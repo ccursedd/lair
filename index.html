@@ -1,2098 +1,303 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KaliWeb Terminal</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#000000;
-  --surface:#000000;
-  --surface2:#050505;
-  --surface3:#080808;
-  --border:#1a1a1a;
-  --border2:#222;
-  --text:#e8e8e8;
-  --text2:#aaa;
-  --text3:#666;
-  --green:#39ff14;
-  --green2:#00c851;
-  --green3:#004d1a;
-  --red:#ff3333;
-  --red2:#cc0000;
-  --yellow:#ffcc00;
-  --blue:#4499ff;
-  --cyan:#00ffff;
-  --purple:#cc44ff;
-  --orange:#ff8800;
-  --pink:#ff44aa;
-  --mono:'JetBrains Mono',monospace;
-  --header:'Orbitron',monospace;
-}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:var(--mono)}
-body{position:relative}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mev</title>
+  <link rel="icon" type="image/png" href="/fav/f0.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
 
-/* SCANLINE EFFECT */
-body::before{
-  content:'';
-  position:fixed;
-  top:0;left:0;right:0;bottom:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,0,0.015) 2px,rgba(0,255,0,0.015) 4px);
-  pointer-events:none;
-  z-index:9999;
-  animation:scanmove 8s linear infinite;
-}
-@keyframes scanmove{0%{background-position:0 0}100%{background-position:0 100%}}
+    #bg-video {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 2s ease;
+      pointer-events: none;
+    }
+    #bg-video.visible { opacity: 0.55; }
 
-/* BACKGROUND */
-#bg{
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:#000;
-  overflow:hidden;
-}
-.bg-grid{
-  position:absolute;top:0;left:0;right:0;bottom:0;
-  background-image:linear-gradient(rgba(57,255,20,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(57,255,20,0.03) 1px,transparent 1px);
-  background-size:40px 40px;
-}
+    #effect-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
 
-/* TOPBAR */
-#topbar{
-  position:fixed;top:0;left:0;right:0;height:44px;
-  background:#000;
-  border-bottom:1px solid var(--border2);
-  display:flex;align-items:center;padding:0 16px;
-  z-index:1000;
-  gap:16px;
-}
-#topbar-logo{
-  font-family:var(--header);
-  font-size:13px;font-weight:900;
-  color:var(--green);
-  letter-spacing:3px;
-  text-transform:uppercase;
-  text-shadow:0 0 10px rgba(57,255,20,0.5);
-}
-#topbar-logo span{color:var(--red);text-shadow:0 0 10px rgba(255,51,51,0.5)}
-.topbar-sep{width:1px;height:20px;background:var(--border2)}
-#topbar-status{display:flex;gap:12px;align-items:center;flex:1}
-.status-item{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:4px;font-family:var(--mono)}
-.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-.status-dot.red{background:var(--red);box-shadow:0 0 4px var(--red)}
-.status-dot.yellow{background:var(--yellow);box-shadow:0 0 4px var(--yellow)}
-#topbar-time{margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--mono)}
-.topbar-btn{
-  background:transparent;border:1px solid var(--border2);
-  color:var(--text2);font-size:10px;padding:4px 10px;
-  cursor:pointer;font-family:var(--mono);letter-spacing:1px;
-  transition:all 0.15s;border-radius:2px;
-}
-.topbar-btn:hover{border-color:var(--green);color:var(--green)}
+    .pfp-wrap {
+      margin-top: 22vh;
+      position: relative;
+      z-index: 10;
+      opacity: 0;
+      transform: scale(0.92);
+      animation: pfpIn 1.4s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes pfpIn { to { opacity: 1; transform: scale(1); } }
+    .pfp { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; display: block; }
 
-/* DESKTOP */
-#desktop{
-  position:fixed;top:44px;left:0;right:0;bottom:32px;
-  overflow:hidden;
-}
+    .enter-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: opacity 1.4s ease;
+    }
 
-/* TASKBAR */
-#taskbar{
-  position:fixed;bottom:0;left:0;right:0;height:32px;
-  background:#000;
-  border-top:1px solid var(--border2);
-  display:flex;align-items:center;padding:0 8px;gap:4px;
-  z-index:1000;
-}
-.task-item{
-  font-size:10px;color:var(--text3);padding:3px 10px;
-  border:1px solid transparent;cursor:pointer;
-  transition:all 0.15s;font-family:var(--mono);letter-spacing:0.5px;
-  border-radius:2px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;
-}
-.task-item.active{border-color:var(--green);color:var(--green)}
-.task-item:hover{border-color:var(--border2);color:var(--text)}
-#taskbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.taskbar-info{font-size:10px;color:var(--text3);font-family:var(--mono)}
+    .player {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      align-items: flex-end;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      animation: pfpIn 1s 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .player-title-wrap { height: 22px; overflow: hidden; }
+    .player-title-wrap canvas { display: block; }
+    .player-controls { display: flex; align-items: center; gap: 14px; }
+    .player-btn {
+      background: none; border: none; cursor: pointer; padding: 2px;
+      opacity: 0.18; transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .player-btn:hover { opacity: 0.55; transform: translateY(-1px); }
+    .player-btn canvas { display: block; }
 
-/* WINDOW */
-.window{
-  position:absolute;
-  background:#000;
-  border:1px solid var(--border2);
-  border-radius:4px;
-  overflow:hidden;
-  box-shadow:0 0 0 1px #111,0 20px 60px rgba(0,0,0,0.9),0 0 30px rgba(57,255,20,0.03);
-  display:flex;flex-direction:column;
-  min-width:300px;min-height:200px;
-  transition:box-shadow 0.15s;
-}
-.window.focused{
-  border-color:#2a2a2a;
-  box-shadow:0 0 0 1px #1a1a1a,0 30px 80px rgba(0,0,0,0.95),0 0 40px rgba(57,255,20,0.06);
-}
-.window.minimized{display:none}
-
-/* TITLEBAR */
-.titlebar{
-  height:32px;
-  background:#050505;
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 10px;
-  cursor:grab;user-select:none;flex-shrink:0;
-  gap:8px;
-}
-.titlebar:active{cursor:grabbing}
-.win-btns{display:flex;gap:6px}
-.win-btn{
-  width:12px;height:12px;border-radius:50%;cursor:pointer;
-  border:none;outline:none;transition:filter 0.1s;
-  flex-shrink:0;
-}
-.win-btn:hover{filter:brightness(1.3)}
-.win-close{background:#ff5f56}
-.win-min{background:#ffbd2e}
-.win-max{background:#27c93f}
-.win-title{
-  font-size:11px;color:var(--text3);flex:1;text-align:center;
-  font-family:var(--mono);letter-spacing:1px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-
-/* TERMINAL */
-.term-container{
-  flex:1;overflow:hidden;display:flex;flex-direction:column;
-  background:#000;
-}
-.term-output{
-  flex:1;overflow-y:auto;padding:8px 12px;
-  font-family:var(--mono);font-size:13px;line-height:1.6;
-  scroll-behavior:smooth;
-}
-.term-output::-webkit-scrollbar{width:4px}
-.term-output::-webkit-scrollbar-track{background:#000}
-.term-output::-webkit-scrollbar-thumb{background:#1a1a1a;border-radius:2px}
-.term-output::-webkit-scrollbar-thumb:hover{background:#2a2a2a}
-.term-input-row{
-  display:flex;align-items:center;padding:6px 12px;
-  border-top:1px solid var(--border);
-  background:#000;flex-shrink:0;gap:0;
-}
-.term-prompt-label{
-  font-family:var(--mono);font-size:13px;white-space:nowrap;flex-shrink:0;
-}
-.term-input{
-  background:transparent;border:none;outline:none;
-  color:var(--text);font-family:var(--mono);font-size:13px;
-  flex:1;caret-color:var(--green);
-}
-.term-input::selection{background:rgba(57,255,20,0.2)}
-.term-cursor{
-  display:inline-block;width:8px;height:14px;
-  background:var(--green);animation:blink 1s step-end infinite;
-  vertical-align:text-bottom;
-}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-
-/* OUTPUT LINES */
-.line{display:block;word-break:break-all}
-.line.cmd{color:var(--green)}
-.line.out{color:var(--text)}
-.line.err{color:var(--red)}
-.line.warn{color:var(--yellow)}
-.line.info{color:var(--cyan)}
-.line.success{color:var(--green2)}
-.line.muted{color:var(--text3)}
-.line.prompt-echo{color:var(--green)}
-.ansi-green{color:var(--green)}
-.ansi-red{color:var(--red)}
-.ansi-yellow{color:var(--yellow)}
-.ansi-blue{color:var(--blue)}
-.ansi-cyan{color:var(--cyan)}
-.ansi-purple{color:var(--purple)}
-.ansi-white{color:var(--text)}
-.ansi-gray{color:var(--text3)}
-.ansi-bold{font-weight:700}
-
-/* RESIZE HANDLE */
-.resize-handle{
-  position:absolute;bottom:0;right:0;
-  width:16px;height:16px;cursor:se-resize;
-  background:transparent;
-}
-.resize-handle::after{
-  content:'';position:absolute;bottom:3px;right:3px;
-  width:8px;height:8px;
-  border-right:2px solid var(--border2);
-  border-bottom:2px solid var(--border2);
-}
-
-/* TABS */
-.term-tabs{
-  display:flex;align-items:center;
-  border-bottom:1px solid var(--border);
-  background:#000;padding:0 8px;gap:2px;flex-shrink:0;overflow-x:auto;
-}
-.term-tabs::-webkit-scrollbar{height:2px}
-.term-tabs::-webkit-scrollbar-thumb{background:#1a1a1a}
-.term-tab{
-  font-size:11px;color:var(--text3);
-  padding:5px 12px;cursor:pointer;
-  border-bottom:2px solid transparent;
-  transition:all 0.15s;white-space:nowrap;
-  font-family:var(--mono);letter-spacing:0.5px;
-  display:flex;align-items:center;gap:6px;
-}
-.term-tab.active{color:var(--green);border-bottom-color:var(--green)}
-.term-tab:hover:not(.active){color:var(--text2)}
-.term-tab-close{
-  width:14px;height:14px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;color:var(--text3);
-  background:transparent;border:none;cursor:pointer;
-  transition:all 0.1s;
-}
-.term-tab-close:hover{background:#1a1a1a;color:var(--red)}
-.term-tab-add{
-  font-size:14px;color:var(--text3);
-  background:transparent;border:none;cursor:pointer;
-  padding:4px 8px;transition:all 0.1s;
-}
-.term-tab-add:hover{color:var(--green)}
-
-/* LOADING */
-.typing-indicator{
-  display:inline-flex;gap:3px;align-items:center;padding:2px 0;
-}
-.typing-dot{
-  width:4px;height:4px;border-radius:50%;
-  background:var(--green);
-  animation:tdot 1.2s infinite;
-}
-.typing-dot:nth-child(2){animation-delay:0.2s}
-.typing-dot:nth-child(3){animation-delay:0.4s}
-@keyframes tdot{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
-
-/* FILE MANAGER WINDOW */
-.file-manager{
-  flex:1;overflow:hidden;display:flex;flex-direction:column;
-  background:#000;font-family:var(--mono);font-size:12px;
-}
-.fm-toolbar{
-  display:flex;align-items:center;gap:8px;
-  padding:6px 10px;border-bottom:1px solid var(--border);
-  background:#000;flex-shrink:0;
-}
-.fm-path{
-  flex:1;background:#050505;border:1px solid var(--border2);
-  color:var(--text);font-size:11px;padding:3px 8px;
-  font-family:var(--mono);border-radius:2px;
-}
-.fm-btn{
-  background:transparent;border:1px solid var(--border2);
-  color:var(--text3);font-size:10px;padding:3px 8px;
-  cursor:pointer;font-family:var(--mono);transition:all 0.1s;border-radius:2px;
-}
-.fm-btn:hover{border-color:var(--green);color:var(--green)}
-.fm-content{flex:1;overflow-y:auto;padding:4px}
-.fm-content::-webkit-scrollbar{width:4px}
-.fm-content::-webkit-scrollbar-thumb{background:#1a1a1a}
-.fm-item{
-  display:flex;align-items:center;gap:8px;
-  padding:4px 8px;cursor:pointer;border-radius:2px;
-  transition:background 0.1s;
-}
-.fm-item:hover{background:#0a0a0a}
-.fm-item.selected{background:#0d1a0d}
-.fm-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
-.fm-name{color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fm-name.dir{color:var(--blue)}
-.fm-name.exec{color:var(--green)}
-.fm-size{color:var(--text3);font-size:10px;min-width:50px;text-align:right}
-
-/* CONTEXT MENU */
-#ctx-menu{
-  position:fixed;display:none;
-  background:#050505;border:1px solid var(--border2);
-  z-index:9000;padding:4px 0;min-width:160px;border-radius:3px;
-  box-shadow:0 8px 24px rgba(0,0,0,0.8);
-}
-.ctx-item{
-  padding:6px 16px;font-size:11px;color:var(--text2);
-  cursor:pointer;transition:all 0.1s;font-family:var(--mono);
-  letter-spacing:0.5px;
-}
-.ctx-item:hover{background:#0d0d0d;color:var(--green)}
-.ctx-sep{height:1px;background:var(--border);margin:3px 0}
-.ctx-item.danger:hover{color:var(--red)}
-
-/* NOTIFICATION */
-.notif{
-  position:fixed;bottom:40px;right:16px;
-  background:#050505;border:1px solid var(--border2);
-  padding:10px 16px;font-size:11px;color:var(--text2);
-  font-family:var(--mono);border-radius:3px;
-  max-width:280px;z-index:9998;
-  animation:notifIn 0.2s ease,notifOut 0.2s ease forwards;
-  animation-delay:0s,2.8s;animation-fill-mode:forwards;
-  border-left:3px solid var(--green);
-}
-@keyframes notifIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-@keyframes notifOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
-
-/* MODAL */
-.modal-overlay{
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.7);z-index:5000;
-  display:flex;align-items:center;justify-content:center;
-}
-.modal{
-  background:#000;border:1px solid var(--border2);
-  padding:24px;min-width:320px;max-width:500px;border-radius:4px;
-  font-family:var(--mono);
-}
-.modal h3{font-size:13px;color:var(--green);margin-bottom:16px;letter-spacing:1px}
-.modal p{font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end}
-.modal-btn{
-  background:transparent;border:1px solid var(--border2);
-  color:var(--text2);font-size:11px;padding:6px 16px;
-  cursor:pointer;font-family:var(--mono);transition:all 0.15s;border-radius:2px;
-}
-.modal-btn:hover{border-color:var(--green);color:var(--green)}
-.modal-btn.primary{border-color:var(--green);color:var(--green)}
-.modal-btn.primary:hover{background:rgba(57,255,20,0.1)}
-
-/* HELP PANEL */
-.help-content{flex:1;overflow-y:auto;padding:12px;font-family:var(--mono);font-size:12px;color:var(--text2)}
-.help-content::-webkit-scrollbar{width:4px}
-.help-content::-webkit-scrollbar-thumb{background:#1a1a1a}
-.help-section{margin-bottom:16px}
-.help-section h3{color:var(--green);font-size:11px;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase}
-.help-cmd{color:var(--cyan)}
-.help-desc{color:var(--text3)}
-
-/* SPLASH */
-#splash{
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:#000;z-index:99999;
-  display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:16px;
-}
-#splash-logo{
-  font-family:var(--header);font-size:32px;font-weight:900;
-  color:var(--green);letter-spacing:8px;
-  text-shadow:0 0 20px rgba(57,255,20,0.6);
-  animation:glitch 3s infinite;
-}
-@keyframes glitch{
-  0%,90%,100%{transform:none;text-shadow:0 0 20px rgba(57,255,20,0.6)}
-  92%{transform:skew(-2deg);text-shadow:-2px 0 var(--red),2px 0 var(--cyan)}
-  94%{transform:skew(1deg);text-shadow:2px 0 var(--red),-2px 0 var(--cyan)}
-}
-#splash-sub{font-size:11px;color:var(--text3);letter-spacing:4px;font-family:var(--mono)}
-#splash-bar{width:300px;height:2px;background:#111;border-radius:1px;overflow:hidden}
-#splash-prog{height:100%;background:var(--green);width:0;transition:width 0.05s;box-shadow:0 0 8px var(--green)}
-#splash-status{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;min-height:14px}
-</style>
+    .socials {
+      margin-top: 40px;
+      display: flex;
+      gap: 20px;
+      z-index: 10;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: pfpIn 1s 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .social-icon { display: block; cursor: pointer; opacity: 0.2; transition: opacity 0.3s ease, transform 0.3s ease; }
+    .social-icon:hover { opacity: 0.6; transform: translateY(-2px); }
+    .social-icon canvas { display: block; }
+  </style>
 </head>
 <body>
 
-<div id="splash">
-  <div id="splash-logo">KALIWEB</div>
-  <div id="splash-sub">BROWSER TERMINAL v2.0</div>
-  <div id="splash-bar"><div id="splash-prog"></div></div>
-  <div id="splash-status"></div>
-</div>
+  <video id="bg-video" src="https://github.com/ccursedd/lair/raw/refs/heads/main/black.mp4" loop playsinline></video>
 
-<div id="bg"><div class="bg-grid"></div></div>
-
-<div id="topbar">
-  <div id="topbar-logo">Kali<span>Web</span></div>
-  <div class="topbar-sep"></div>
-  <div id="topbar-status">
-    <div class="status-item"><div class="status-dot"></div>ONLINE</div>
-    <div class="status-item"><div class="status-dot yellow"></div>AI ENGINE</div>
-    <div class="status-item" id="stat-proc"><div class="status-dot"></div>0 PROC</div>
+  <div class="enter-overlay" id="enter-overlay">
+    <canvas id="enter-text" width="280" height="20"></canvas>
   </div>
-  <button class="topbar-btn" onclick="newTerminal()">+ TERMINAL</button>
-  <button class="topbar-btn" onclick="newFileManager()">FILES</button>
-  <button class="topbar-btn" onclick="showHelp()">HELP</button>
-  <div class="topbar-sep"></div>
-  <div id="topbar-time"></div>
-</div>
 
-<div id="desktop"></div>
-
-<div id="taskbar">
-  <div id="taskbar-windows"></div>
-  <div id="taskbar-right">
-    <div class="taskbar-info" id="tbar-info">root@kaliweb</div>
+  <div class="pfp-wrap">
+    <img class="pfp" src="https://cdn.discordapp.com/avatars/1463280835577774120/placeholder.png?size=256" alt="mev">
   </div>
-</div>
 
-<div id="ctx-menu">
-  <div class="ctx-item" onclick="ctxAction('new-terminal')">New Terminal</div>
-  <div class="ctx-item" onclick="ctxAction('new-file-manager')">File Manager</div>
-  <div class="ctx-sep"></div>
-  <div class="ctx-item" onclick="ctxAction('clear-desktop')">Clear Desktop</div>
-  <div class="ctx-item danger" onclick="ctxAction('close-all')">Close All</div>
-</div>
-
-<script>
-const API_URL = "https://api.anthropic.com/v1/messages";
-
-// === VIRTUAL FILESYSTEM ===
-const VFS = {
-  '/': {type:'dir'},
-  '/root': {type:'dir'},
-  '/root/Desktop': {type:'dir'},
-  '/root/Documents': {type:'dir'},
-  '/root/Downloads': {type:'dir'},
-  '/root/Pictures': {type:'dir'},
-  '/root/Music': {type:'dir'},
-  '/root/Videos': {type:'dir'},
-  '/root/.bashrc': {type:'file',content:'# ~/.bashrc\nexport PS1="\\[\\033[01;32m\\]root@kaliweb\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]# "\nexport PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"\nalias ll="ls -la"\nalias la="ls -A"\nalias l="ls -CF"\nalias grep="grep --color=auto"\nalias nmap="nmap"\nalias sqlmap="sqlmap.py"\n',size:320},
-  '/root/.profile': {type:'file',content:'# ~/.profile\nif [ -n "$BASH_VERSION" ]; then\n  if [ -f "$HOME/.bashrc" ]; then\n    . "$HOME/.bashrc"\n  fi\nfi\n',size:128},
-  '/root/.ssh': {type:'dir'},
-  '/root/.ssh/known_hosts': {type:'file',content:'',size:0},
-  '/root/Documents/notes.txt': {type:'file',content:'# Pentest Notes\n\n## Target: 192.168.1.0/24\n## Date: '+new Date().toLocaleDateString()+'\n\n## Recon\n- nmap -sV -sC 192.168.1.1\n- Running services: SSH(22), HTTP(80), HTTPS(443)\n\n## Findings\n- Default credentials found on router\n- CVE-2021-XXXX potential exploit\n\n## TODO\n- [ ] Full port scan\n- [ ] Directory brute force\n- [ ] Check for SQLi\n',size:380},
-  '/root/Downloads/payload.py': {type:'file',content:'#!/usr/bin/env python3\n# Sample Python script\nimport sys\nimport os\n\ndef main():\n    print("[*] KaliWeb Payload Framework")\n    print("[*] Loading modules...")\n    print("[+] Ready")\n\nif __name__ == "__main__":\n    main()\n',size:180},
-  '/usr': {type:'dir'},
-  '/usr/bin': {type:'dir'},
-  '/usr/local': {type:'dir'},
-  '/usr/local/bin': {type:'dir'},
-  '/usr/share': {type:'dir'},
-  '/usr/share/wordlists': {type:'dir'},
-  '/usr/share/wordlists/rockyou.txt': {type:'file',content:'[wordlist - too large to display]\n14344391 lines\n',size:139921497},
-  '/tmp': {type:'dir'},
-  '/etc': {type:'dir'},
-  '/etc/passwd': {type:'file',content:'root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n',size:256},
-  '/etc/hosts': {type:'file',content:'127.0.0.1\tlocalhost\n127.0.1.1\tkaliweb\n::1\t\tlocalhost ip6-localhost ip6-loopback\n192.168.1.1\tgateway\n',size:120},
-  '/etc/os-release': {type:'file',content:'PRETTY_NAME="KaliWeb GNU/Linux"\nNAME="KaliWeb Linux"\nVERSION_ID="2024.1"\nVERSION="2024.1 (Browser Terminal)"\nID=kali\nID_LIKE=debian\nHOME_URL="https://github.com"\nSUPPORT_URL="https://github.com"\nBUG_REPORT_URL="https://github.com"\n',size:260},
-  '/var': {type:'dir'},
-  '/var/log': {type:'dir'},
-  '/var/log/auth.log': {type:'file',content:'May 24 00:00:01 kaliweb sshd[1234]: Server listening on 0.0.0.0 port 22\nMay 24 00:00:01 kaliweb sshd[1234]: Server listening on :: port 22\nMay 24 10:23:44 kaliweb login[5678]: ROOT LOGIN on \'/dev/tty1\'\n',size:200},
-  '/proc': {type:'dir'},
-  '/proc/version': {type:'file',content:'Linux version 6.1.0-kaliweb (root@build) (gcc version 12.2.0) #1 SMP KaliWeb 6.1.0-1 (2024-01-15)\n',size:96},
-  '/home': {type:'dir'},
-  '/bin': {type:'dir'},
-  '/sbin': {type:'dir'},
-  '/dev': {type:'dir'},
-  '/dev/null': {type:'file',content:'',size:0},
-  '/opt': {type:'dir'},
-  '/opt/metasploit': {type:'dir'},
-  '/opt/metasploit/README': {type:'file',content:'Metasploit Framework\nSimulated environment - use msf console\n',size:64},
-};
-
-// === STATE ===
-let windows = {};
-let winZIndex = 100;
-let winCount = 0;
-let focusedWin = null;
-let commandHistory = [];
-let histIndex = -1;
-let processList = ['bash','sshd','cron','systemd','dbus-daemon'];
-let bashEnv = {HOME:'/root',USER:'root',SHELL:'/bin/bash',PATH:'/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',TERM:'xterm-256color',LANG:'en_US.UTF-8',PWD:'/root',OLDPWD:'/root',HOSTNAME:'kaliweb',PS1:'\\[\\033[01;32m\\]root@kaliweb\\[\\033[00m\\]:\\[\\033[01;34m\\]\\w\\[\\033[00m\\]# '};
-let gitRepos = {};
-let networkSim = {interfaces:[{name:'eth0',ip:'10.0.2.15',mask:'255.255.255.0',mac:'08:00:27:ab:cd:ef',state:'UP'},{name:'lo',ip:'127.0.0.1',mask:'255.0.0.0',mac:'00:00:00:00:00:00',state:'UP'},{name:'wlan0',ip:'192.168.1.100',mask:'255.255.255.0',mac:'00:11:22:33:44:55',state:'UP'}]};
-
-// === SPLASH BOOT ===
-const bootMsgs = [
-  'Loading kernel modules...','Initializing filesystem...','Starting network services...',
-  'Loading Kali tools...','Mounting virtual drives...','Starting SSH daemon...',
-  'Loading AI engine...','Initializing terminal emulator...','System ready.'
-];
-let bootIdx = 0;
-function doSplash(){
-  const prog = document.getElementById('splash-prog');
-  const status = document.getElementById('splash-status');
-  const interval = setInterval(()=>{
-    if(bootIdx >= bootMsgs.length){
-      clearInterval(interval);
-      setTimeout(()=>{
-        document.getElementById('splash').style.opacity='0';
-        document.getElementById('splash').style.transition='opacity 0.5s';
-        setTimeout(()=>{
-          document.getElementById('splash').style.display='none';
-          newTerminal();
-        },500);
-      },400);
-      return;
-    }
-    prog.style.width = ((bootIdx+1)/bootMsgs.length*100)+'%';
-    status.textContent = bootMsgs[bootIdx];
-    bootIdx++;
-  },120);
-}
-doSplash();
-
-// === CLOCK ===
-function updateClock(){
-  const now = new Date();
-  document.getElementById('topbar-time').textContent = now.toLocaleTimeString('en-US',{hour12:false});
-  document.getElementById('tbar-info').textContent = 'root@kaliweb ~ '+now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-}
-setInterval(updateClock,1000);
-updateClock();
-
-// === WINDOW MANAGER ===
-function createWindow(opts){
-  const id = 'win-'+(++winCount);
-  const w = opts.width||700;
-  const h = opts.height||460;
-  const maxX = window.innerWidth - w;
-  const maxY = window.innerHeight - h - 76;
-  const x = opts.x !== undefined ? opts.x : Math.max(0, Math.random()*Math.min(maxX,300)+20);
-  const y = opts.y !== undefined ? opts.y : Math.max(0, Math.random()*Math.min(maxY,200)+20);
-
-  const el = document.createElement('div');
-  el.className = 'window focused';
-  el.id = id;
-  el.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${++winZIndex}`;
-
-  el.innerHTML = `
-    <div class="titlebar" id="tb-${id}">
-      <div class="win-btns">
-        <button class="win-btn win-close" onclick="closeWindow('${id}')"></button>
-        <button class="win-btn win-min" onclick="minimizeWindow('${id}')"></button>
-        <button class="win-btn win-max" onclick="maximizeWindow('${id}')"></button>
-      </div>
-      <div class="win-title">${opts.title||'Terminal'}</div>
+  <div class="player">
+    <div class="player-title-wrap"><canvas id="player-title-canvas" width="250" height="22"></canvas></div>
+    <div class="player-controls">
+      <button class="player-btn" id="player-prev"><canvas width="40" height="40"></canvas></button>
+      <button class="player-btn" id="player-toggle"><canvas width="44" height="44"></canvas></button>
+      <button class="player-btn" id="player-next"><canvas width="40" height="40"></canvas></button>
     </div>
-    <div id="content-${id}"></div>
-    <div class="resize-handle" id="rh-${id}"></div>
-  `;
+  </div>
 
-  document.getElementById('desktop').appendChild(el);
-  windows[id] = {el,title:opts.title,minimized:false,maxed:false,prevRect:null,type:opts.type||'terminal'};
+  <div class="socials">
+    <a class="social-icon" href="https://www.tiktok.com/@rmzc" data-icon="tiktok"><canvas width="64" height="64"></canvas></a>
+  </div>
 
-  makeDraggable(id);
-  makeResizable(id);
-  el.addEventListener('mousedown',()=>focusWindow(id));
+  <audio id="player-audio" preload="auto" src="/mev/tracks/%23SILKROAD.mp3"></audio>
+  <canvas id="effect-canvas"></canvas>
 
-  addTaskbarItem(id, opts.title||'Terminal');
-  focusWindow(id);
-  return id;
-}
-
-function focusWindow(id){
-  if(focusedWin && focusedWin!==id){
-    const prev = document.getElementById(focusedWin);
-    if(prev) prev.classList.remove('focused');
-  }
-  const el = document.getElementById(id);
-  if(el){
-    el.classList.add('focused');
-    el.style.zIndex = ++winZIndex;
-  }
-  focusedWin = id;
-  document.querySelectorAll('.task-item').forEach(t=>{
-    t.classList.toggle('active', t.dataset.winId===id);
-  });
-}
-
-function closeWindow(id){
-  const el = document.getElementById(id);
-  if(el) el.remove();
-  const ti = document.querySelector(`.task-item[data-win-id="${id}"]`);
-  if(ti) ti.remove();
-  delete windows[id];
-  updateProcCount();
-}
-
-function minimizeWindow(id){
-  const win = windows[id];
-  if(!win) return;
-  win.minimized = !win.minimized;
-  document.getElementById(id).classList.toggle('minimized', win.minimized);
-}
-
-function maximizeWindow(id){
-  const win = windows[id];
-  const el = document.getElementById(id);
-  if(!win||!el) return;
-  if(win.maxed){
-    const r = win.prevRect;
-    Object.assign(el.style, {left:r.left,top:r.top,width:r.width,height:r.height});
-    win.maxed = false;
-  } else {
-    win.prevRect = {left:el.style.left,top:el.style.top,width:el.style.width,height:el.style.height};
-    Object.assign(el.style, {left:'0px',top:'0px',width:'100%',height:'calc(100vh - 76px)'});
-    win.maxed = true;
-  }
-}
-
-function addTaskbarItem(id, title){
-  const t = document.createElement('div');
-  t.className = 'task-item';
-  t.dataset.winId = id;
-  t.textContent = title.replace('Terminal','TERM').slice(0,16);
-  t.onclick = ()=>{ minimizeWindow(id); if(windows[id]?.minimized===false) focusWindow(id); };
-  document.getElementById('taskbar-windows').appendChild(t);
-  updateProcCount();
-}
-
-function updateProcCount(){
-  const c = Object.keys(windows).length;
-  document.getElementById('stat-proc').innerHTML = `<div class="status-dot${c>0?'':' red'}"></div>${c} PROC`;
-}
-
-// === DRAG ===
-function makeDraggable(id){
-  const tb = document.getElementById('tb-'+id);
-  const el = document.getElementById(id);
-  if(!tb||!el) return;
-  let dx=0,dy=0,startX=0,startY=0,dragging=false;
-  tb.addEventListener('mousedown',e=>{
-    if(e.target.classList.contains('win-btn')) return;
-    dragging=true;
-    startX=e.clientX; startY=e.clientY;
-    dx = el.offsetLeft; dy = el.offsetTop;
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove',e=>{
-    if(!dragging) return;
-    const nx = dx + (e.clientX - startX);
-    const ny = dy + (e.clientY - startY);
-    el.style.left = Math.max(-200,Math.min(window.innerWidth-100,nx))+'px';
-    el.style.top = Math.max(0,Math.min(window.innerHeight-100,ny))+'px';
-  });
-  document.addEventListener('mouseup',()=>{ dragging=false; });
-}
-
-// === RESIZE ===
-function makeResizable(id){
-  const rh = document.getElementById('rh-'+id);
-  const el = document.getElementById(id);
-  if(!rh||!el) return;
-  let resizing=false,sx=0,sy=0,sw=0,sh=0;
-  rh.addEventListener('mousedown',e=>{
-    resizing=true; sx=e.clientX; sy=e.clientY;
-    sw=el.offsetWidth; sh=el.offsetHeight;
-    e.preventDefault(); e.stopPropagation();
-  });
-  document.addEventListener('mousemove',e=>{
-    if(!resizing) return;
-    el.style.width = Math.max(300, sw+(e.clientX-sx))+'px';
-    el.style.height = Math.max(200, sh+(e.clientY-sy))+'px';
-  });
-  document.addEventListener('mouseup',()=>{ resizing=false; });
-}
-
-// === TERMINAL ===
-let termTabCounter = 0;
-
-function newTerminal(opts={}){
-  const id = createWindow({title:'Terminal — root@kaliweb',width:740,height:480,...opts,type:'terminal'});
-  const content = document.getElementById('content-'+id);
-  content.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden;height:calc(100% - 32px)';
-
-  const tabsEl = document.createElement('div');
-  tabsEl.className = 'term-tabs';
-  tabsEl.id = 'tabs-'+id;
-
-  const addBtn = document.createElement('button');
-  addBtn.className = 'term-tab-add';
-  addBtn.textContent = '+';
-  addBtn.onclick = ()=>addTab(id);
-
-  content.appendChild(tabsEl);
-  content.appendChild(addBtn);
-
-  const panesEl = document.createElement('div');
-  panesEl.id = 'panes-'+id;
-  panesEl.style.cssText = 'flex:1;overflow:hidden;display:flex;flex-direction:column';
-  content.appendChild(panesEl);
-
-  tabsEl.appendChild(addBtn);
-
-  windows[id].tabs = {};
-  windows[id].activeTab = null;
-  windows[id].cwd = '/root';
-  windows[id].env = {...bashEnv};
-
-  addTab(id);
-  return id;
-}
-
-function addTab(winId){
-  const tabId = 'tab-'+(++termTabCounter);
-  const win = windows[winId];
-  if(!win) return;
-
-  const tabEl = document.createElement('div');
-  tabEl.className = 'term-tab';
-  tabEl.id = 'tabel-'+tabId;
-  tabEl.dataset.tabId = tabId;
-  tabEl.innerHTML = `bash <button class="term-tab-close" onclick="closeTab('${winId}','${tabId}',event)">×</button>`;
-  tabEl.onclick = (e)=>{ if(!e.target.classList.contains('term-tab-close')) switchTab(winId, tabId); };
-
-  const tabsEl = document.getElementById('tabs-'+winId);
-  const addBtn = tabsEl.querySelector('.term-tab-add');
-  tabsEl.insertBefore(tabEl, addBtn);
-
-  const pane = document.createElement('div');
-  pane.className = 'term-container';
-  pane.id = 'pane-'+tabId;
-  pane.style.display = 'none';
-
-  const out = document.createElement('div');
-  out.className = 'term-output';
-  out.id = 'out-'+tabId;
-
-  const inputRow = document.createElement('div');
-  inputRow.className = 'term-input-row';
-
-  const prompt = document.createElement('span');
-  prompt.className = 'term-prompt-label';
-  prompt.id = 'prompt-'+tabId;
-  prompt.innerHTML = buildPromptHTML('/root');
-
-  const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.className = 'term-input';
-  inp.id = 'inp-'+tabId;
-  inp.autocomplete = 'off';
-  inp.spellcheck = false;
-
-  inputRow.appendChild(prompt);
-  inputRow.appendChild(inp);
-  pane.appendChild(out);
-  pane.appendChild(inputRow);
-
-  document.getElementById('panes-'+winId).appendChild(pane);
-
-  win.tabs[tabId] = {cwd:win.cwd||'/root',history:[],histIdx:-1,env:{...bashEnv,PWD:win.cwd||'/root'}};
-
-  printBanner(tabId);
-  inp.addEventListener('keydown', e=>handleKey(e, winId, tabId));
-  inp.addEventListener('keydown', e=>{
-    if(e.key==='Tab'){e.preventDefault();handleTab(winId,tabId);}
-  });
-
-  switchTab(winId, tabId);
-  inp.focus();
-}
-
-function switchTab(winId, tabId){
-  const win = windows[winId];
-  if(!win) return;
-  Object.entries(win.tabs).forEach(([tid])=>{
-    const pane = document.getElementById('pane-'+tid);
-    const tab = document.getElementById('tabel-'+tid);
-    if(pane) pane.style.display = tid===tabId ? 'flex' : 'none';
-    if(tab) tab.classList.toggle('active', tid===tabId);
-  });
-  win.activeTab = tabId;
-  const inp = document.getElementById('inp-'+tabId);
-  if(inp) inp.focus();
-}
-
-function closeTab(winId, tabId, e){
-  e.stopPropagation();
-  const win = windows[winId];
-  if(!win) return;
-  const tabCount = Object.keys(win.tabs).length;
-  if(tabCount <= 1){ closeWindow(winId); return; }
-  document.getElementById('pane-'+tabId)?.remove();
-  document.getElementById('tabel-'+tabId)?.remove();
-  delete win.tabs[tabId];
-  const remaining = Object.keys(win.tabs);
-  if(win.activeTab === tabId && remaining.length > 0) switchTab(winId, remaining[remaining.length-1]);
-}
-
-function buildPromptHTML(cwd){
-  const shortCwd = cwd.replace('/root','~');
-  return `<span class="ansi-green ansi-bold">root@kaliweb</span><span class="ansi-white">:</span><span class="ansi-blue ansi-bold">${shortCwd}</span><span class="ansi-white"># </span>`;
-}
-
-function printBanner(tabId){
-  const lines = [
-    `<span class="ansi-green ansi-bold">┌──────────────────────────────────────────────────────────┐</span>`,
-    `<span class="ansi-green ansi-bold">│</span>  <span class="ansi-red ansi-bold">██╗  ██╗ █████╗ ██╗     ██╗    ██╗███████╗██████╗</span>  <span class="ansi-green ansi-bold">│</span>`,
-    `<span class="ansi-green ansi-bold">│</span>  <span class="ansi-red ansi-bold">██║ ██╔╝██╔══██╗██║     ██║    ██║██╔════╝██╔══██╗</span> <span class="ansi-green ansi-bold">│</span>`,
-    `<span class="ansi-green ansi-bold">│</span>  <span class="ansi-red ansi-bold">█████╔╝ ███████║██║     ██║ █╗ ██║█████╗  ██████╔╝</span> <span class="ansi-green ansi-bold">│</span>`,
-    `<span class="ansi-green ansi-bold">│</span>  <span class="ansi-red ansi-bold">██╔═██╗ ██╔══██║██║     ██║███╗██║██╔══╝  ██╔══██╗</span> <span class="ansi-green ansi-bold">│</span>`,
-    `<span class="ansi-green ansi-bold">│</span>  <span class="ansi-red ansi-bold">██║  ██╗██║  ██║███████╗╚███╔███╔╝███████╗██████╔╝</span> <span class="ansi-green ansi-bold">│</span>`,
-    `<span class="ansi-green ansi-bold">│</span>  <span class="ansi-gray">╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚══╝╚══╝ ╚══════╝╚═════╝</span>  <span class="ansi-green ansi-bold">│</span>`,
-    `<span class="ansi-green ansi-bold">│</span>            <span class="ansi-cyan">Browser Terminal  v2.0  AI-Powered</span>           <span class="ansi-green ansi-bold">│</span>`,
-    `<span class="ansi-green ansi-bold">└──────────────────────────────────────────────────────────┘</span>`,
-    `<span class="ansi-gray">Type </span><span class="ansi-green">help</span><span class="ansi-gray"> for available commands. All Kali tools simulated via AI.</span>`,
-    `<span class="ansi-yellow">root@kaliweb</span><span class="ansi-gray">:~# uname -a</span>`,
-    `<span class="ansi-white">Linux kaliweb 6.1.0-kaliweb #1 SMP KaliWeb 6.1.0-1 x86_64 GNU/Linux</span>`,
-    ``,
-  ];
-  const out = document.getElementById('out-'+tabId);
-  lines.forEach(l=>{ const s=document.createElement('span'); s.className='line out'; s.innerHTML=l; out.appendChild(s); });
-}
-
-function appendLine(tabId, text, cls='out', html=false){
-  const out = document.getElementById('out-'+tabId);
-  if(!out) return;
-  const el = document.createElement('span');
-  el.className = 'line '+cls;
-  if(html) el.innerHTML = text; else el.textContent = text;
-  out.appendChild(el);
-  out.scrollTop = out.scrollHeight;
-}
-
-function appendHTML(tabId, html){
-  const out = document.getElementById('out-'+tabId);
-  if(!out) return;
-  const el = document.createElement('span');
-  el.className = 'line out';
-  el.innerHTML = html;
-  out.appendChild(el);
-  out.scrollTop = out.scrollHeight;
-}
-
-function clearOutput(tabId){
-  const out = document.getElementById('out-'+tabId);
-  if(out) out.innerHTML = '';
-}
-
-// === KEY HANDLER ===
-function handleKey(e, winId, tabId){
-  const inp = document.getElementById('inp-'+tabId);
-  const tab = windows[winId]?.tabs[tabId];
-  if(!inp || !tab) return;
-
-  if(e.key === 'Enter'){
-    const cmd = inp.value.trim();
-    inp.value = '';
-    if(cmd){
-      tab.history.unshift(cmd);
-      tab.histIdx = -1;
-      commandHistory.unshift(cmd);
-    }
-    const promptSnap = buildPromptHTML(tab.cwd);
-    appendHTML(tabId, promptSnap + `<span class="ansi-white">${escHtml(cmd)}</span>`);
-    if(cmd) executeCommand(winId, tabId, cmd);
-    else appendLine(tabId,'');
-    const prom = document.getElementById('prompt-'+tabId);
-    if(prom) prom.innerHTML = buildPromptHTML(tab.cwd);
-  }
-  else if(e.key === 'ArrowUp'){
-    e.preventDefault();
-    if(tab.histIdx < tab.history.length-1){
-      tab.histIdx++;
-      inp.value = tab.history[tab.histIdx]||'';
-    }
-  }
-  else if(e.key === 'ArrowDown'){
-    e.preventDefault();
-    if(tab.histIdx > 0){ tab.histIdx--; inp.value = tab.history[tab.histIdx]||''; }
-    else if(tab.histIdx===0){ tab.histIdx=-1; inp.value=''; }
-  }
-  else if(e.key==='l' && e.ctrlKey){ e.preventDefault(); clearOutput(tabId); }
-  else if(e.key==='c' && e.ctrlKey){ e.preventDefault(); appendHTML(tabId, buildPromptHTML(tab.cwd)+'<span class="ansi-white">^C</span>'); appendLine(tabId,''); }
-  else if(e.key==='d' && e.ctrlKey){ e.preventDefault(); appendLine(tabId,'exit','warn'); closeTab(winId, tabId, {stopPropagation:()=>{}}); }
-}
-
-function handleTab(winId, tabId){
-  const inp = document.getElementById('inp-'+tabId);
-  const tab = windows[winId]?.tabs[tabId];
-  if(!inp||!tab) return;
-  const val = inp.value;
-  const parts = val.split(' ');
-  const last = parts[parts.length-1];
-  if(!last) return;
-  // autocomplete path
-  const dirPath = last.includes('/') ? last.substring(0,last.lastIndexOf('/')+1) : tab.cwd+'/';
-  const prefix = last.includes('/') ? last.substring(last.lastIndexOf('/')+1) : last;
-  const absDir = resolvePath(tab.cwd, dirPath.endsWith('/')?dirPath:dirPath+'/');
-  const matches = Object.keys(VFS).filter(k=>{
-    if(!k.startsWith(absDir===''?'/':absDir)) return false;
-    const rel = k.slice(absDir.length);
-    return rel && !rel.includes('/') && rel.startsWith(prefix);
-  }).map(k=>k.slice(absDir.length));
-  if(matches.length===1){
-    parts[parts.length-1] = (last.includes('/')?last.substring(0,last.lastIndexOf('/')+1):'')+matches[0]+(VFS[absDir+matches[0]]?.type==='dir'?'/':'');
-    inp.value = parts.join(' ');
-  } else if(matches.length>1){
-    appendLine(tabId, matches.join('  '),'muted');
-  }
-}
-
-// === PATH UTILS ===
-function resolvePath(cwd, path){
-  if(!path) return cwd;
-  let parts;
-  if(path.startsWith('/')) parts = path.split('/');
-  else parts = [...cwd.split('/'), ...path.split('/')];
-  const stack = [];
-  for(const p of parts){
-    if(!p||p==='.') continue;
-    if(p==='..') stack.pop();
-    else stack.push(p);
-  }
-  return '/'+stack.join('/');
-}
-
-function lsDir(path){
-  const entries = [];
-  const prefix = path==='/'?'/':path+'/';
-  for(const k of Object.keys(VFS)){
-    if(k===path) continue;
-    if(k.startsWith(prefix)){
-      const rel = k.slice(prefix.length);
-      if(!rel.includes('/')) entries.push({name:rel,...VFS[k]});
-    }
-  }
-  return entries;
-}
-
-function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// === COMMAND EXECUTOR ===
-async function executeCommand(winId, tabId, rawCmd){
-  const win = windows[winId];
-  if(!win) return;
-  const tab = win.tabs[tabId];
-  if(!tab) return;
-
-  // Handle pipes (basic)
-  const cmds = rawCmd.split('|').map(c=>c.trim());
-  let inputData = null;
-  for(const cmdStr of cmds){
-    inputData = await runSingleCommand(winId, tabId, cmdStr, inputData, cmds.length > 1);
-  }
-}
-
-async function runSingleCommand(winId, tabId, rawCmd, pipeInput, isPiped){
-  const win = windows[winId];
-  const tab = win?.tabs[tabId];
-  if(!tab) return null;
-
-  // Variable substitution
-  let cmd = rawCmd.replace(/\$(\w+)/g,(m,v)=>tab.env[v]||m);
-
-  // Redirect
-  let outFile = null;
-  let appendFile = null;
-  if(cmd.includes('>>')){
-    [cmd, appendFile] = cmd.split('>>').map(s=>s.trim());
-  } else if(cmd.includes('>')){
-    [cmd, outFile] = cmd.split('>').map(s=>s.trim());
-  }
-
-  const parts = cmd.trim().split(/\s+/);
-  const command = parts[0];
-  const args = parts.slice(1);
-
-  let output = null;
-
-  // BUILT-IN COMMANDS
-  switch(command){
-    case '': return null;
-    case 'clear': case 'reset': clearOutput(tabId); return null;
-    case 'exit': case 'logout':
-      appendLine(tabId,'logout','warn');
-      setTimeout(()=>closeTab(winId, tabId, {stopPropagation:()=>{}}), 300);
-      return null;
-    case 'echo':
-      output = args.map(a=>a.replace(/"/g,'').replace(/'/g,'')).join(' ');
-      if(!isPiped || outFile) appendLine(tabId, output||'');
-      return output;
-    case 'pwd':
-      output = tab.cwd;
-      if(!isPiped) appendLine(tabId, tab.cwd);
-      return output;
-    case 'whoami': case 'id':
-      output = command==='id'?'uid=0(root) gid=0(root) groups=0(root)':'root';
-      appendLine(tabId, output);
-      return output;
-    case 'hostname':
-      output = 'kaliweb';
-      appendLine(tabId, output);
-      return output;
-    case 'uname':
-      if(args.includes('-a')) output='Linux kaliweb 6.1.0-kaliweb #1 SMP KaliWeb 6.1.0-1 x86_64 GNU/Linux';
-      else if(args.includes('-r')) output='6.1.0-kaliweb';
-      else if(args.includes('-m')) output='x86_64';
-      else output='Linux';
-      appendLine(tabId, output);
-      return output;
-    case 'date':
-      output = new Date().toString();
-      appendLine(tabId, output);
-      return output;
-    case 'uptime':
-      output = new Date().toTimeString().split(' ')[0]+' up 2:37,  1 user,  load average: 0.08, 0.12, 0.09';
-      appendLine(tabId, output);
-      return output;
-    case 'history':
-      commandHistory.slice(0,50).forEach((c,i)=>appendLine(tabId,`  ${String(i+1).padStart(3)} ${c}`,'muted'));
-      return null;
-    case 'env': case 'printenv':
-      Object.entries(tab.env).forEach(([k,v])=>appendLine(tabId,`${k}=${v}`,'muted'));
-      return null;
-    case 'export':
-      args.forEach(a=>{ const [k,v]=a.split('='); if(k&&v!==undefined) tab.env[k]=v.replace(/^["']|["']$/g,''); });
-      return null;
-    case 'unset':
-      args.forEach(a=>delete tab.env[a]);
-      return null;
-    case 'alias':
-      appendHTML(tabId,`<span class="ansi-gray">alias ll='ls -la'\nalias la='ls -A'\nalias nmap='nmap'\nalias grep='grep --color=auto'</span>`);
-      return null;
-    case 'cd':{
-      const target = args[0]||tab.env.HOME||'/root';
-      const resolved = target==='~'?'/root':target==='-'?tab.env.OLDPWD||'/root':resolvePath(tab.cwd, target);
-      if(VFS[resolved]?.type==='dir'||!VFS[resolved]&&resolved.startsWith('/proc')){
-        tab.env.OLDPWD = tab.cwd;
-        tab.cwd = resolved;
-        tab.env.PWD = resolved;
-        const prom = document.getElementById('prompt-'+tabId);
-        if(prom) prom.innerHTML = buildPromptHTML(tab.cwd);
-      } else if(VFS[resolved]){
-        appendLine(tabId,`bash: cd: ${args[0]}: Not a directory`,'err');
-      } else {
-        appendLine(tabId,`bash: cd: ${args[0]}: No such file or directory`,'err');
+  <script>
+    // ── Discord avatar ──
+    ;(async () => {
+      const apis = [
+        { url: id => `https://japi.rest/discord/v1/user/${id}`, parse: j => j.data?.avatar },
+        { url: id => `https://discordlookup.mesalytic.moe/v1/user/${id}`, parse: j => j.avatar?.id },
+      ]
+      const img = document.querySelector('.pfp')
+      for (const api of apis) {
+        try {
+          const res = await fetch(api.url('1507165921989492919')); if (!res.ok) continue
+          const json = await res.json(); const av = api.parse(json)
+          if (av) { img.src = `https://cdn.discordapp.com/avatars/1507165921989492919/${av}.${av.startsWith('a_')?'gif':'png'}?size=256`; break }
+        } catch(e) {}
       }
-      return null;
+    })()
+
+    // ── Sketchy utils ──
+    function sketchLine(c, x1, y1, x2, y2, j) {
+      const segs = 4+Math.floor(Math.random()*3); c.beginPath()
+      c.moveTo(x1+(Math.random()-.5)*j, y1+(Math.random()-.5)*j)
+      for (let i=1;i<=segs;i++){const t=i/segs;c.lineTo(x1+(x2-x1)*t+(Math.random()-.5)*j,y1+(y2-y1)*t+(Math.random()-.5)*j)}
+      c.stroke()
     }
-    case 'ls':{
-      const flags = args.filter(a=>a.startsWith('-')).join('');
-      const pathArg = args.find(a=>!a.startsWith('-'))||tab.cwd;
-      const target = resolvePath(tab.cwd, pathArg);
-      if(!VFS[target]){ appendLine(tabId,`ls: cannot access '${pathArg}': No such file or directory`,'err'); return null; }
-      const entries = lsDir(target);
-      if(!entries.length && VFS[target]?.type!=='dir'){ appendLine(tabId, pathArg); return pathArg; }
-      if(flags.includes('l')){
-        appendHTML(tabId,`<span class="ansi-gray">total ${entries.length*4}</span>`);
-        entries.forEach(e=>{
-          const isDir = e.type==='dir';
-          const perm = isDir?'drwxr-xr-x':'-rw-r--r--';
-          const size = e.size||4096;
-          const date='May 24 00:00';
-          const nameHtml = isDir?`<span class="ansi-blue ansi-bold">${e.name}</span>`:e.name.match(/\.(sh|py|pl|rb|exe|elf)$/)?`<span class="ansi-green ansi-bold">${e.name}</span>`:`<span class="ansi-white">${e.name}</span>`;
-          appendHTML(tabId,`<span class="ansi-gray">${perm} 1 root root ${String(size).padStart(8)} ${date} </span>${nameHtml}`);
-        });
-      } else if(flags.includes('a')||flags.includes('A')){
-        if(!flags.includes('A')){ appendHTML(tabId,`<span class="ansi-blue ansi-bold">. ..</span> `); }
-        const row = entries.map(e=>e.type==='dir'?`<span class="ansi-blue ansi-bold">${e.name}</span>`:e.name).join('  ');
-        appendHTML(tabId, row||'');
-      } else {
-        const row = entries.filter(e=>!e.name.startsWith('.')).map(e=>e.type==='dir'?`<span class="ansi-blue ansi-bold">${e.name}</span>`:e.name.match(/\.(sh|py|pl|rb|exe)$/)?`<span class="ansi-green ansi-bold">${e.name}</span>`:`<span class="ansi-white">${e.name}</span>`).join('  ');
-        appendHTML(tabId, row||'');
+    function sketchArc(c, cx, cy, r, start, end, j) {
+      const steps=16+Math.floor(Math.random()*8); c.beginPath()
+      for(let i=0;i<=steps;i++){const t=i/steps,a=start+(end-start)*t;const x=cx+Math.cos(a)*(r+(Math.random()-.5)*j),y=cy+Math.sin(a)*(r+(Math.random()-.5)*j);i===0?c.moveTo(x,y):c.lineTo(x,y)}
+      c.stroke()
+    }
+    function sketchPath(c, d, sc, ox, oy, j) {
+      const cmds=d.match(/[MLCZ][^MLCZ]*/gi); if(!cmds)return; c.beginPath()
+      for(const cmd of cmds){const type=cmd[0],nums=cmd.slice(1).trim().split(/[\s,]+/).map(Number)
+        if(type==='M')c.moveTo(nums[0]*sc+ox+(Math.random()-.5)*j,nums[1]*sc+oy+(Math.random()-.5)*j)
+        else if(type==='L')c.lineTo(nums[0]*sc+ox+(Math.random()-.5)*j,nums[1]*sc+oy+(Math.random()-.5)*j)
+        else if(type==='C'){for(let i=0;i<nums.length;i+=6)c.bezierCurveTo(nums[i]*sc+ox+(Math.random()-.5)*j,nums[i+1]*sc+oy+(Math.random()-.5)*j,nums[i+2]*sc+ox+(Math.random()-.5)*j,nums[i+3]*sc+oy+(Math.random()-.5)*j,nums[i+4]*sc+ox+(Math.random()-.5)*j,nums[i+5]*sc+oy+(Math.random()-.5)*j)}
+        else if(type==='Z'||type==='z')c.closePath()}
+      c.stroke()
+    }
+
+    // ── TikTok icon ──
+    function drawTiktok(c, s, j) {
+      j=j||0.6; c.clearRect(0,0,s,s); c.strokeStyle='#fff'; c.lineWidth=1.3; c.lineCap='round'; c.lineJoin='round'
+      sketchPath(c,'M19.59 6.69 C18.39 6.69 17.28 6.19 16.47 5.35 C15.67 4.5 15.2 3.37 15.2 2.12 L12.36 2.12 L12.36 15.26 C12.36 16.75 11.15 17.96 9.66 17.96 C8.17 17.96 6.96 16.75 6.96 15.26 C6.96 13.77 8.17 12.56 9.66 12.56 C9.98 12.56 10.29 12.61 10.57 12.7 L10.57 9.82 C10.27 9.78 9.97 9.76 9.66 9.76 C6.63 9.76 4.17 12.22 4.17 15.25 C4.17 18.28 6.63 20.74 9.66 20.74 C12.69 20.74 15.15 18.28 15.15 15.25 L15.15 8.53 C16.37 9.4 17.89 9.9 19.53 9.9 L19.53 7.06 C19.55 6.85 19.57 6.77 19.59 6.69 Z',s/24,0,0,j)
+    }
+
+    document.querySelectorAll('.social-icon').forEach(el => {
+      const cvs=el.querySelector('canvas'), c=cvs.getContext('2d')
+      drawTiktok(c, cvs.width, 0.6)
+      let hi=null
+      el.addEventListener('mouseenter',()=>{hi=setInterval(()=>drawTiktok(c,cvs.width,1.8),100)})
+      el.addEventListener('mouseleave',()=>{clearInterval(hi);drawTiktok(c,cvs.width,0.6)})
+      const href=el.getAttribute('href')
+      if(href&&href!=='#') el.addEventListener('click',e=>{e.preventDefault();document.body.style.transition='transform 0.7s cubic-bezier(0.7,0,0.84,0),opacity 0.7s ease';document.body.style.transform='translateY(30%)';document.body.style.opacity='0';setTimeout(()=>{window.top.location.href=href},700)})
+    })
+
+    // ── Playlist ──
+    const playlist=[{title:'#SILKROAD',src:'/mev/tracks/%23SILKROAD.mp3'}]
+    let currentTrack=0, playing=false
+    const playerAudio=document.getElementById('player-audio')
+    playerAudio.src=playlist[0].src; playerAudio.volume=0.45
+
+    function loadTrack(i){currentTrack=((i%playlist.length)+playlist.length)%playlist.length;playerAudio.src=playlist[currentTrack].src;startTitleAnim()}
+    function togglePlay(){if(playing){playerAudio.pause();playing=false}else{playerAudio.play().catch(()=>{});playing=true};drawPlayPause()}
+    function nextTrack(){loadTrack(currentTrack+1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
+    function prevTrack(){loadTrack(currentTrack-1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
+    playerAudio.addEventListener('ended',nextTrack)
+
+    // ── Title scroll ──
+    const tc=document.getElementById('player-title-canvas').getContext('2d')
+    const TW=250,TH=22,TF='14px "JetBrains Mono",monospace'
+    let ttw=0,ttext='',toff=0,tphase='pause-start',tlt=0,tpe=0,trf=0,tre=0
+    function cubicBezier(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+    function startTitleAnim(){ttext=playlist[currentTrack].title;tc.font=TF;ttw=Math.ceil(tc.measureText(ttext).width);toff=0;tphase='pause-start';tpe=0;tlt=0}
+    function drawTitle(now){
+      if(!tlt)tlt=now; const dt=Math.min(now-tlt,50);tlt=now
+      if(ttw>TW){const ms=ttw-TW;if(tphase==='pause-start'){tpe+=dt;if(tpe>=1500)tphase='scroll'}else if(tphase==='scroll'){toff+=35*(dt/1000);if(toff>=ms){toff=ms;tphase='pause-end';tpe=0}}else if(tphase==='pause-end'){tpe+=dt;if(tpe>=1500){tphase='reset';trf=toff;tre=0}}else if(tphase==='reset'){tre+=dt;const t=Math.min(1,tre/800);toff=trf*(1-cubicBezier(t));if(t>=1){toff=0;tphase='pause-start';tpe=0}}}
+      tc.clearRect(0,0,TW,TH);tc.save();tc.beginPath();tc.rect(0,0,TW,TH);tc.clip()
+      tc.font=TF;tc.textBaseline='middle';tc.fillStyle='rgba(255,255,255,0.35)'
+      tc.fillText(ttext,ttw<=TW?TW-ttw-1:-toff,TH/2);tc.restore();requestAnimationFrame(drawTitle)
+    }
+    requestAnimationFrame(drawTitle)
+
+    // ── Player buttons ──
+    function drawPlayPause(j){const cvs=document.getElementById('player-toggle').querySelector('canvas'),c=cvs.getContext('2d'),s=44;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.5;c.lineCap='round';if(playing){sketchLine(c,s*.33,s*.22,s*.33,s*.78,j);sketchLine(c,s*.67,s*.22,s*.67,s*.78,j)}else{sketchLine(c,s*.28,s*.18,s*.28,s*.82,j);sketchLine(c,s*.28,s*.18,s*.78,s*.5,j);sketchLine(c,s*.78,s*.5,s*.28,s*.82,j)}}
+    function drawPrev(j){const cvs=document.getElementById('player-prev').querySelector('canvas'),c=cvs.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.55,s*.22,s*.28,s*.5,j);sketchLine(c,s*.28,s*.5,s*.55,s*.78,j);sketchLine(c,s*.72,s*.22,s*.45,s*.5,j);sketchLine(c,s*.45,s*.5,s*.72,s*.78,j)}
+    function drawNext(j){const cvs=document.getElementById('player-next').querySelector('canvas'),c=cvs.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.28,s*.22,s*.55,s*.5,j);sketchLine(c,s*.55,s*.5,s*.28,s*.78,j);sketchLine(c,s*.45,s*.22,s*.72,s*.5,j);sketchLine(c,s*.72,s*.5,s*.45,s*.78,j)}
+    drawPlayPause();drawPrev();drawNext()
+
+    document.getElementById('player-toggle').addEventListener('click',togglePlay)
+    document.getElementById('player-prev').addEventListener('click',prevTrack)
+    document.getElementById('player-next').addEventListener('click',nextTrack)
+    ;[{id:'player-prev',fn:drawPrev},{id:'player-toggle',fn:drawPlayPause},{id:'player-next',fn:drawNext}].forEach(({id,fn})=>{
+      const el=document.getElementById(id); let iv=null
+      el.addEventListener('mouseenter',()=>{iv=setInterval(()=>fn(2.2),100)})
+      el.addEventListener('mouseleave',()=>{clearInterval(iv);fn()})
+    })
+
+    // ── Enter overlay ──
+    const overlay=document.getElementById('enter-overlay')
+    const bgVideo=document.getElementById('bg-video')
+    const eCvs=document.getElementById('enter-text'), eCtx=eCvs.getContext('2d')
+
+    function drawEnterText(){
+      eCtx.clearRect(0,0,280,20); eCtx.font='12px "JetBrains Mono",monospace'; eCtx.textAlign='center'; eCtx.textBaseline='middle'
+      for(let p=0;p<3;p++){eCtx.fillStyle='rgba(255,255,255,'+(0.15+Math.random()*0.06)+')';eCtx.fillText('click to see motion',140+(Math.random()-.5)*1.2,10+(Math.random()-.5)*0.8)}
+    }
+    drawEnterText(); const eJitter=setInterval(drawEnterText,120)
+
+    overlay.addEventListener('click', () => {
+      clearInterval(eJitter)
+      overlay.style.opacity='0'
+      overlay.style.pointerEvents='none'
+      setTimeout(()=>overlay.remove(), 1400)
+
+      // play video WITH sound
+      bgVideo.muted = false
+      bgVideo.volume = 0.75
+      const vp = bgVideo.play()
+      if (vp !== undefined) {
+        vp.catch(() => {
+          // autoplay blocked, fall back to muted
+          bgVideo.muted = true
+          bgVideo.play().catch(()=>{})
+        })
       }
-      return null;
+      setTimeout(()=>{ bgVideo.classList.add('visible') }, 80)
+
+      // fade in audio track too
+      playerAudio.volume = 0
+      playerAudio.play().then(()=>{
+        playing=true; drawPlayPause(); startTitleAnim()
+        const start=performance.now()
+        ;(function tick(){const p=Math.min(1,(performance.now()-start)/3000);playerAudio.volume=p*p*0.45;if(p<1)requestAnimationFrame(tick)})()
+      }).catch(()=>{})
+    })
+
+    // ── Snow ──
+    const sc=document.getElementById('effect-canvas'), sctx=sc.getContext('2d')
+    function rsz(){sc.width=window.innerWidth;sc.height=window.innerHeight}
+    rsz(); window.addEventListener('resize',rsz)
+    const flakes=[]
+    for(let i=0;i<120;i++)flakes.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:0.5+Math.random()*2.5,speed:0.3+Math.random()*1,wind:(Math.random()-.5)*0.3,sway:Math.random()*Math.PI*2,swaySpeed:0.005+Math.random()*0.01,swayAmp:0.3+Math.random()*0.6,alpha:0.1+Math.random()*0.25})
+    function drawSnow(){
+      const W=sc.width,H=sc.height; sctx.clearRect(0,0,W,H)
+      for(const f of flakes){f.y+=f.speed;f.sway+=f.swaySpeed;f.x+=f.wind+Math.sin(f.sway)*f.swayAmp*0.3;if(f.y>H+5){f.y=-5;f.x=Math.random()*W}if(f.x>W+5)f.x=-5;if(f.x<-5)f.x=W+5;sctx.globalAlpha=f.alpha;sctx.fillStyle='#fff';sctx.font=`${f.r*5}px monospace`;sctx.textAlign='center';sctx.textBaseline='middle';sctx.fillText('*',f.x,f.y)}
+      requestAnimationFrame(drawSnow)
     }
-    case 'cat':{
-      if(!args.length){ appendLine(tabId,'cat: missing operand','err'); return null; }
-      if(pipeInput){ appendLine(tabId, pipeInput); return pipeInput; }
-      let all = '';
-      for(const a of args.filter(a=>!a.startsWith('-'))){
-        const p = resolvePath(tab.cwd, a);
-        if(VFS[p]?.type==='file'){ appendLine(tabId, VFS[p].content||''); all+=VFS[p].content||''; }
-        else if(VFS[p]?.type==='dir') appendLine(tabId,`cat: ${a}: Is a directory`,'err');
-        else appendLine(tabId,`cat: ${a}: No such file or directory`,'err');
+    sc.style.opacity='0'; sc.style.transition='opacity 2s ease'
+    setTimeout(()=>{sc.style.opacity='1';drawSnow()},600)
+
+    // ── Cross cursor ──
+    ;(function(){
+      const SZ=32,FR=4,PX=2,cv=document.createElement('canvas'); cv.width=SZ; cv.height=SZ; const cx=cv.getContext('2d')
+      const cr=['...............','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......',`....#######....`,'.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......']
+      function df(f){cx.clearRect(0,0,SZ,SZ);const p=0.7+0.2*Math.sin(f*Math.PI/2);for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(0,0,0,0.7)';cx.fillRect(x*PX-1,y*PX,PX+2,PX+2);cx.fillRect(x*PX,y*PX-1,PX+2,PX+2)};for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(255,255,255,'+p+')';cx.fillRect(x*PX+1,y*PX+1,PX,PX)};return cv.toDataURL('image/png')}
+      const fs=[];for(let i=0;i<FR;i++)fs.push(df(i));let cur=0
+      function ap(){document.body.style.cursor='url('+fs[cur]+') 15 21, crosshair';cur=(cur+1)%FR}
+      ap(); setInterval(ap,250)
+    })()
+
+    // ── Sparkle trail ──
+    ;(function(){
+      const N=50; let smx=400,smy=300,osmx=400,osmy=300
+      const stars=[],tiny=[],sv=[],tv=[],ssx=[],ssy=[],ttx=[],tty=[]
+      function mkDiv(w,h){const d=document.createElement('div');d.style.cssText=`position:absolute;width:${w}px;height:${h}px;overflow:hidden;pointer-events:none`;return d}
+      for(let i=0;i<N;i++){
+        const t=mkDiv(3,3);t.style.visibility='hidden';t.style.zIndex='9999';document.body.appendChild(t);tiny.push(t);sv[i]=0;tv[i]=0
+        const s=mkDiv(5,5);s.style.cssText+=';background:transparent;visibility:hidden;z-index:9999'
+        const h=mkDiv(5,1),v=mkDiv(1,5);h.style.cssText+='top:2px;left:0';v.style.cssText+='top:0;left:2px'
+        s.appendChild(h);s.appendChild(v);document.body.appendChild(s);stars.push(s)
       }
-      return all;
-    }
-    case 'head':{
-      const n = args.includes('-n')?parseInt(args[args.indexOf('-n')+1])||10:10;
-      const src = pipeInput || (() => { const p=resolvePath(tab.cwd, args.find(a=>!a.startsWith('-'))||''); return VFS[p]?.content||''; })();
-      const lines = src.split('\n').slice(0,n).join('\n');
-      appendLine(tabId, lines);
-      return lines;
-    }
-    case 'tail':{
-      const n = args.includes('-n')?parseInt(args[args.indexOf('-n')+1])||10:10;
-      const src = pipeInput || (() => { const p=resolvePath(tab.cwd, args.find(a=>!a.startsWith('-'))||''); return VFS[p]?.content||''; })();
-      const lines = src.split('\n').slice(-n).join('\n');
-      appendLine(tabId, lines);
-      return lines;
-    }
-    case 'wc':{
-      const src = pipeInput || (() => { const p=resolvePath(tab.cwd, args.find(a=>!a.startsWith('-'))||''); return VFS[p]?.content||''; })();
-      const lines=src.split('\n').length, words=src.split(/\s+/).filter(Boolean).length, chars=src.length;
-      if(args.includes('-l')) appendLine(tabId, String(lines));
-      else if(args.includes('-w')) appendLine(tabId, String(words));
-      else if(args.includes('-c')) appendLine(tabId, String(chars));
-      else appendLine(tabId, `${lines} ${words} ${chars}`);
-      return src;
-    }
-    case 'grep':{
-      const flags2 = args.filter(a=>a.startsWith('-')).join('');
-      const nonFlags = args.filter(a=>!a.startsWith('-'));
-      const pattern = nonFlags[0]||'';
-      const src = pipeInput || (()=>{ const p=resolvePath(tab.cwd,nonFlags[1]||''); return VFS[p]?.content||''; })();
-      const re = new RegExp(pattern, flags2.includes('i')?'i':'');
-      const matched = src.split('\n').filter(l=>re.test(l));
-      if(flags2.includes('c')){ appendLine(tabId,String(matched.length)); return String(matched.length); }
-      if(!matched.length && !flags2.includes('q')) appendLine(tabId,'','muted');
-      matched.forEach(l=>{
-        const hi = l.replace(re, m=>`<span style="color:#000;background:var(--red)">${m}</span>`);
-        appendHTML(tabId, hi);
-      });
-      return matched.join('\n');
-    }
-    case 'find':{
-      const startPath = args[0]?resolvePath(tab.cwd,args[0]):tab.cwd;
-      const nameIdx = args.indexOf('-name');
-      const pattern = nameIdx>=0?args[nameIdx+1]:'*';
-      const regex = new RegExp('^'+pattern.replace(/\./g,'\\.').replace(/\*/g,'.*')+'$');
-      const results = Object.keys(VFS).filter(k=>k.startsWith(startPath)&&regex.test(k.split('/').pop()));
-      if(!results.length) appendLine(tabId,'(no results)','muted');
-      else results.forEach(r=>appendLine(tabId,r,'muted'));
-      return results.join('\n');
-    }
-    case 'mkdir':{
-      const p = args.find(a=>!a.startsWith('-'));
-      if(!p){ appendLine(tabId,'mkdir: missing operand','err'); return null; }
-      const resolved = resolvePath(tab.cwd, p);
-      if(VFS[resolved]) appendLine(tabId,`mkdir: cannot create directory '${p}': File exists`,'err');
-      else { VFS[resolved]={type:'dir'}; appendLine(tabId,'','muted'); }
-      return null;
-    }
-    case 'rm':{
-      const toDelete = args.filter(a=>!a.startsWith('-'));
-      const recursive = args.some(a=>a.includes('r'));
-      toDelete.forEach(a=>{
-        const p = resolvePath(tab.cwd, a);
-        if(!VFS[p]) appendLine(tabId,`rm: cannot remove '${a}': No such file or directory`,'err');
-        else if(VFS[p].type==='dir'&&!recursive) appendLine(tabId,`rm: cannot remove '${a}': Is a directory`,'err');
-        else {
-          if(recursive){ Object.keys(VFS).filter(k=>k.startsWith(p)).forEach(k=>delete VFS[k]); }
-          else delete VFS[p];
-        }
-      });
-      return null;
-    }
-    case 'cp':{
-      if(args.length<2){ appendLine(tabId,'cp: missing file operand','err'); return null; }
-      const src = resolvePath(tab.cwd, args[args.length-2]);
-      const dst = resolvePath(tab.cwd, args[args.length-1]);
-      if(!VFS[src]) appendLine(tabId,`cp: cannot stat '${args[args.length-2]}': No such file or directory`,'err');
-      else VFS[dst]={...VFS[src]};
-      return null;
-    }
-    case 'mv':{
-      if(args.length<2){ appendLine(tabId,'mv: missing file operand','err'); return null; }
-      const src = resolvePath(tab.cwd, args[args.length-2]);
-      const dst = resolvePath(tab.cwd, args[args.length-1]);
-      if(!VFS[src]) appendLine(tabId,`mv: cannot stat '${args[args.length-2]}': No such file or directory`,'err');
-      else { VFS[dst]={...VFS[src]}; delete VFS[src]; }
-      return null;
-    }
-    case 'touch':{
-      args.filter(a=>!a.startsWith('-')).forEach(a=>{
-        const p=resolvePath(tab.cwd,a);
-        if(!VFS[p]) VFS[p]={type:'file',content:'',size:0};
-      });
-      return null;
-    }
-    case 'nano': case 'vim': case 'vi': case 'nvim':{
-      const f = args.find(a=>!a.startsWith('-'));
-      if(!f){ appendLine(tabId,`${command}: no file specified`,'warn'); return null; }
-      const p = resolvePath(tab.cwd, f);
-      openEditor(winId, tabId, p, command);
-      return null;
-    }
-    case 'chmod': case 'chown':
-      appendLine(tabId,'','muted');
-      return null;
-    case 'which':{
-      const tool = args[0];
-      const paths = {bash:'/bin/bash',sh:'/bin/sh',python3:'/usr/bin/python3',python:'/usr/bin/python3',nmap:'/usr/bin/nmap',
-        sqlmap:'/usr/bin/sqlmap',metasploit:'/opt/metasploit/msfconsole',curl:'/usr/bin/curl',wget:'/usr/bin/wget',
-        git:'/usr/bin/git',nc:'/usr/bin/nc',netcat:'/usr/bin/netcat',john:'/usr/sbin/john',hydra:'/usr/bin/hydra',
-        burpsuite:'/usr/bin/burpsuite',nikto:'/usr/bin/nikto',dirb:'/usr/bin/dirb',aircrack:'/usr/bin/aircrack-ng',
-        hashcat:'/usr/bin/hashcat',msfconsole:'/opt/metasploit/msfconsole',ssh:'/usr/bin/ssh',
-        scp:'/usr/bin/scp',ping:'/bin/ping',traceroute:'/usr/bin/traceroute',arp:'/usr/sbin/arp',
-        ifconfig:'/sbin/ifconfig',ip:'/sbin/ip',ss:'/sbin/ss',netstat:'/bin/netstat',
-        ps:'/bin/ps',top:'/usr/bin/top',htop:'/usr/bin/htop',kill:'/bin/kill',
-        tar:'/bin/tar',zip:'/usr/bin/zip',unzip:'/usr/bin/unzip',
-        gcc:'/usr/bin/gcc',make:'/usr/bin/make',gdb:'/usr/bin/gdb',
-        openssl:'/usr/bin/openssl',gpg:'/usr/bin/gpg',base64:'/usr/bin/base64'
-      };
-      if(paths[tool]) appendLine(tabId, paths[tool]);
-      else appendLine(tabId,'');
-      return paths[tool]||null;
-    }
-    case 'type':{
-      const tool = args[0];
-      const builtins = ['cd','echo','pwd','export','unset','alias','history','exit','clear','source','.'];
-      if(builtins.includes(tool)) appendLine(tabId,`${tool} is a shell builtin`);
-      else { appendLine(tabId,`${tool} is /usr/bin/${tool}`); }
-      return null;
-    }
-    case 'man': case '--help':
-      await aiCommand(tabId, tab, rawCmd, pipeInput);
-      return null;
-    case 'ps':{
-      appendHTML(tabId,`<span class="ansi-green">  PID TTY          TIME CMD</span>`);
-      processList.forEach((p,i)=>appendLine(tabId,`${String(i+1).padStart(5)} pts/0    00:00:0${i} ${p}`,'muted'));
-      appendLine(tabId,`${String(processList.length+1).padStart(5)} pts/0    00:00:00 bash`,'muted');
-      return null;
-    }
-    case 'kill': case 'killall':{
-      const target = args.find(a=>!a.startsWith('-'));
-      appendLine(tabId,`[1] ${target||'process'}: terminated`,'warn');
-      return null;
-    }
-    case 'top': case 'htop':{
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">top - ${new Date().toTimeString().split(' ')[0]} up 2:37, 1 user, load avg: 0.08, 0.12, 0.09</span>`);
-      appendHTML(tabId,`<span class="ansi-green">Tasks:</span><span class="ansi-white">  42 total,   1 running,  41 sleeping,   0 stopped</span>`);
-      appendHTML(tabId,`<span class="ansi-green">%Cpu(s):</span><span class="ansi-white">  2.3 us,  0.8 sy,  0.0 ni, 96.4 id,  0.3 wa</span>`);
-      appendHTML(tabId,`<span class="ansi-green">MiB Mem:</span><span class="ansi-white">   8192.0 total,   4096.0 free,   2048.0 used,   2048.0 buff</span>`);
-      appendHTML(tabId,'');
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">  PID USER      PR  NI  VIRT  RES   S %CPU %MEM COMMAND</span>`);
-      processList.forEach((p,i)=>appendLine(tabId,`${String(i+1).padStart(5)} root      20   0 ${Math.floor(Math.random()*200+50)}m  ${Math.floor(Math.random()*50+10)}m  S  ${(Math.random()*2).toFixed(1)}  ${(Math.random()*5).toFixed(1)} ${p}`,'muted'));
-      appendHTML(tabId,`<span class="ansi-gray">(press q to quit - simulated)</span>`);
-      return null;
-    }
-    case 'free':{
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">              total        used        free      shared  buff/cache   available</span>`);
-      appendLine(tabId,'Mem:        8388608     2097152     4194304      262144     2097152     6291456','muted');
-      appendLine(tabId,'Swap:       2097152           0     2097152','muted');
-      return null;
-    }
-    case 'df':{
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">Filesystem     1K-blocks    Used Available Use% Mounted on</span>`);
-      appendLine(tabId,'overlay        51475068 8192512  40632492  17% /','muted');
-      appendLine(tabId,'tmpfs             65536       0     65536   0% /dev','muted');
-      appendLine(tabId,'/dev/sda1      51475068 8192512  40632492  17% /etc/hosts','muted');
-      appendLine(tabId,'tmpfs           4194304       0   4194304   0% /sys/fs/cgroup','muted');
-      return null;
-    }
-    case 'du':{
-      const p = args.find(a=>!a.startsWith('-'))||tab.cwd;
-      appendLine(tabId,`4\t${p}`,'muted');
-      return null;
-    }
-    case 'ifconfig': case 'ip':{
-      if(command==='ip' && args[0]==='route'){
-        appendLine(tabId,'default via 10.0.2.2 dev eth0','muted');
-        appendLine(tabId,'10.0.2.0/24 dev eth0 proto kernel scope link src 10.0.2.15','muted');
-        return null;
+      document.addEventListener('mousemove',e=>{smx=e.pageX;smy=e.pageY})
+      function sparkle(){
+        if(Math.abs(smx-osmx)>1||Math.abs(smy-osmy)>1){osmx=smx;osmy=smy;for(let i=0;i<N;i++){if(!sv[i]){stars[i].style.left=(ssx[i]=smx)+'px';stars[i].style.top=(ssy[i]=smy)+'px';stars[i].style.clip='rect(0px,5px,5px,0px)';stars[i].childNodes[0].style.backgroundColor='white';stars[i].childNodes[1].style.backgroundColor='white';stars[i].style.visibility='visible';sv[i]=50;break}}}
+        for(let i=0;i<N;i++){if(sv[i])uStar(i);if(tv[i])uTiny(i)}
+        setTimeout(sparkle,40)
       }
-      networkSim.interfaces.forEach(iface=>{
-        appendHTML(tabId,`<span class="ansi-green ansi-bold">${iface.name}</span><span class="ansi-white">: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500</span>`);
-        appendLine(tabId,`        inet ${iface.ip}  netmask ${iface.mask}  broadcast ${iface.ip.replace(/\d+$/,'255')}`,'muted');
-        appendLine(tabId,`        ether ${iface.mac}  txqueuelen 1000  (Ethernet)`,'muted');
-        appendLine(tabId,`        RX packets 4521  bytes 2938744 (2.8 MiB)`,'muted');
-        appendLine(tabId,`        TX packets 2341  bytes 428291 (418.2 KiB)`,'muted');
-        appendLine(tabId,'');
-      });
-      return null;
-    }
-    case 'ping':{
-      const host = args.find(a=>!a.startsWith('-'))||'localhost';
-      const count = args.includes('-c')?parseInt(args[args.indexOf('-c')+1])||4:4;
-      appendHTML(tabId,`<span class="ansi-yellow">PING ${host} (${host==='localhost'?'127.0.0.1':'8.8.8.8'}): 56 data bytes</span>`);
-      for(let i=0;i<count;i++) appendLine(tabId,`64 bytes from ${host==='localhost'?'127.0.0.1':'8.8.8.8'}: icmp_seq=${i} ttl=64 time=${(Math.random()*5+0.5).toFixed(3)} ms`,'muted');
-      appendLine(tabId,'');
-      appendHTML(tabId,`<span class="ansi-green">--- ${host} ping statistics ---</span>`);
-      appendLine(tabId,`${count} packets transmitted, ${count} received, 0% packet loss, time ${count*1000-1}ms`,'muted');
-      return null;
-    }
-    case 'netstat': case 'ss':{
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">Proto Recv-Q Send-Q Local Address           Foreign Address         State</span>`);
-      appendLine(tabId,'tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN','muted');
-      appendLine(tabId,'tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN','muted');
-      appendLine(tabId,'tcp        0      0 127.0.0.1:3306          0.0.0.0:*               LISTEN','muted');
-      appendLine(tabId,'tcp6       0      0 :::22                   :::*                    LISTEN','muted');
-      return null;
-    }
-    case 'arp':{
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">Address                  HWtype  HWaddress           Flags Iface</span>`);
-      appendLine(tabId,'10.0.2.2                 ether   52:55:0a:00:02:02   C     eth0','muted');
-      appendLine(tabId,'192.168.1.1              ether   c8:3a:35:11:ab:cd   C     wlan0','muted');
-      return null;
-    }
-    case 'route':{
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">Kernel IP routing table</span>`);
-      appendHTML(tabId,`<span class="ansi-green">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span>`);
-      appendLine(tabId,'default         10.0.2.2        0.0.0.0         UG    100    0        0 eth0','muted');
-      appendLine(tabId,'10.0.2.0        0.0.0.0         255.255.255.0   U     100    0        0 eth0','muted');
-      return null;
-    }
-    case 'traceroute': case 'tracepath':{
-      const host = args.find(a=>!a.startsWith('-'))||'8.8.8.8';
-      appendHTML(tabId,`<span class="ansi-yellow">traceroute to ${host}, 30 hops max, 60 byte packets</span>`);
-      for(let i=1;i<=8;i++) appendLine(tabId,` ${i}  ${i===1?'10.0.2.2':'192.168.'+i+'.1'} (${i===1?'10.0.2.2':'192.168.'+i+'.1'})  ${(Math.random()*10+1).toFixed(3)} ms`,'muted');
-      appendLine(tabId,` 9  ${host} (${host})  ${(Math.random()*20+10).toFixed(3)} ms`,'success');
-      return null;
-    }
-    case 'ssh':{
-      const host = args.find(a=>!a.startsWith('-')&&!a.includes('@'))||args.find(a=>a.includes('@'));
-      appendLine(tabId,`ssh: connect to host ${host||'unknown'}: Connection refused`,'err');
-      appendLine(tabId,'(SSH connections are simulated in KaliWeb)','muted');
-      return null;
-    }
-    case 'scp': case 'sftp':
-      appendLine(tabId,'(File transfer simulated in KaliWeb)','muted');
-      return null;
-    case 'curl': case 'wget':{
-      const url = args.find(a=>!a.startsWith('-'));
-      if(!url){ appendLine(tabId,`${command}: no URL specified`,'err'); return null; }
-      appendLine(tabId,`${command}: simulating request to ${url}...`,'warn');
-      const showTyping = showLoadingIndicator(tabId);
-      await delay(800);
-      showTyping();
-      if(command==='wget') appendLine(tabId,`--${new Date().toISOString()}--  ${url}\nResolving ${url.split('/')[2]}... 93.184.216.34\nConnecting to ${url.split('/')[2]}|93.184.216.34|:443... connected.\nHTTP request sent, awaiting response... 200 OK\nLength: 1270 (1.2K) [text/html]\nSaving to: 'index.html'\n\nindex.html          100%[===================>]   1.24K  --.-KB/s    in 0s\n\n${new Date().toISOString()} (48.2 MB/s) - 'index.html' saved [1270/1270]`,'success');
-      else appendLine(tabId,`HTTP/1.1 200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: 1270\nDate: ${new Date().toUTCString()}\n\n<!DOCTYPE html><html><head><title>Example Domain</title></head><body><h1>Example Domain</h1></body></html>`,'muted');
-      return null;
-    }
-    case 'git':{
-      await handleGit(winId, tabId, tab, args);
-      return null;
-    }
-    case 'python3': case 'python': case 'python2':{
-      const script = args.find(a=>!a.startsWith('-'));
-      if(args[0]==='-c'){
-        await aiCommand(tabId, tab, rawCmd, pipeInput, 'python');
-      } else if(script){
-        const p = resolvePath(tab.cwd, script);
-        if(VFS[p]?.content){
-          await aiCommand(tabId, tab, `python3 script runner for: ${VFS[p].content}`, null, 'python');
-        } else { appendLine(tabId,`python3: can't open file '${script}': [Errno 2] No such file or directory`,'err'); }
-      } else {
-        appendHTML(tabId,`<span class="ansi-green">Python 3.11.2 (main, Mar 13 2023, 12:18:29) [GCC 12.2.0] on linux</span>`);
-        appendHTML(tabId,`<span class="ansi-gray">Type "help", "copyright", "credits" or "license" for more information.</span>`);
-        appendHTML(tabId,`<span class="ansi-cyan">>> </span><span class="ansi-gray">(interactive python - type exit() to quit)</span>`);
-      }
-      return null;
-    }
-    case 'node': case 'nodejs':{
-      const script = args.find(a=>!a.startsWith('-'));
-      if(script){
-        const p = resolvePath(tab.cwd, script);
-        if(VFS[p]?.content) await aiCommand(tabId, tab, `node.js runner: ${VFS[p].content}`, null, 'node');
-        else appendLine(tabId,`Error: Cannot find module '${script}'`,'err');
-      } else {
-        appendHTML(tabId,`<span class="ansi-green">Welcome to Node.js v20.10.0.</span>`);
-      }
-      return null;
-    }
-    case 'bash': case 'sh':{
-      const script = args.find(a=>!a.startsWith('-'));
-      if(script){
-        const p = resolvePath(tab.cwd, script);
-        if(VFS[p]?.content) await aiCommand(tabId, tab, `bash script: ${VFS[p].content}`, null, 'bash');
-        else appendLine(tabId,`bash: ${script}: No such file or directory`,'err');
-      } else { appendLine(tabId,'(subshell started)','muted'); }
-      return null;
-    }
-    case 'gcc': case 'g++': case 'cc':{
-      const src = args.find(a=>!a.startsWith('-'));
-      if(!src){ appendLine(tabId,'gcc: no input files','err'); return null; }
-      const p = resolvePath(tab.cwd, src);
-      if(!VFS[p]){ appendLine(tabId,`gcc: error: ${src}: No such file or directory`,'err'); return null; }
-      const out = (args[args.indexOf('-o')+1])||'a.out';
-      appendLine(tabId,'Compiling...','warn');
-      const hide = showLoadingIndicator(tabId);
-      await delay(600);
-      hide();
-      const outP = resolvePath(tab.cwd, out);
-      VFS[outP] = {type:'file',content:`ELF binary - compiled from ${src}`,size:8192,executable:true};
-      appendLine(tabId,`gcc: compiled ${src} -> ${out}`,'success');
-      return null;
-    }
-    case 'make':{
-      appendLine(tabId,'make: Entering directory \''+tab.cwd+'\'','muted');
-      appendLine(tabId,'gcc -Wall -O2 -o main main.c','muted');
-      appendLine(tabId,'make: \'all\' is up to date.','success');
-      return null;
-    }
-    case 'tar':{
-      const flags3 = args.filter(a=>a.startsWith('-')).join('');
-      const files = args.filter(a=>!a.startsWith('-'));
-      if(flags3.includes('c')){ appendLine(tabId,`Creating archive ${files[0]}...`,'muted'); }
-      else if(flags3.includes('x')){ appendLine(tabId,`Extracting ${files[0]}...`,'muted'); }
-      else if(flags3.includes('t')){ appendLine(tabId,`${files[0]||'archive.tar'}\n./file1\n./file2`,'muted'); }
-      return null;
-    }
-    case 'zip': case 'unzip':
-      appendLine(tabId,`${command}: simulated`,'muted');
-      return null;
-    case 'base64':{
-      const text = pipeInput || args.find(a=>!a.startsWith('-'))||'';
-      if(args.includes('-d')){ try{appendLine(tabId,atob(text));}catch{appendLine(tabId,'base64: invalid input','err');} }
-      else appendLine(tabId, btoa(text));
-      return null;
-    }
-    case 'md5sum': case 'sha256sum': case 'sha1sum':{
-      const src2 = pipeInput||args[0]||'';
-      const fake = Array.from({length:command==='md5sum'?32:64},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
-      appendLine(tabId,`${fake}  ${args[0]||'-'}`,'muted');
-      return `${fake}  ${args[0]||'-'}`;
-    }
-    case 'openssl':{
-      await aiCommand(tabId, tab, rawCmd, pipeInput, 'openssl');
-      return null;
-    }
-    case 'xxd': case 'hexdump':{
-      const src3 = pipeInput||'Hello, World!';
-      for(let i=0;i<Math.min(4,Math.ceil(src3.length/16));i++){
-        const chunk = src3.slice(i*16,(i+1)*16);
-        const hex = chunk.split('').map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join(' ');
-        const asc = chunk.replace(/[^\x20-\x7e]/g,'.');
-        appendLine(tabId,`${(i*16).toString(16).padStart(8,'0')}: ${hex.padEnd(48)} ${asc}`,'muted');
-      }
-      return null;
-    }
-    case 'strings':{
-      const src4 = pipeInput||args[0]||'';
-      appendLine(tabId,'ELF\n/bin/bash\nlibc.so.6\nGLIBC_2.34\n__gmon_start__\nmain\n','muted');
-      return null;
-    }
-    case 'file':{
-      const target2 = args.find(a=>!a.startsWith('-'))||'';
-      const p2 = resolvePath(tab.cwd, target2);
-      if(VFS[p2]) appendLine(tabId,`${target2}: ${VFS[p2].type==='dir'?'directory':'ASCII text'}`);
-      else appendLine(tabId,`${target2}: ERROR: No such file or directory`,'err');
-      return null;
-    }
-    case 'ln':
-      appendLine(tabId,'','muted');
-      return null;
-    case 'sort':{
-      const src5 = pipeInput||'';
-      const sorted = src5.split('\n').sort().join('\n');
-      appendLine(tabId, sorted);
-      return sorted;
-    }
-    case 'uniq':{
-      const src6 = pipeInput||'';
-      const ulines = [...new Set(src6.split('\n'))].join('\n');
-      appendLine(tabId, ulines);
-      return ulines;
-    }
-    case 'awk': case 'sed': case 'cut': case 'tr': case 'xargs':
-      await aiCommand(tabId, tab, `${rawCmd}${pipeInput?' with input: '+pipeInput.slice(0,200):''}`, pipeInput, 'text-processing');
-      return null;
-    case 'tee':{
-      const f3 = args.find(a=>!a.startsWith('-'));
-      if(pipeInput){
-        appendLine(tabId, pipeInput);
-        if(f3) VFS[resolvePath(tab.cwd,f3)]={type:'file',content:pipeInput,size:pipeInput.length};
-      }
-      return pipeInput;
-    }
-    case 'less': case 'more':{
-      const p3 = args.find(a=>!a.startsWith('-'));
-      const content = p3?VFS[resolvePath(tab.cwd,p3)]?.content||'':pipeInput||'';
-      content.split('\n').slice(0,30).forEach(l=>appendLine(tabId,l,'muted'));
-      appendHTML(tabId,`<span class="ansi-yellow">-- (END) -- (simulated pager)</span>`);
-      return null;
-    }
-    case 'source': case '.':{
-      const f4 = args[0];
-      if(f4){ const p4=resolvePath(tab.cwd,f4); if(VFS[p4]) appendLine(tabId,`Sourced ${f4}`,'success'); else appendLine(tabId,`bash: ${f4}: No such file or directory`,'err'); }
-      return null;
-    }
-    case 'env': case 'set':
-      Object.entries(tab.env).forEach(([k,v])=>appendLine(tabId,`${k}=${v}`,'muted'));
-      return null;
-    case 'lsof':
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">COMMAND  PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME</span>`);
-      appendLine(tabId,'bash     1   root  cwd   DIR    8,1     4096    2 /root','muted');
-      appendLine(tabId,'bash     1   root  txt   REG    8,1  1183448  512 /bin/bash','muted');
-      return null;
-    case 'strace': case 'ltrace':
-      appendHTML(tabId,`<span class="ansi-yellow">execve("/bin/ls", ["ls"], 0x7f...) = 0</span>`);
-      appendLine(tabId,'brk(NULL) = 0x564f2d3c9000','muted');
-      appendLine(tabId,'arch_prctl(0x3001, 0x7ffed2a5b470) = -1 EINVAL','muted');
-      return null;
-    case 'gdb':{
-      appendHTML(tabId,`<span class="ansi-green">GNU gdb (Debian 12.1-4) 12.1</span>`);
-      appendHTML(tabId,`<span class="ansi-gray">Copyright (C) 2022 Free Software Foundation, Inc.</span>`);
-      appendHTML(tabId,`<span class="ansi-gray">(gdb) </span><span class="ansi-gray">(simulated - type quit to exit)</span>`);
-      return null;
-    }
-    case 'msfconsole': case 'msf':{
-      openMsfConsole(winId, tabId);
-      return null;
-    }
-    case 'nmap':{
-      await handleNmap(tabId, args);
-      return null;
-    }
-    case 'sqlmap':{
-      await aiCommand(tabId, tab, 'sqlmap '+args.join(' ')+' (simulate output)', pipeInput, 'sqlmap');
-      return null;
-    }
-    case 'nikto':{
-      await aiCommand(tabId, tab, 'nikto web scanner '+args.join(' '), pipeInput, 'nikto');
-      return null;
-    }
-    case 'dirb': case 'gobuster': case 'ffuf': case 'wfuzz':{
-      await aiCommand(tabId, tab, `${command} directory/fuzzing scanner ${args.join(' ')}`, pipeInput, 'web-scanner');
-      return null;
-    }
-    case 'hydra': case 'medusa': case 'patator':{
-      await aiCommand(tabId, tab, `${command} brute force tool ${args.join(' ')}`, pipeInput, 'bruteforce');
-      return null;
-    }
-    case 'john': case 'hashcat':{
-      await aiCommand(tabId, tab, `${command} password cracker ${args.join(' ')}`, pipeInput, 'hashcrack');
-      return null;
-    }
-    case 'aircrack-ng': case 'airodump-ng': case 'aireplay-ng': case 'airmon-ng':{
-      await aiCommand(tabId, tab, `${command} wifi tool ${args.join(' ')}`, pipeInput, 'wifi');
-      return null;
-    }
-    case 'nc': case 'netcat':{
-      await aiCommand(tabId, tab, `netcat ${args.join(' ')}`, pipeInput, 'netcat');
-      return null;
-    }
-    case 'tcpdump': case 'wireshark':{
-      await aiCommand(tabId, tab, `${command} packet capture ${args.join(' ')}`, pipeInput, 'pcap');
-      return null;
-    }
-    case 'burpsuite': case 'burp':{
-      appendHTML(tabId,`<span class="ansi-yellow">Starting Burp Suite Professional...</span>`);
-      appendLine(tabId,'(Burp Suite runs as a GUI application - simulated in KaliWeb)','muted');
-      return null;
-    }
-    case 'metasploit': case 'msfvenom':{
-      await aiCommand(tabId, tab, `${command} ${args.join(' ')}`, pipeInput, 'metasploit');
-      return null;
-    }
-    case 'enum4linux': case 'smbmap': case 'smbclient':{
-      await aiCommand(tabId, tab, `${command} SMB enumeration ${args.join(' ')}`, pipeInput, 'smb');
-      return null;
-    }
-    case 'snmpwalk': case 'snmpget':{
-      await aiCommand(tabId, tab, `${command} SNMP tool ${args.join(' ')}`, pipeInput, 'snmp');
-      return null;
-    }
-    case 'wpscan': case 'joomscan':{
-      await aiCommand(tabId, tab, `${command} CMS scanner ${args.join(' ')}`, pipeInput, 'cms-scan');
-      return null;
-    }
-    case 'linpeas': case 'winpeas': case 'pspy':{
-      await aiCommand(tabId, tab, `${command} privilege escalation tool`, pipeInput, 'privesc');
-      return null;
-    }
-    case 'help': case '?':
-      showBuiltinHelp(tabId);
-      return null;
-    case 'neofetch': case 'screenfetch':
-      showNeofetch(tabId);
-      return null;
-    case 'cowsay':{
-      const msg = args.join(' ')||'Moo';
-      const line = '-'.repeat(msg.length+2);
-      appendLine(tabId,`  +${line}+`);
-      appendLine(tabId,`  | ${msg} |`);
-      appendLine(tabId,`  +${line}+`);
-      appendLine(tabId,'         \\   ^__^');
-      appendLine(tabId,'          \\  (oo)\\_______');
-      appendLine(tabId,'             (__)\\       )\\/\\');
-      appendLine(tabId,'                 ||----w |');
-      appendLine(tabId,'                 ||     ||');
-      return null;
-    }
-    case 'fortune':
-      appendLine(tabId,["The quieter you become, the more you are able to hear.","In God we trust. All others we monitor.","Hack the planet!","There is no patch for human stupidity.","The best defense is a good offense."][Math.floor(Math.random()*5)],'muted');
-      return null;
-    case 'matrix':{
-      startMatrixEffect(tabId);
-      return null;
-    }
-    case 'sl': case 'lolcat': case 'toilet': case 'figlet':
-      appendHTML(tabId,`<span class="ansi-green ansi-bold">🚂 chugga chugga chugga...</span>`);
-      return null;
-    case 'sudo':{
-      const subcmd = args.join(' ');
-      if(!subcmd){ appendLine(tabId,'usage: sudo <command>','warn'); return null; }
-      appendLine(tabId,'[sudo] password for root: ','warn');
-      appendLine(tabId,'root has full privileges. Executing as root...','success');
-      await executeCommand(winId, tabId, subcmd);
-      return null;
-    }
-    case 'su':
-      appendLine(tabId,'Password:','warn');
-      appendLine(tabId,'su: Authentication failure','err');
-      return null;
-    case 'passwd':
-      appendLine(tabId,'New password: ','warn');
-      appendLine(tabId,'Retype new password: ','warn');
-      appendLine(tabId,'passwd: password updated successfully','success');
-      return null;
-    case 'useradd': case 'groupadd': case 'usermod':
-      appendLine(tabId,'','muted');
-      return null;
-    case 'service': case 'systemctl':{
-      await aiCommand(tabId, tab, rawCmd, null, 'systemctl');
-      return null;
-    }
-    case 'apt': case 'apt-get': case 'dpkg':{
-      await handleApt(tabId, args, command);
-      return null;
-    }
-    case 'pip': case 'pip3':{
-      await handlePip(tabId, args);
-      return null;
-    }
-    case 'npm': case 'yarn':{
-      await handleNpm(tabId, args, command);
-      return null;
-    }
-    case 'write': case 'tee':
-      break;
-    default:
-      // Try to run as a file
-      const p5 = resolvePath(tab.cwd, command);
-      if(VFS[p5]?.type==='file'){
-        await aiCommand(tabId, tab, `execute file: ${VFS[p5].content}`, pipeInput, 'exec');
-        return null;
-      }
-      // AI fallback for everything else
-      await aiCommand(tabId, tab, rawCmd, pipeInput);
-      return null;
-  }
-  return null;
-}
-
-// === AI COMMAND ===
-async function aiCommand(tabId, tab, cmd, pipeInput, ctx='terminal'){
-  const stopTyping = showLoadingIndicator(tabId);
-  try {
-    const sysPrompt = `You are a Kali Linux terminal emulator. The user is running commands in a simulated Kali Linux environment.
-Current directory: ${tab.cwd}
-User: root
-Hostname: kaliweb
-OS: Kali Linux 2024.1
-
-RULES:
-- Output ONLY what the terminal would display, nothing else
-- Be realistic and accurate for Kali Linux commands
-- For security tools (nmap, sqlmap, nikto, etc.), produce realistic-looking simulated output
-- For network scans, make up realistic IPs, ports, services
-- For password crackers, show realistic progress and results
-- Keep output concise but complete
-- Use ANSI escape codes style output (plain text, no markdown)
-- If it's a man page request, show a realistic man page
-- Context: ${ctx}
-${pipeInput?'Pipe input: '+pipeInput.slice(0,500):''}`;
-
-    const resp = await fetch(API_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:sysPrompt,
-        messages:[{role:'user',content:`Command: ${cmd}`}]
-      })
-    });
-    const data = await resp.json();
-    stopTyping();
-    const text = data.content?.find(b=>b.type==='text')?.text||'Command not found';
-    text.split('\n').forEach(l=>appendLine(tabId,l,'muted'));
-    return text;
-  } catch(e){
-    stopTyping();
-    appendLine(tabId,`Error: ${e.message}`,'err');
-    return null;
-  }
-}
-
-// === LOADING INDICATOR ===
-function showLoadingIndicator(tabId){
-  const out = document.getElementById('out-'+tabId);
-  if(!out) return ()=>{};
-  const el = document.createElement('span');
-  el.className = 'line out';
-  el.innerHTML = '<span class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span>';
-  el.id = 'loading-'+Date.now();
-  out.appendChild(el);
-  out.scrollTop = out.scrollHeight;
-  return ()=>el.remove();
-}
-
-function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-// === NMAP ===
-async function handleNmap(tabId, args){
-  const target = args.find(a=>!a.startsWith('-'))||'127.0.0.1';
-  const isV = args.some(a=>a.includes('s'));
-  appendHTML(tabId,`<span class="ansi-green ansi-bold">Starting Nmap 7.94 ( https://nmap.org ) at ${new Date().toISOString().replace('T',' ').split('.')[0]}</span>`);
-  const stopTyping = showLoadingIndicator(tabId);
-  await delay(1200);
-  stopTyping();
-  appendHTML(tabId,`<span class="ansi-yellow">Nmap scan report for ${target}</span>`);
-  appendHTML(tabId,`<span class="ansi-gray">Host is up (0.00${Math.floor(Math.random()*9)+1}2s latency).</span>`);
-  if(args.some(a=>a==='-p-')) appendLine(tabId,'Not shown: 65529 closed tcp ports (reset)','muted');
-  else appendLine(tabId,'Not shown: 997 closed tcp ports (reset)','muted');
-  appendHTML(tabId,`<span class="ansi-green ansi-bold">PORT     STATE SERVICE${isV?'        VERSION':''}</span>`);
-  const ports = [[22,'tcp','ssh','OpenSSH 8.9p1 Ubuntu 3ubuntu0.6'],[80,'tcp','http','Apache httpd 2.4.54'],[443,'tcp','https','Apache httpd 2.4.54'],[3306,'tcp','mysql','MySQL 8.0.35']];
-  ports.forEach(([port,proto,svc,ver])=>{
-    appendHTML(tabId,`<span class="ansi-white">${String(port+'/'+proto).padEnd(9)}</span><span class="ansi-green">open  </span><span class="ansi-cyan">${svc.padEnd(${isV?15:8})}</span>${isV?`<span class="ansi-yellow">${ver}</span>`:''}`);
-  });
-  if(args.some(a=>a.includes('A')||a.includes('O'))){
-    appendHTML(tabId,`\n<span class="ansi-green ansi-bold">OS details:</span> <span class="ansi-white">Linux 5.4 - 6.1</span>`);
-    appendHTML(tabId,`<span class="ansi-green ansi-bold">Network Distance:</span> <span class="ansi-white">1 hop</span>`);
-  }
-  appendHTML(tabId,`\n<span class="ansi-green">Nmap done: 1 IP address (1 host up) scanned in ${(Math.random()*3+1).toFixed(2)} seconds</span>`);
-}
-
-// === GIT ===
-async function handleGit(winId, tabId, tab, args){
-  const sub = args[0];
-  switch(sub){
-    case 'clone':{
-      const url = args[1];
-      if(!url){ appendLine(tabId,'usage: git clone <url>','err'); return; }
-      const repoName = url.split('/').pop().replace('.git','');
-      const targetPath = resolvePath(tab.cwd, args[2]||repoName);
-      appendHTML(tabId,`<span class="ansi-yellow">Cloning into '${repoName}'...</span>`);
-      const stopTyping = showLoadingIndicator(tabId);
-      await delay(1500);
-      stopTyping();
-      appendLine(tabId,'remote: Enumerating objects: 143, done.','muted');
-      appendLine(tabId,'remote: Counting objects: 100% (143/143), done.','muted');
-      appendLine(tabId,'remote: Compressing objects: 100% (89/89), done.','muted');
-      appendLine(tabId,'Receiving objects: 100% (143/143), 284.72 KiB | 2.84 MiB/s, done.','muted');
-      appendLine(tabId,'Resolving deltas: 100% (67/67), done.','muted');
-      VFS[targetPath]={type:'dir'};
-      VFS[targetPath+'/.git']={type:'dir'};
-      VFS[targetPath+'/README.md']={type:'file',content:`# ${repoName}\n\nCloned from ${url}\n`,size:100};
-      gitRepos[targetPath]={url,branch:'main',log:[{hash:'abc1234',msg:'Initial commit',author:'Author',date:new Date().toISOString()}]};
-      appendLine(tabId,'','muted');
-      return;
-    }
-    case 'init':{
-      VFS[tab.cwd+'/.git']={type:'dir'};
-      gitRepos[tab.cwd]={url:null,branch:'main',log:[],staged:[],modified:[]};
-      appendLine(tabId,`Initialized empty Git repository in ${tab.cwd}/.git/`,'success');
-      return;
-    }
-    case 'status':{
-      const repo = gitRepos[tab.cwd]||gitRepos[Object.keys(gitRepos).find(k=>tab.cwd.startsWith(k))];
-      if(!repo){ appendLine(tabId,'fatal: not a git repository (or any parent): .git','err'); return; }
-      appendHTML(tabId,`<span class="ansi-green">On branch ${repo.branch||'main'}</span>`);
-      appendHTML(tabId,`<span class="ansi-gray">nothing to commit, working tree clean</span>`);
-      return;
-    }
-    case 'log':{
-      const repo2 = gitRepos[tab.cwd]||gitRepos[Object.keys(gitRepos).find(k=>tab.cwd.startsWith(k))];
-      if(!repo2){ appendLine(tabId,'fatal: not a git repository','err'); return; }
-      if(!repo2.log?.length){ appendLine(tabId,'fatal: your current branch has no commits yet','err'); return; }
-      repo2.log.forEach(entry=>{
-        appendHTML(tabId,`<span class="ansi-yellow">commit ${entry.hash}${Array(33).fill('a').map(()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('')}</span>`);
-        appendLine(tabId,`Author: ${entry.author} <${entry.author.toLowerCase().replace(' ','.')}@example.com>`,'muted');
-        appendLine(tabId,`Date:   ${entry.date}`,'muted');
-        appendLine(tabId,'');
-        appendLine(tabId,'    '+entry.msg,'muted');
-        appendLine(tabId,'');
-      });
-      return;
-    }
-    case 'add': case 'commit': case 'push': case 'pull': case 'fetch':
-    case 'branch': case 'checkout': case 'merge': case 'rebase':
-    case 'stash': case 'tag': case 'diff': case 'show': case 'remote':
-      await aiCommand(tabId, tab, 'git '+args.join(' '), null, 'git');
-      return;
-    default:
-      await aiCommand(tabId, tab, 'git '+args.join(' '), null, 'git');
-      return;
-  }
-}
-
-// === APT ===
-async function handleApt(tabId, args, cmd){
-  const sub = args[0];
-  const pkg = args.find((a,i)=>i>0&&!a.startsWith('-'));
-  if(sub==='update'){
-    appendLine(tabId,'Hit:1 http://kali.download/kali kali-rolling InRelease','muted');
-    appendLine(tabId,'Reading package lists... Done','success');
-    return;
-  }
-  if(sub==='upgrade'){
-    const stopTyping = showLoadingIndicator(tabId);
-    await delay(600);
-    stopTyping();
-    appendLine(tabId,'Reading package lists... Done','muted');
-    appendLine(tabId,'Building dependency tree... Done','muted');
-    appendLine(tabId,'0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.','success');
-    return;
-  }
-  if((sub==='install'||sub==='-y')&&pkg){
-    appendHTML(tabId,`<span class="ansi-yellow">Reading package lists...</span>`);
-    const stopTyping = showLoadingIndicator(tabId);
-    await delay(800);
-    stopTyping();
-    appendHTML(tabId,`<span class="ansi-green">The following NEW packages will be installed: ${pkg}</span>`);
-    appendLine(tabId,'0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.','muted');
-    appendLine(tabId,`Selecting previously unselected package ${pkg}.`,'muted');
-    appendLine(tabId,`Setting up ${pkg} ...`,'muted');
-    appendLine(tabId,`Processing triggers for ${pkg} ...`,'success');
-    return;
-  }
-  await aiCommand(tabId, null, `${cmd} ${args.join(' ')}`, null, 'apt');
-}
-
-// === PIP ===
-async function handlePip(tabId, args){
-  const sub = args[0]; const pkg = args[1];
-  if(sub==='install'&&pkg){
-    const stopTyping = showLoadingIndicator(tabId);
-    await delay(600);
-    stopTyping();
-    appendLine(tabId,`Collecting ${pkg}`,'muted');
-    appendLine(tabId,`  Downloading ${pkg}-1.0.0.tar.gz (24 kB)`,'muted');
-    appendLine(tabId,`Installing collected packages: ${pkg}`,'muted');
-    appendLine(tabId,`Successfully installed ${pkg}-1.0.0`,'success');
-  } else if(sub==='list'){
-    appendLine(tabId,'Package         Version','muted');
-    appendLine(tabId,'--------------- -------','muted');
-    ['requests 2.31.0','flask 3.0.0','numpy 1.26.3','cryptography 41.0.7','scapy 2.5.0','pwntools 4.12.0'].forEach(p=>appendLine(tabId,p,'muted'));
-  } else await aiCommand(tabId, null, 'pip '+args.join(' '), null, 'pip');
-}
-
-// === NPM ===
-async function handleNpm(tabId, args, cmd){
-  const sub = args[0]; const pkg = args[1];
-  if(sub==='install'||sub==='i'){
-    const stopTyping = showLoadingIndicator(tabId);
-    await delay(700);
-    stopTyping();
-    appendLine(tabId,`added ${Math.floor(Math.random()*200+50)} packages in ${(Math.random()*5+1).toFixed(1)}s`,'success');
-  } else if(sub==='list'||sub==='ls'){
-    appendLine(tabId,'project@1.0.0 /root','muted');
-    appendLine(tabId,'├── express@4.18.2','muted');
-    appendLine(tabId,'├── lodash@4.17.21','muted');
-    appendLine(tabId,'└── axios@1.6.5','muted');
-  } else await aiCommand(tabId, null, `${cmd} ${args.join(' ')}`, null, 'npm');
-}
-
-// === MSF CONSOLE ===
-function openMsfConsole(winId, tabId){
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">
-       =[ metasploit v6.3.44-dev                          ]
-+ -- --=[ 2376 exploits - 1232 auxiliary - 416 post       ]
-+ -- --=[ 1388 payloads - 46 encoders - 11 nops            ]
-+ -- --=[ 9 evasion                                        ]
-
-Metasploit tip: Use the edit command to open the current
-module in your editor
-</span>`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">msf6 &gt; </span><span class="ansi-gray">(MSF simulated via AI - type commands normally)</span>`);
-}
-
-// === NEOFETCH ===
-function showNeofetch(tabId){
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">    ......        </span>  <span class="ansi-green ansi-bold">root@kaliweb</span>`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">  .;oo8888oo;.    </span>  <span class="ansi-gray">----------</span>`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold"> .88888888888.    </span>  <span class="ansi-green">OS:</span> KaliWeb GNU/Linux x86_64`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold"> 888888888888      </span>  <span class="ansi-green">Host:</span> Browser Virtual Machine`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold"> '888888888888.    </span>  <span class="ansi-green">Kernel:</span> 6.1.0-kaliweb`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">  '888888888888;   </span>  <span class="ansi-green">Uptime:</span> 2 hours, 37 mins`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">   '888888888888.  </span>  <span class="ansi-green">Shell:</span> bash 5.2.15`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">     888888888888  </span>  <span class="ansi-green">Terminal:</span> KaliWeb vTE`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">   .8888888888888. </span>  <span class="ansi-green">CPU:</span> Intel i7 (simulated)`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">  888888888888888. </span>  <span class="ansi-green">Memory:</span> 2048MiB / 8192MiB`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold"> :888888888888888' </span>`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold"> .888888888888888' </span>  <span style="background:#ff0000">  </span><span style="background:#ff8800">  </span><span style="background:#ffff00">  </span><span style="background:#00ff00">  </span><span style="background:#0000ff">  </span><span style="background:#ff00ff">  </span>`);
-  appendHTML(tabId,`<span class="ansi-red ansi-bold">  '8888888888888'  </span>`);
-}
-
-// === BUILT-IN HELP ===
-function showBuiltinHelp(tabId){
-  const cmds = [
-    ['FILE SYSTEM','ls, cd, pwd, cat, mkdir, rm, cp, mv, touch, find, chmod, ln, df, du, tar, zip, unzip'],
-    ['NETWORK','ping, ifconfig, ip, netstat, ss, arp, route, traceroute, curl, wget, ssh, nc, tcpdump'],
-    ['PROCESS','ps, top, htop, kill, killall, free, uptime, lsof, strace'],
-    ['SECURITY','nmap, sqlmap, nikto, dirb, gobuster, hydra, john, hashcat, msfconsole, aircrack-ng, burpsuite'],
-    ['DEVELOPMENT','python3, node, gcc, make, gdb, git, npm, pip'],
-    ['TEXT','cat, grep, awk, sed, cut, tr, sort, uniq, wc, head, tail, less, more, nano, vim'],
-    ['SYSTEM','uname, hostname, whoami, id, date, env, export, sudo, su, apt, systemctl, service'],
-    ['CRYPTO','base64, md5sum, sha256sum, openssl, gpg, xxd'],
-    ['FUN','neofetch, cowsay, fortune, matrix, sl'],
-  ];
-  appendHTML(tabId,`\n<span class="ansi-green ansi-bold">KaliWeb Terminal Commands</span>\n`);
-  cmds.forEach(([cat, list])=>{
-    appendHTML(tabId,`<span class="ansi-cyan ansi-bold">${cat}</span>`);
-    appendHTML(tabId,`<span class="ansi-gray">  ${list}</span>`);
-  });
-  appendHTML(tabId,`\n<span class="ansi-gray">All commands are AI-simulated for commands not natively implemented.</span>\n<span class="ansi-gray">Use Ctrl+L to clear, Ctrl+C to interrupt, Tab for autocomplete.</span>\n`);
-}
-
-// === EDITOR ===
-function openEditor(winId, tabId, filePath, editorName){
-  const existingContent = VFS[filePath]?.content||'';
-  const winId2 = createWindow({
-    title:`${editorName} — ${filePath.split('/').pop()}`,
-    width:680,height:500,type:'editor'
-  });
-  const content = document.getElementById('content-'+winId2);
-  content.style.cssText = 'flex:1;display:flex;flex-direction:column;height:calc(100% - 32px)';
-  content.innerHTML = `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--border);background:#000;flex-shrink:0">
-      <span style="font-size:10px;color:var(--text3);font-family:var(--mono);flex:1">${filePath}</span>
-      <button onclick="saveEditorFile('${winId2}','${filePath}')" style="background:transparent;border:1px solid var(--border2);color:var(--green);font-size:10px;padding:3px 12px;cursor:pointer;font-family:var(--mono);border-radius:2px">SAVE</button>
-      <button onclick="closeWindow('${winId2}')" style="background:transparent;border:1px solid var(--border2);color:var(--text3);font-size:10px;padding:3px 12px;cursor:pointer;font-family:var(--mono);border-radius:2px">CLOSE</button>
-    </div>
-    <textarea id="editor-ta-${winId2}" spellcheck="false" style="flex:1;background:#000;color:var(--text);font-family:var(--mono);font-size:13px;padding:12px;border:none;outline:none;resize:none;line-height:1.6;overflow-y:auto" wrap="off">${escHtml(existingContent)}</textarea>
-    <div style="padding:4px 10px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);font-family:var(--mono)">${editorName.toUpperCase()} | ${filePath} | Ctrl+S: Save</div>
-  `;
-  const ta = document.getElementById('editor-ta-'+winId2);
-  if(ta){
-    ta.addEventListener('keydown', e=>{
-      if(e.key==='s'&&e.ctrlKey){ e.preventDefault(); saveEditorFile(winId2, filePath); }
-      if(e.key==='Tab'){ e.preventDefault(); const s=ta.selectionStart; ta.value=ta.value.substring(0,s)+'  '+ta.value.substring(ta.selectionEnd); ta.selectionStart=ta.selectionEnd=s+2; }
-    });
-    ta.focus();
-  }
-  appendLine(tabId,`Opened ${filePath} in ${editorName}`,'success');
-}
-
-function saveEditorFile(winId2, filePath){
-  const ta = document.getElementById('editor-ta-'+winId2);
-  if(!ta) return;
-  VFS[filePath] = {type:'file', content:ta.value, size:ta.value.length};
-  showNotif(`Saved: ${filePath.split('/').pop()}`);
-}
-
-// === MATRIX EFFECT ===
-function startMatrixEffect(tabId){
-  const out = document.getElementById('out-'+tabId);
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*(){}[]|<>?!~`';
-  let count = 0;
-  const interval = setInterval(()=>{
-    if(count++ > 40){ clearInterval(interval); appendLine(tabId,''); return; }
-    const line = Array.from({length:60},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
-    appendHTML(tabId,`<span class="ansi-green" style="letter-spacing:2px">${line}</span>`);
-    out.scrollTop = out.scrollHeight;
-  }, 80);
-}
-
-// === FILE MANAGER ===
-function newFileManager(){
-  const id = createWindow({title:'File Manager',width:560,height:420,type:'filemanager'});
-  const content = document.getElementById('content-'+id);
-  content.style.cssText = 'flex:1;display:flex;flex-direction:column;height:calc(100% - 32px)';
-  const fm = document.createElement('div');
-  fm.className = 'file-manager';
-  fm.id = 'fm-'+id;
-  content.appendChild(fm);
-  windows[id].fmCwd = '/root';
-  renderFileManager(id, '/root');
-}
-
-function renderFileManager(winId, path){
-  const fm = document.getElementById('fm-'+winId);
-  if(!fm) return;
-  windows[winId].fmCwd = path;
-  const entries = [{name:'..',type:'dir'},...lsDir(path)];
-  fm.innerHTML = `
-    <div class="fm-toolbar">
-      <button class="fm-btn" onclick="renderFileManager('${winId}','${path==='/'?'/':path.substring(0,path.lastIndexOf('/')||1)}')">↑</button>
-      <input class="fm-path" value="${path}" id="fm-path-${winId}" onkeydown="if(event.key==='Enter'){renderFileManager('${winId}',document.getElementById('fm-path-${winId}').value)}" readonly>
-      <button class="fm-btn" onclick="refreshFM('${winId}')">↻</button>
-    </div>
-    <div class="fm-content" id="fm-content-${winId}"></div>
-    <div style="padding:4px 8px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);font-family:var(--mono)">${lsDir(path).length} items</div>
-  `;
-  const fc = document.getElementById('fm-content-'+winId);
-  entries.forEach(entry=>{
-    const isDir = entry.type==='dir';
-    const item = document.createElement('div');
-    item.className = 'fm-item';
-    item.innerHTML = `<span class="fm-icon">${isDir?'📁':'📄'}</span><span class="fm-name ${isDir?'dir':entry.name.match(/\.(sh|py|pl|rb|exe)$/)?'exec':''}">${entry.name}</span><span class="fm-size">${isDir?'—':formatSize(entry.size||0)}</span>`;
-    item.ondblclick = ()=>{
-      if(isDir){
-        const np = entry.name==='..'?path.substring(0,path.lastIndexOf('/')||1)||'/':path+'/'+entry.name;
-        renderFileManager(winId, np);
-      } else {
-        openFilePreview(winId, path+'/'+entry.name, entry);
-      }
-    };
-    item.oncontextmenu = (e)=>{ e.preventDefault(); showFmCtxMenu(e, winId, path, entry); };
-    fc.appendChild(item);
-  });
-}
-
-function refreshFM(winId){ renderFileManager(winId, windows[winId].fmCwd||'/root'); }
-function formatSize(b){ if(b<1024) return b+'B'; if(b<1048576) return (b/1024).toFixed(1)+'K'; return (b/1048576).toFixed(1)+'M'; }
-
-function openFilePreview(winId, path, entry){
-  const pvId = createWindow({title:`Preview — ${entry.name}`,width:500,height:380,type:'preview'});
-  const content = document.getElementById('content-'+pvId);
-  content.style.cssText = 'flex:1;overflow-y:auto;padding:16px;font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;height:calc(100% - 32px)';
-  content.textContent = VFS[path]?.content||'(empty file)';
-}
-
-function showFmCtxMenu(e, winId, path, entry){}
-
-// === HELP WINDOW ===
-function showHelp(){
-  const id = createWindow({title:'Help — KaliWeb Terminal',width:540,height:480,type:'help'});
-  const content = document.getElementById('content-'+id);
-  content.style.cssText = 'flex:1;display:flex;flex-direction:column;height:calc(100% - 32px)';
-  const sections = [
-    ['NAVIGATION','cd <dir>    Change directory\npwd         Print working directory\nls [-la]    List directory contents\nfind        Find files and directories'],
-    ['FILE OPS','cat, less, more    View files\nnano/vim           Edit files\nmkdir, rm, cp, mv  File management\ntar, zip, unzip    Archives'],
-    ['NETWORK','ping, traceroute   Network diagnostics\nifconfig, ip       Network interfaces\nnetstat, ss        Active connections\ncurl, wget         HTTP requests\nssh, nc            Remote connections'],
-    ['SECURITY TOOLS','nmap         Port scanner\nsqlmap       SQL injection\nnikto        Web scanner\ndirb/gobuster Directory brute force\nhydra/john   Password cracking\nmsfconsole   Metasploit Framework\naircrack-ng  WiFi cracking'],
-    ['DEVELOPMENT','git clone/commit/push/pull    Git operations\npython3 script.py             Run Python\nnode script.js                Run Node.js\nbash script.sh                Run Shell\ngcc source.c -o output        Compile C\napt install <pkg>             Install packages'],
-    ['TERMINAL TIPS','Ctrl+C  Interrupt command\nCtrl+L  Clear screen\nCtrl+D  Exit shell\nTab     Autocomplete\n↑/↓     Command history\n|       Pipe commands\n>       Redirect output'],
-  ];
-  const hc = document.createElement('div');
-  hc.className = 'help-content';
-  sections.forEach(([title, text])=>{
-    hc.innerHTML += `<div class="help-section"><h3>${title}</h3><pre style="color:var(--text2);font-size:12px;line-height:1.7;font-family:var(--mono)">${text}</pre></div>`;
-  });
-  content.appendChild(hc);
-}
-
-// === CONTEXT MENU ===
-document.getElementById('desktop').addEventListener('contextmenu', e=>{ e.preventDefault(); const m=document.getElementById('ctx-menu'); m.style.display='block'; m.style.left=e.clientX+'px'; m.style.top=e.clientY+'px'; });
-document.addEventListener('click', ()=>{ document.getElementById('ctx-menu').style.display='none'; });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.getElementById('ctx-menu').style.display='none'; });
-
-function ctxAction(action){
-  switch(action){
-    case 'new-terminal': newTerminal(); break;
-    case 'new-file-manager': newFileManager(); break;
-    case 'clear-desktop': break;
-    case 'close-all': Object.keys(windows).forEach(id=>closeWindow(id)); break;
-  }
-  document.getElementById('ctx-menu').style.display='none';
-}
-
-// === NOTIFICATIONS ===
-function showNotif(msg, type='success'){
-  const n = document.createElement('div');
-  n.className = 'notif';
-  if(type==='err') n.style.borderLeftColor='var(--red)';
-  else if(type==='warn') n.style.borderLeftColor='var(--yellow)';
-  n.textContent = msg;
-  document.body.appendChild(n);
-  setTimeout(()=>n.remove(), 3200);
-}
-
-// Focus terminal when clicking desktop
-document.getElementById('desktop').addEventListener('click', e=>{
-  if(e.target.id==='desktop'){
-    const wins = Object.entries(windows);
-    if(wins.length){
-      const last = wins.reduce((a,b)=>parseInt(document.getElementById(a[0])?.style.zIndex||0)>parseInt(document.getElementById(b[0])?.style.zIndex||0)?a:b);
-      const inp = document.querySelector(`#${last[0]} .term-input`);
-      if(inp) inp.focus();
-    }
-  }
-});
-
-// Keep terminal focused
-document.addEventListener('keydown', e=>{
-  const active = document.activeElement;
-  if(active && (active.classList.contains('term-input')||active.tagName==='TEXTAREA')) return;
-  if(e.key.length===1||e.key==='Backspace'||e.key==='Enter'){
-    const inp = document.querySelector('.window.focused .term-input:not([style*="display: none"])');
-    if(inp){ inp.focus(); }
-  }
-});
-</script>
+      function uStar(i){if(--sv[i]===25)stars[i].style.clip='rect(1px,4px,4px,1px)';if(sv[i]){ssy[i]+=1+Math.random()*3;ssx[i]+=(i%5-2)/5;if(ssy[i]<document.documentElement.scrollHeight){stars[i].style.top=ssy[i]+'px';stars[i].style.left=ssx[i]+'px'}else{stars[i].style.visibility='hidden';sv[i]=0;return}}else{tv[i]=50;tiny[i].style.top=(tty[i]=ssy[i])+'px';tiny[i].style.left=(ttx[i]=ssx[i])+'px';tiny[i].style.width='2px';tiny[i].style.height='2px';tiny[i].style.backgroundColor='white';stars[i].style.visibility='hidden';tiny[i].style.visibility='visible'}}
+      function uTiny(i){if(--tv[i]===25){tiny[i].style.width='1px';tiny[i].style.height='1px'}if(tv[i]){tty[i]+=1+Math.random()*3;ttx[i]+=(i%5-2)/5;if(tty[i]<document.documentElement.scrollHeight){tiny[i].style.top=tty[i]+'px';tiny[i].style.left=ttx[i]+'px'}else{tiny[i].style.visibility='hidden';tv[i]=0;return}}else tiny[i].style.visibility='hidden'}
+      sparkle()
+    })()
+  </script>
 </body>
 </html>
