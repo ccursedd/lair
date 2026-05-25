@@ -1,303 +1,407 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>mev</title>
-  <link rel="icon" type="image/png" href="/fav/f0.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+    body { background: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; font-family: 'JetBrains Mono', monospace; }
 
     #bg-video {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 2s ease;
-      pointer-events: none;
+      position: fixed; inset: 0; z-index: 0;
+      width: 100%; height: 100%; object-fit: cover;
+      opacity: 0; transition: opacity 2s ease; pointer-events: none;
     }
     #bg-video.visible { opacity: 0.55; }
 
-    #effect-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
+    #effect-canvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+
+    .profile-wrap {
+      margin-top: 16vh;
+      position: relative; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+      opacity: 0; transform: scale(0.92);
+      animation: fadeUp 1.4s 0.3s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    @keyframes fadeUp { to { opacity: 1; transform: scale(1); } }
+
+    .pfp-ring { position: relative; width: 110px; height: 110px; }
+    .pfp {
+      width: 110px; height: 110px; border-radius: 50%;
+      object-fit: cover; display: block;
+      border: 2px solid rgba(255,255,255,0.1);
+      background: #111;
+    }
+    .status-dot {
+      position: absolute; bottom: 5px; right: 5px;
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2.5px solid #000; background: #747f8d;
+      transition: background 0.4s;
+    }
+    .status-dot.online  { background: #23a55a; }
+    .status-dot.idle    { background: #f0b232; }
+    .status-dot.dnd     { background: #f23f43; }
+
+    .name-tagline { margin-top: 10px; text-align: center; }
+    .name-text { font-size: 17px; font-weight: 500; color: rgba(255,255,255,0.85); letter-spacing: -0.01em; }
+    .tagline-text { font-size: 11px; color: rgba(255,255,255,0.28); letter-spacing: 0.05em; margin-top: 2px; min-height: 14px; }
+
+    .discord-card {
+      margin-top: 14px;
+      background: rgba(18,18,20,0.75);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 11px 16px 11px 14px;
+      min-width: 240px; max-width: 290px; width: 88vw;
+    }
+    .dc-header { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .dc-header svg { opacity: 0.35; flex-shrink: 0; }
+    .dc-label { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 0.05em; text-transform: lowercase; }
+    .dc-username { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.85); margin-bottom: 6px; letter-spacing: -0.01em; }
+    .status-row { display: flex; align-items: center; gap: 5px; }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      font-size: 10px; color: rgba(255,255,255,0.4);
+    }
+    .dot-tiny { width: 6px; height: 6px; border-radius: 50%; background: #747f8d; flex-shrink: 0; transition: background 0.4s; }
+    .dot-tiny.online { background: #23a55a; }
+    .dot-tiny.idle   { background: #f0b232; }
+    .dot-tiny.dnd    { background: #f23f43; }
+    .dc-activity {
+      margin-top: 6px; font-size: 10px; color: rgba(255,255,255,0.28);
+      letter-spacing: 0.01em; min-height: 13px; transition: all 0.3s;
     }
 
-    .pfp-wrap {
-      margin-top: 22vh;
-      position: relative;
-      z-index: 10;
-      opacity: 0;
-      transform: scale(0.92);
-      animation: pfpIn 1.4s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .socials {
+      margin-top: 20px;
+      display: flex; gap: 12px; z-index: 10;
+      opacity: 0; transform: translateY(8px);
+      animation: fadeUp 1s 0.85s cubic-bezier(0.16,1,0.3,1) forwards;
     }
-    @keyframes pfpIn { to { opacity: 1; transform: scale(1); } }
-    .pfp { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; display: block; }
-
-    .enter-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: opacity 1.4s ease;
+    .social-btn {
+      width: 46px; height: 46px; border-radius: 12px;
+      background: rgba(18,18,20,0.68);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.22s, border-color 0.22s, transform 0.22s;
     }
+    .social-btn:hover { background: rgba(38,38,44,0.88); border-color: rgba(255,255,255,0.16); transform: translateY(-2px); }
 
     .player {
-      position: fixed;
-      bottom: 24px;
-      right: 28px;
-      align-items: flex-end;
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      opacity: 0;
-      animation: pfpIn 1s 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: fixed; bottom: 24px; right: 28px;
+      align-items: flex-end; z-index: 20;
+      display: flex; flex-direction: column; gap: 10px;
+      opacity: 0; animation: fadeUp 1s 1.2s cubic-bezier(0.16,1,0.3,1) forwards;
     }
     .player-title-wrap { height: 22px; overflow: hidden; }
     .player-title-wrap canvas { display: block; }
     .player-controls { display: flex; align-items: center; gap: 14px; }
-    .player-btn {
-      background: none; border: none; cursor: pointer; padding: 2px;
-      opacity: 0.18; transition: opacity 0.3s ease, transform 0.3s ease;
-    }
+    .player-btn { background: none; border: none; cursor: pointer; padding: 2px; opacity: 0.18; transition: opacity 0.3s, transform 0.3s; }
     .player-btn:hover { opacity: 0.55; transform: translateY(-1px); }
     .player-btn canvas { display: block; }
 
-    .socials {
-      margin-top: 40px;
-      display: flex;
-      gap: 20px;
-      z-index: 10;
-      opacity: 0;
-      transform: translateY(8px);
-      animation: pfpIn 1s 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .enter-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: opacity 1.4s ease;
     }
-    .social-icon { display: block; cursor: pointer; opacity: 0.2; transition: opacity 0.3s ease, transform 0.3s ease; }
-    .social-icon:hover { opacity: 0.6; transform: translateY(-2px); }
-    .social-icon canvas { display: block; }
   </style>
 </head>
 <body>
 
-  <video id="bg-video" src="https://r2.guns.lol/641b1fc9-2fd6-4141-9765-effb13b2134e.mp4" loop playsinline></video>
+<video id="bg-video" src="https://r2.guns.lol/641b1fc9-2fd6-4141-9765-effb13b2134e.mp4" loop playsinline></video>
 
-  <div class="enter-overlay" id="enter-overlay">
-    <canvas id="enter-text" width="280" height="20"></canvas>
+<div class="enter-overlay" id="enter-overlay">
+  <canvas id="enter-text" width="280" height="20"></canvas>
+</div>
+
+<div class="profile-wrap">
+  <div class="pfp-ring">
+    <img class="pfp" id="pfp-img" src="" alt="mev">
+    <div class="status-dot" id="status-dot"></div>
   </div>
-
-  <div class="pfp-wrap">
-    <img class="pfp" src="https://cdn.discordapp.com/avatars/1463280835577774120/placeholder.png?size=256" alt="mev">
+  <div class="name-tagline">
+    <div class="name-text" id="dc-displayname">mev</div>
+    <div class="tagline-text" id="dc-tagline"></div>
   </div>
-
-  <div class="player">
-    <div class="player-title-wrap"><canvas id="player-title-canvas" width="250" height="22"></canvas></div>
-    <div class="player-controls">
-      <button class="player-btn" id="player-prev"><canvas width="40" height="40"></canvas></button>
-      <button class="player-btn" id="player-toggle"><canvas width="44" height="44"></canvas></button>
-      <button class="player-btn" id="player-next"><canvas width="40" height="40"></canvas></button>
+  <div class="discord-card">
+    <div class="dc-header">
+      <svg width="13" height="10" viewBox="0 0 24 18" fill="rgba(255,255,255,1)">
+        <path d="M20.317 1.492a19.84 19.84 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 1.492a.07.07 0 0 0-.032.027C.533 6.093-.32 10.555.099 14.961a.08.08 0 0 0 .031.055 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 12.278c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419z"/>
+      </svg>
+      <span class="dc-label">discord</span>
     </div>
+    <div class="dc-username" id="dc-username">loading...</div>
+    <div class="status-row">
+      <div class="status-pill">
+        <span class="dot-tiny" id="dot-tiny"></span>
+        <span id="status-label">offline</span>
+      </div>
+    </div>
+    <div class="dc-activity" id="dc-activity"></div>
   </div>
 
   <div class="socials">
-    <a class="social-icon" href="https://www.tiktok.com/@rmzc" data-icon="tiktok"><canvas width="64" height="64"></canvas></a>
+<!-- Roblox -->
+<a class="social-btn" href="https://www.roblox.com/users/3686879219/profile" title="Roblox">
+  <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+    <g transform="rotate(-15 16 16)">
+      <!-- Outer Roblox shape -->
+      <rect
+        x="8"
+        y="8"
+        width="16"
+        height="16"
+        rx="2"
+        fill="rgba(255,255,255,0.72)"
+      />
+
+      <!-- Center cutout -->
+      <rect
+        x="13"
+        y="13"
+        width="6"
+        height="6"
+        rx="0.8"
+        fill="rgba(0,0,0,0.35)"
+      />
+    </g>
+  </svg>
+</a>
+    <!-- Instagram -->
+    <a class="social-btn" href="https://www.instagram.com/hatemyinsomnia" title="Instagram @hatemyinsomnia">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+      </svg>
+    </a>
+    <!-- Discord -->
+    <a class="social-btn" href="https://discord.com" title="Discord">
+      <svg width="22" height="17" viewBox="0 0 24 18" fill="rgba(255,255,255,0.72)">
+        <path d="M20.317 1.492a19.84 19.84 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.566 18.566 0 0 0-5.487 0 12.36 12.36 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 1.492a.07.07 0 0 0-.032.027C.533 6.093-.32 10.555.099 14.961a.08.08 0 0 0 .031.055 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 12.278c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419z"/>
+      </svg>
+    </a>
+    <!-- Spotify -->
+    <a class="social-btn" href="https://open.spotify.com/user/31rwwynjv5fo6iujfwdsvy7al324" title="Spotify">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="rgba(255,255,255,0.72)">
+        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.499 17.311a.748.748 0 0 1-1.03.249c-2.821-1.727-6.37-2.117-10.552-1.16a.748.748 0 1 1-.334-1.459c4.574-1.046 8.497-.596 11.668 1.339a.748.748 0 0 1 .248 1.031zm1.468-3.267a.937.937 0 0 1-1.288.308c-3.226-1.983-8.148-2.557-11.963-1.4a.937.937 0 1 1-.543-1.793c4.36-1.323 9.78-.681 13.487 1.596a.937.937 0 0 1 .307 1.289zm.126-3.402C15.592 8.529 9.953 8.34 6.547 9.36a1.124 1.124 0 1 1-.652-2.151c3.966-1.202 10.553-.97 14.716 1.628a1.124 1.124 0 0 1-1.518 1.805z"/>
+      </svg>
+    </a>
+    <!-- TikTok -->
+    <a class="social-btn" href="https://www.tiktok.com/@rmzc" title="TikTok @rmzc">
+      <svg width="18" height="21" viewBox="0 0 24 24" fill="rgba(255,255,255,0.72)">
+        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.15 8.15 0 0 0 4.77 1.52V6.75a4.85 4.85 0 0 1-1-.06z"/>
+      </svg>
+    </a>
   </div>
+</div>
 
-  <audio id="player-audio" preload="auto" src="/mev/tracks/%23SILKROAD.mp3"></audio>
-  <canvas id="effect-canvas"></canvas>
+<div class="player">
+  <div class="player-title-wrap"><canvas id="player-title-canvas" width="250" height="22"></canvas></div>
+  <div class="player-controls">
+    <button class="player-btn" id="player-prev"><canvas width="40" height="40"></canvas></button>
+    <button class="player-btn" id="player-toggle"><canvas width="44" height="44"></canvas></button>
+    <button class="player-btn" id="player-next"><canvas width="40" height="40"></canvas></button>
+  </div>
+</div>
 
-  <script>
-    // ── Discord avatar ──
-    ;(async () => {
-      const apis = [
-        { url: id => `https://japi.rest/discord/v1/user/${id}`, parse: j => j.data?.avatar },
-        { url: id => `https://discordlookup.mesalytic.moe/v1/user/${id}`, parse: j => j.avatar?.id },
-      ]
-      const img = document.querySelector('.pfp')
-      for (const api of apis) {
-        try {
-          const res = await fetch(api.url('1507165921989492919')); if (!res.ok) continue
-          const json = await res.json(); const av = api.parse(json)
-          if (av) { img.src = `https://cdn.discordapp.com/avatars/1507165921989492919/${av}.${av.startsWith('a_')?'gif':'png'}?size=256`; break }
-        } catch(e) {}
+<audio id="player-audio" preload="auto" src="/mev/tracks/%23SILKROAD.mp3"></audio>
+<canvas id="effect-canvas"></canvas>
+
+<script>
+const DISCORD_ID = '1507165921989492919';
+
+// ── Try multiple APIs in order, stop on first success ──
+async function loadDiscordProfile() {
+  const apis = [
+    // 1. avatar-cyan — returns full profile info, no token
+    async () => {
+      const r = await fetch(`https://avatar-cyan.vercel.app/api/${DISCORD_ID}`);
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      return {
+        username: j.display_name || j.username,
+        avatar: j.avatarUrl,
+      };
+    },
+    // 2. japi.rest
+    async () => {
+      const r = await fetch(`https://japi.rest/discord/v1/user/${DISCORD_ID}`);
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      const av = j.data?.avatar_url || (j.data?.avatar ? `https://cdn.discordapp.com/avatars/${DISCORD_ID}/${j.data.avatar}.png?size=256` : null);
+      return { username: j.data?.global_name || j.data?.username, avatar: av };
+    },
+    // 3. mesalytic
+    async () => {
+      const r = await fetch(`https://discordlookup.mesalytic.moe/v1/user/${DISCORD_ID}`);
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      const avId = j.avatar?.id;
+      const av = avId ? `https://cdn.discordapp.com/avatars/${DISCORD_ID}/${avId}.${avId.startsWith('a_')?'gif':'png'}?size=256` : null;
+      return { username: j.global_name || j.username, avatar: av };
+    },
+    // 4. discordpfp.vercel.app (avatar only)
+    async () => {
+      const r = await fetch(`https://discordpfp.vercel.app/api/avatar?id=${DISCORD_ID}`);
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      return { username: null, avatar: j.avatar || j.url || j.avatarUrl };
+    },
+  ];
+
+  for (const api of apis) {
+    try {
+      const result = await api();
+      if (result.username) document.getElementById('dc-username').textContent = result.username;
+      if (result.username) { document.getElementById('dc-displayname').textContent = result.username; }
+      if (result.avatar)   { document.getElementById('pfp-img').src = result.avatar; }
+      break;
+    } catch(e) { /* try next */ }
+  }
+}
+
+// ── Lanyard for live presence ──
+async function loadPresence() {
+  try {
+    const r = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_ID}`);
+    if (!r.ok) return;
+    const { success, data } = await r.json();
+    if (!success) return;
+
+    // status dot
+    const st = data.discord_status || 'offline';
+    document.getElementById('status-dot').className = 'status-dot ' + (st !== 'offline' ? st : '');
+    document.getElementById('dot-tiny').className = 'dot-tiny ' + (st !== 'offline' ? st : '');
+    const lbl = { online:'online', idle:'idle', dnd:'do not disturb', offline:'offline' };
+    document.getElementById('status-label').textContent = lbl[st] || 'offline';
+
+    // avatar from lanyard if available
+    if (data.discord_user?.avatar && !document.getElementById('pfp-img').src.includes('cdn.discordapp')) {
+      const av = data.discord_user.avatar;
+      document.getElementById('pfp-img').src = `https://cdn.discordapp.com/avatars/${DISCORD_ID}/${av}.${av.startsWith('a_')?'gif':'png'}?size=256`;
+    }
+    // username
+    const un = data.discord_user?.global_name || data.discord_user?.username;
+    if (un) {
+      document.getElementById('dc-username').textContent = un;
+      document.getElementById('dc-displayname').textContent = un;
+    }
+
+    // activity / custom status
+    let act = '';
+    if (data.activities) {
+      for (const a of data.activities) {
+        if (a.type === 4 && a.state) { act = (a.emoji?.name ? a.emoji.name + ' ' : '') + a.state; break; }
       }
-    })()
-
-    // ── Sketchy utils ──
-    function sketchLine(c, x1, y1, x2, y2, j) {
-      const segs = 4+Math.floor(Math.random()*3); c.beginPath()
-      c.moveTo(x1+(Math.random()-.5)*j, y1+(Math.random()-.5)*j)
-      for (let i=1;i<=segs;i++){const t=i/segs;c.lineTo(x1+(x2-x1)*t+(Math.random()-.5)*j,y1+(y2-y1)*t+(Math.random()-.5)*j)}
-      c.stroke()
-    }
-    function sketchArc(c, cx, cy, r, start, end, j) {
-      const steps=16+Math.floor(Math.random()*8); c.beginPath()
-      for(let i=0;i<=steps;i++){const t=i/steps,a=start+(end-start)*t;const x=cx+Math.cos(a)*(r+(Math.random()-.5)*j),y=cy+Math.sin(a)*(r+(Math.random()-.5)*j);i===0?c.moveTo(x,y):c.lineTo(x,y)}
-      c.stroke()
-    }
-    function sketchPath(c, d, sc, ox, oy, j) {
-      const cmds=d.match(/[MLCZ][^MLCZ]*/gi); if(!cmds)return; c.beginPath()
-      for(const cmd of cmds){const type=cmd[0],nums=cmd.slice(1).trim().split(/[\s,]+/).map(Number)
-        if(type==='M')c.moveTo(nums[0]*sc+ox+(Math.random()-.5)*j,nums[1]*sc+oy+(Math.random()-.5)*j)
-        else if(type==='L')c.lineTo(nums[0]*sc+ox+(Math.random()-.5)*j,nums[1]*sc+oy+(Math.random()-.5)*j)
-        else if(type==='C'){for(let i=0;i<nums.length;i+=6)c.bezierCurveTo(nums[i]*sc+ox+(Math.random()-.5)*j,nums[i+1]*sc+oy+(Math.random()-.5)*j,nums[i+2]*sc+ox+(Math.random()-.5)*j,nums[i+3]*sc+oy+(Math.random()-.5)*j,nums[i+4]*sc+ox+(Math.random()-.5)*j,nums[i+5]*sc+oy+(Math.random()-.5)*j)}
-        else if(type==='Z'||type==='z')c.closePath()}
-      c.stroke()
-    }
-
-    // ── TikTok icon ──
-    function drawTiktok(c, s, j) {
-      j=j||0.6; c.clearRect(0,0,s,s); c.strokeStyle='#fff'; c.lineWidth=1.3; c.lineCap='round'; c.lineJoin='round'
-      sketchPath(c,'M19.59 6.69 C18.39 6.69 17.28 6.19 16.47 5.35 C15.67 4.5 15.2 3.37 15.2 2.12 L12.36 2.12 L12.36 15.26 C12.36 16.75 11.15 17.96 9.66 17.96 C8.17 17.96 6.96 16.75 6.96 15.26 C6.96 13.77 8.17 12.56 9.66 12.56 C9.98 12.56 10.29 12.61 10.57 12.7 L10.57 9.82 C10.27 9.78 9.97 9.76 9.66 9.76 C6.63 9.76 4.17 12.22 4.17 15.25 C4.17 18.28 6.63 20.74 9.66 20.74 C12.69 20.74 15.15 18.28 15.15 15.25 L15.15 8.53 C16.37 9.4 17.89 9.9 19.53 9.9 L19.53 7.06 C19.55 6.85 19.57 6.77 19.59 6.69 Z',s/24,0,0,j)
-    }
-
-    document.querySelectorAll('.social-icon').forEach(el => {
-      const cvs=el.querySelector('canvas'), c=cvs.getContext('2d')
-      drawTiktok(c, cvs.width, 0.6)
-      let hi=null
-      el.addEventListener('mouseenter',()=>{hi=setInterval(()=>drawTiktok(c,cvs.width,1.8),100)})
-      el.addEventListener('mouseleave',()=>{clearInterval(hi);drawTiktok(c,cvs.width,0.6)})
-      const href=el.getAttribute('href')
-      if(href&&href!=='#') el.addEventListener('click',e=>{e.preventDefault();document.body.style.transition='transform 0.7s cubic-bezier(0.7,0,0.84,0),opacity 0.7s ease';document.body.style.transform='translateY(30%)';document.body.style.opacity='0';setTimeout(()=>{window.top.location.href=href},700)})
-    })
-
-    // ── Playlist ──
-    const playlist=[{title:'#SILKROAD',src:'/mev/tracks/%23SILKROAD.mp3'}]
-    let currentTrack=0, playing=false
-    const playerAudio=document.getElementById('player-audio')
-    playerAudio.src=playlist[0].src; playerAudio.volume=0.45
-
-    function loadTrack(i){currentTrack=((i%playlist.length)+playlist.length)%playlist.length;playerAudio.src=playlist[currentTrack].src;startTitleAnim()}
-    function togglePlay(){if(playing){playerAudio.pause();playing=false}else{playerAudio.play().catch(()=>{});playing=true};drawPlayPause()}
-    function nextTrack(){loadTrack(currentTrack+1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
-    function prevTrack(){loadTrack(currentTrack-1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
-    playerAudio.addEventListener('ended',nextTrack)
-
-    // ── Title scroll ──
-    const tc=document.getElementById('player-title-canvas').getContext('2d')
-    const TW=250,TH=22,TF='14px "JetBrains Mono",monospace'
-    let ttw=0,ttext='',toff=0,tphase='pause-start',tlt=0,tpe=0,trf=0,tre=0
-    function cubicBezier(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
-    function startTitleAnim(){ttext=playlist[currentTrack].title;tc.font=TF;ttw=Math.ceil(tc.measureText(ttext).width);toff=0;tphase='pause-start';tpe=0;tlt=0}
-    function drawTitle(now){
-      if(!tlt)tlt=now; const dt=Math.min(now-tlt,50);tlt=now
-      if(ttw>TW){const ms=ttw-TW;if(tphase==='pause-start'){tpe+=dt;if(tpe>=1500)tphase='scroll'}else if(tphase==='scroll'){toff+=35*(dt/1000);if(toff>=ms){toff=ms;tphase='pause-end';tpe=0}}else if(tphase==='pause-end'){tpe+=dt;if(tpe>=1500){tphase='reset';trf=toff;tre=0}}else if(tphase==='reset'){tre+=dt;const t=Math.min(1,tre/800);toff=trf*(1-cubicBezier(t));if(t>=1){toff=0;tphase='pause-start';tpe=0}}}
-      tc.clearRect(0,0,TW,TH);tc.save();tc.beginPath();tc.rect(0,0,TW,TH);tc.clip()
-      tc.font=TF;tc.textBaseline='middle';tc.fillStyle='rgba(255,255,255,0.35)'
-      tc.fillText(ttext,ttw<=TW?TW-ttw-1:-toff,TH/2);tc.restore();requestAnimationFrame(drawTitle)
-    }
-    requestAnimationFrame(drawTitle)
-
-    // ── Player buttons ──
-    function drawPlayPause(j){const cvs=document.getElementById('player-toggle').querySelector('canvas'),c=cvs.getContext('2d'),s=44;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.5;c.lineCap='round';if(playing){sketchLine(c,s*.33,s*.22,s*.33,s*.78,j);sketchLine(c,s*.67,s*.22,s*.67,s*.78,j)}else{sketchLine(c,s*.28,s*.18,s*.28,s*.82,j);sketchLine(c,s*.28,s*.18,s*.78,s*.5,j);sketchLine(c,s*.78,s*.5,s*.28,s*.82,j)}}
-    function drawPrev(j){const cvs=document.getElementById('player-prev').querySelector('canvas'),c=cvs.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.55,s*.22,s*.28,s*.5,j);sketchLine(c,s*.28,s*.5,s*.55,s*.78,j);sketchLine(c,s*.72,s*.22,s*.45,s*.5,j);sketchLine(c,s*.45,s*.5,s*.72,s*.78,j)}
-    function drawNext(j){const cvs=document.getElementById('player-next').querySelector('canvas'),c=cvs.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.28,s*.22,s*.55,s*.5,j);sketchLine(c,s*.55,s*.5,s*.28,s*.78,j);sketchLine(c,s*.45,s*.22,s*.72,s*.5,j);sketchLine(c,s*.72,s*.5,s*.45,s*.78,j)}
-    drawPlayPause();drawPrev();drawNext()
-
-    document.getElementById('player-toggle').addEventListener('click',togglePlay)
-    document.getElementById('player-prev').addEventListener('click',prevTrack)
-    document.getElementById('player-next').addEventListener('click',nextTrack)
-    ;[{id:'player-prev',fn:drawPrev},{id:'player-toggle',fn:drawPlayPause},{id:'player-next',fn:drawNext}].forEach(({id,fn})=>{
-      const el=document.getElementById(id); let iv=null
-      el.addEventListener('mouseenter',()=>{iv=setInterval(()=>fn(2.2),100)})
-      el.addEventListener('mouseleave',()=>{clearInterval(iv);fn()})
-    })
-
-    // ── Enter overlay ──
-    const overlay=document.getElementById('enter-overlay')
-    const bgVideo=document.getElementById('bg-video')
-    const eCvs=document.getElementById('enter-text'), eCtx=eCvs.getContext('2d')
-
-    function drawEnterText(){
-      eCtx.clearRect(0,0,280,20); eCtx.font='12px "JetBrains Mono",monospace'; eCtx.textAlign='center'; eCtx.textBaseline='middle'
-      for(let p=0;p<3;p++){eCtx.fillStyle='rgba(255,255,255,'+(0.15+Math.random()*0.06)+')';eCtx.fillText('click to see motion',140+(Math.random()-.5)*1.2,10+(Math.random()-.5)*0.8)}
-    }
-    drawEnterText(); const eJitter=setInterval(drawEnterText,120)
-
-    overlay.addEventListener('click', () => {
-      clearInterval(eJitter)
-      overlay.style.opacity='0'
-      overlay.style.pointerEvents='none'
-      setTimeout(()=>overlay.remove(), 1400)
-
-      // play video WITH sound
-      bgVideo.muted = false
-      bgVideo.volume = 0.75
-      const vp = bgVideo.play()
-      if (vp !== undefined) {
-        vp.catch(() => {
-          // autoplay blocked, fall back to muted
-          bgVideo.muted = true
-          bgVideo.play().catch(()=>{})
-        })
+      if (!act) {
+        for (const a of data.activities) {
+          if (a.type !== 4 && a.name) { act = 'playing ' + a.name; break; }
+        }
       }
-      setTimeout(()=>{ bgVideo.classList.add('visible') }, 80)
-
-      // fade in audio track too
-      playerAudio.volume = 0
-      playerAudio.play().then(()=>{
-        playing=true; drawPlayPause(); startTitleAnim()
-        const start=performance.now()
-        ;(function tick(){const p=Math.min(1,(performance.now()-start)/3000);playerAudio.volume=p*p*0.45;if(p<1)requestAnimationFrame(tick)})()
-      }).catch(()=>{})
-    })
-
-    // ── Snow ──
-    const sc=document.getElementById('effect-canvas'), sctx=sc.getContext('2d')
-    function rsz(){sc.width=window.innerWidth;sc.height=window.innerHeight}
-    rsz(); window.addEventListener('resize',rsz)
-    const flakes=[]
-    for(let i=0;i<120;i++)flakes.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:0.5+Math.random()*2.5,speed:0.3+Math.random()*1,wind:(Math.random()-.5)*0.3,sway:Math.random()*Math.PI*2,swaySpeed:0.005+Math.random()*0.01,swayAmp:0.3+Math.random()*0.6,alpha:0.1+Math.random()*0.25})
-    function drawSnow(){
-      const W=sc.width,H=sc.height; sctx.clearRect(0,0,W,H)
-      for(const f of flakes){f.y+=f.speed;f.sway+=f.swaySpeed;f.x+=f.wind+Math.sin(f.sway)*f.swayAmp*0.3;if(f.y>H+5){f.y=-5;f.x=Math.random()*W}if(f.x>W+5)f.x=-5;if(f.x<-5)f.x=W+5;sctx.globalAlpha=f.alpha;sctx.fillStyle='#fff';sctx.font=`${f.r*5}px monospace`;sctx.textAlign='center';sctx.textBaseline='middle';sctx.fillText('*',f.x,f.y)}
-      requestAnimationFrame(drawSnow)
     }
-    sc.style.opacity='0'; sc.style.transition='opacity 2s ease'
-    setTimeout(()=>{sc.style.opacity='1';drawSnow()},600)
+    document.getElementById('dc-activity').textContent = act;
+    if (act) document.getElementById('dc-tagline').textContent = act.slice(0,36);
 
-    // ── Cross cursor ──
-    ;(function(){
-      const SZ=32,FR=4,PX=2,cv=document.createElement('canvas'); cv.width=SZ; cv.height=SZ; const cx=cv.getContext('2d')
-      const cr=['...............','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......',`....#######....`,'.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......']
-      function df(f){cx.clearRect(0,0,SZ,SZ);const p=0.7+0.2*Math.sin(f*Math.PI/2);for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(0,0,0,0.7)';cx.fillRect(x*PX-1,y*PX,PX+2,PX+2);cx.fillRect(x*PX,y*PX-1,PX+2,PX+2)};for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(255,255,255,'+p+')';cx.fillRect(x*PX+1,y*PX+1,PX,PX)};return cv.toDataURL('image/png')}
-      const fs=[];for(let i=0;i<FR;i++)fs.push(df(i));let cur=0
-      function ap(){document.body.style.cursor='url('+fs[cur]+') 15 21, crosshair';cur=(cur+1)%FR}
-      ap(); setInterval(ap,250)
-    })()
+  } catch(e) {}
+}
 
-    // ── Sparkle trail ──
-    ;(function(){
-      const N=50; let smx=400,smy=300,osmx=400,osmy=300
-      const stars=[],tiny=[],sv=[],tv=[],ssx=[],ssy=[],ttx=[],tty=[]
-      function mkDiv(w,h){const d=document.createElement('div');d.style.cssText=`position:absolute;width:${w}px;height:${h}px;overflow:hidden;pointer-events:none`;return d}
-      for(let i=0;i<N;i++){
-        const t=mkDiv(3,3);t.style.visibility='hidden';t.style.zIndex='9999';document.body.appendChild(t);tiny.push(t);sv[i]=0;tv[i]=0
-        const s=mkDiv(5,5);s.style.cssText+=';background:transparent;visibility:hidden;z-index:9999'
-        const h=mkDiv(5,1),v=mkDiv(1,5);h.style.cssText+='top:2px;left:0';v.style.cssText+='top:0;left:2px'
-        s.appendChild(h);s.appendChild(v);document.body.appendChild(s);stars.push(s)
-      }
-      document.addEventListener('mousemove',e=>{smx=e.pageX;smy=e.pageY})
-      function sparkle(){
-        if(Math.abs(smx-osmx)>1||Math.abs(smy-osmy)>1){osmx=smx;osmy=smy;for(let i=0;i<N;i++){if(!sv[i]){stars[i].style.left=(ssx[i]=smx)+'px';stars[i].style.top=(ssy[i]=smy)+'px';stars[i].style.clip='rect(0px,5px,5px,0px)';stars[i].childNodes[0].style.backgroundColor='white';stars[i].childNodes[1].style.backgroundColor='white';stars[i].style.visibility='visible';sv[i]=50;break}}}
-        for(let i=0;i<N;i++){if(sv[i])uStar(i);if(tv[i])uTiny(i)}
-        setTimeout(sparkle,40)
-      }
-      function uStar(i){if(--sv[i]===25)stars[i].style.clip='rect(1px,4px,4px,1px)';if(sv[i]){ssy[i]+=1+Math.random()*3;ssx[i]+=(i%5-2)/5;if(ssy[i]<document.documentElement.scrollHeight){stars[i].style.top=ssy[i]+'px';stars[i].style.left=ssx[i]+'px'}else{stars[i].style.visibility='hidden';sv[i]=0;return}}else{tv[i]=50;tiny[i].style.top=(tty[i]=ssy[i])+'px';tiny[i].style.left=(ttx[i]=ssx[i])+'px';tiny[i].style.width='2px';tiny[i].style.height='2px';tiny[i].style.backgroundColor='white';stars[i].style.visibility='hidden';tiny[i].style.visibility='visible'}}
-      function uTiny(i){if(--tv[i]===25){tiny[i].style.width='1px';tiny[i].style.height='1px'}if(tv[i]){tty[i]+=1+Math.random()*3;ttx[i]+=(i%5-2)/5;if(tty[i]<document.documentElement.scrollHeight){tiny[i].style.top=tty[i]+'px';tiny[i].style.left=ttx[i]+'px'}else{tiny[i].style.visibility='hidden';tv[i]=0;return}}else tiny[i].style.visibility='hidden'}
-      sparkle()
-    })()
-  </script>
+// run both; Lanyard also acts as a backup for avatar/username
+loadDiscordProfile();
+loadPresence();
+setInterval(loadPresence, 25000);
+
+// ── Sketchy utils ──
+function sketchLine(c,x1,y1,x2,y2,j){const s=4+Math.floor(Math.random()*3);c.beginPath();c.moveTo(x1+(Math.random()-.5)*j,y1+(Math.random()-.5)*j);for(let i=1;i<=s;i++){const t=i/s;c.lineTo(x1+(x2-x1)*t+(Math.random()-.5)*j,y1+(y2-y1)*t+(Math.random()-.5)*j)}c.stroke()}
+
+// ── Playlist ──
+const playlist=[{title:'#SILKROAD',src:'/mev/tracks/%23SILKROAD.mp3'}];
+let currentTrack=0,playing=false;
+const playerAudio=document.getElementById('player-audio');
+playerAudio.src=playlist[0].src; playerAudio.volume=0.45;
+function loadTrack(i){currentTrack=((i%playlist.length)+playlist.length)%playlist.length;playerAudio.src=playlist[currentTrack].src;startTitleAnim()}
+function togglePlay(){playing?playerAudio.pause():playerAudio.play().catch(()=>{});playing=!playing;drawPlayPause()}
+function nextTrack(){loadTrack(currentTrack+1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
+function prevTrack(){loadTrack(currentTrack-1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
+playerAudio.addEventListener('ended',nextTrack);
+
+// ── Title scroll ──
+const tc=document.getElementById('player-title-canvas').getContext('2d');
+const TW=250,TH=22,TF='14px "JetBrains Mono",monospace';
+let ttw=0,ttext='',toff=0,tphase='pause-start',tlt=0,tpe=0,trf=0,tre=0;
+function cBez(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
+function startTitleAnim(){ttext=playlist[currentTrack].title;tc.font=TF;ttw=Math.ceil(tc.measureText(ttext).width);toff=0;tphase='pause-start';tpe=0;tlt=0}
+function drawTitle(now){
+  if(!tlt)tlt=now;const dt=Math.min(now-tlt,50);tlt=now;
+  if(ttw>TW){const ms=ttw-TW;if(tphase==='pause-start'){tpe+=dt;if(tpe>=1500)tphase='scroll'}else if(tphase==='scroll'){toff+=35*(dt/1000);if(toff>=ms){toff=ms;tphase='pause-end';tpe=0}}else if(tphase==='pause-end'){tpe+=dt;if(tpe>=1500){tphase='reset';trf=toff;tre=0}}else if(tphase==='reset'){tre+=dt;const t=Math.min(1,tre/800);toff=trf*(1-cBez(t));if(t>=1){toff=0;tphase='pause-start';tpe=0}}}
+  tc.clearRect(0,0,TW,TH);tc.save();tc.beginPath();tc.rect(0,0,TW,TH);tc.clip();tc.font=TF;tc.textBaseline='middle';tc.fillStyle='rgba(255,255,255,0.35)';tc.fillText(ttext,ttw<=TW?TW-ttw-1:-toff,TH/2);tc.restore();requestAnimationFrame(drawTitle)
+}
+requestAnimationFrame(drawTitle);
+
+// ── Player buttons ──
+function drawPlayPause(j){const cv=document.getElementById('player-toggle').querySelector('canvas'),c=cv.getContext('2d'),s=44;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.5;c.lineCap='round';if(playing){sketchLine(c,s*.33,s*.22,s*.33,s*.78,j);sketchLine(c,s*.67,s*.22,s*.67,s*.78,j)}else{sketchLine(c,s*.28,s*.18,s*.28,s*.82,j);sketchLine(c,s*.28,s*.18,s*.78,s*.5,j);sketchLine(c,s*.78,s*.5,s*.28,s*.82,j)}}
+function drawPrev(j){const cv=document.getElementById('player-prev').querySelector('canvas'),c=cv.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.55,s*.22,s*.28,s*.5,j);sketchLine(c,s*.28,s*.5,s*.55,s*.78,j);sketchLine(c,s*.72,s*.22,s*.45,s*.5,j);sketchLine(c,s*.45,s*.5,s*.72,s*.78,j)}
+function drawNext(j){const cv=document.getElementById('player-next').querySelector('canvas'),c=cv.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.28,s*.22,s*.55,s*.5,j);sketchLine(c,s*.55,s*.5,s*.28,s*.78,j);sketchLine(c,s*.45,s*.22,s*.72,s*.5,j);sketchLine(c,s*.72,s*.5,s*.45,s*.78,j)}
+drawPlayPause();drawPrev();drawNext();
+document.getElementById('player-toggle').addEventListener('click',togglePlay);
+document.getElementById('player-prev').addEventListener('click',prevTrack);
+document.getElementById('player-next').addEventListener('click',nextTrack);
+[{id:'player-prev',fn:drawPrev},{id:'player-toggle',fn:drawPlayPause},{id:'player-next',fn:drawNext}].forEach(({id,fn})=>{
+  const el=document.getElementById(id);let iv=null;
+  el.addEventListener('mouseenter',()=>{iv=setInterval(()=>fn(2.2),100)});
+  el.addEventListener('mouseleave',()=>{clearInterval(iv);fn()});
+});
+
+// ── Enter overlay ──
+const overlay=document.getElementById('enter-overlay');
+const bgVideo=document.getElementById('bg-video');
+const eCvs=document.getElementById('enter-text'),eCtx=eCvs.getContext('2d');
+function drawEnterText(){eCtx.clearRect(0,0,280,20);eCtx.font='12px "JetBrains Mono",monospace';eCtx.textAlign='center';eCtx.textBaseline='middle';for(let p=0;p<3;p++){eCtx.fillStyle='rgba(255,255,255,'+(0.15+Math.random()*.06)+')';eCtx.fillText('click to enter',140+(Math.random()-.5)*1.2,10+(Math.random()-.5)*.8)}}
+drawEnterText();const eJitter=setInterval(drawEnterText,120);
+overlay.addEventListener('click',()=>{
+  clearInterval(eJitter);overlay.style.opacity='0';overlay.style.pointerEvents='none';
+  setTimeout(()=>overlay.remove(),1400);
+  bgVideo.muted=false;bgVideo.volume=0.75;
+  const vp=bgVideo.play();if(vp)vp.catch(()=>{bgVideo.muted=true;bgVideo.play().catch(()=>{})});
+  setTimeout(()=>bgVideo.classList.add('visible'),80);
+  playerAudio.volume=0;
+  playerAudio.play().then(()=>{
+    playing=true;drawPlayPause();startTitleAnim();
+    const st=performance.now();
+    (function tick(){const p=Math.min(1,(performance.now()-st)/3000);playerAudio.volume=p*p*.45;if(p<1)requestAnimationFrame(tick)})();
+  }).catch(()=>{});
+});
+
+// ── Snow ──
+const sc=document.getElementById('effect-canvas'),sctx=sc.getContext('2d');
+function rsz(){sc.width=window.innerWidth;sc.height=window.innerHeight}
+rsz();window.addEventListener('resize',rsz);
+const flakes=[];
+for(let i=0;i<120;i++)flakes.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:.5+Math.random()*2.5,speed:.3+Math.random(),wind:(Math.random()-.5)*.3,sway:Math.random()*Math.PI*2,swaySpeed:.005+Math.random()*.01,swayAmp:.3+Math.random()*.6,alpha:.07+Math.random()*.16});
+function drawSnow(){const W=sc.width,H=sc.height;sctx.clearRect(0,0,W,H);for(const f of flakes){f.y+=f.speed;f.sway+=f.swaySpeed;f.x+=f.wind+Math.sin(f.sway)*f.swayAmp*.3;if(f.y>H+5){f.y=-5;f.x=Math.random()*W}if(f.x>W+5)f.x=-5;if(f.x<-5)f.x=W+5;sctx.globalAlpha=f.alpha;sctx.fillStyle='#fff';sctx.font=`${f.r*5}px monospace`;sctx.textAlign='center';sctx.textBaseline='middle';sctx.fillText('*',f.x,f.y)}requestAnimationFrame(drawSnow)}
+sc.style.opacity='0';sc.style.transition='opacity 2s ease';
+setTimeout(()=>{sc.style.opacity='1';drawSnow()},600);
+
+// ── Cursor ──
+;(function(){const SZ=32,PX=2,cv=document.createElement('canvas');cv.width=SZ;cv.height=SZ;const cx=cv.getContext('2d');const cr=['.......#.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','....#######....','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......','.......'+'#'+'.......'];function df(f){cx.clearRect(0,0,SZ,SZ);const p=.7+.2*Math.sin(f*Math.PI/2);for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(0,0,0,.7)';cx.fillRect(x*PX-1,y*PX,PX+2,PX+2);cx.fillRect(x*PX,y*PX-1,PX+2,PX+2)};for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(255,255,255,'+p+')';cx.fillRect(x*PX+1,y*PX+1,PX,PX)};return cv.toDataURL('image/png')}const fs=[];for(let i=0;i<4;i++)fs.push(df(i));let cur=0;function ap(){document.body.style.cursor='url('+fs[cur]+') 15 21, crosshair';cur=(cur+1)%4}ap();setInterval(ap,250);})();
+
+// ── Sparkle trail ──
+;(function(){const N=50;let smx=400,smy=300,osmx=400,osmy=300;const stars=[],tiny=[],sv=[],tv=[],ssx=[],ssy=[],ttx=[],tty=[];function mkDiv(w,h){const d=document.createElement('div');d.style.cssText=`position:absolute;width:${w}px;height:${h}px;overflow:hidden;pointer-events:none`;return d}for(let i=0;i<N;i++){const t=mkDiv(3,3);t.style.visibility='hidden';t.style.zIndex='9999';document.body.appendChild(t);tiny.push(t);sv[i]=0;tv[i]=0;const s=mkDiv(5,5);s.style.cssText+=';background:transparent;visibility:hidden;z-index:9999';const h=mkDiv(5,1),v=mkDiv(1,5);h.style.cssText+='top:2px;left:0';v.style.cssText+='top:0;left:2px';s.appendChild(h);s.appendChild(v);document.body.appendChild(s);stars.push(s)}document.addEventListener('mousemove',e=>{smx=e.pageX;smy=e.pageY});function sparkle(){if(Math.abs(smx-osmx)>1||Math.abs(smy-osmy)>1){osmx=smx;osmy=smy;for(let i=0;i<N;i++){if(!sv[i]){stars[i].style.left=(ssx[i]=smx)+'px';stars[i].style.top=(ssy[i]=smy)+'px';stars[i].style.clip='rect(0px,5px,5px,0px)';stars[i].childNodes[0].style.backgroundColor='white';stars[i].childNodes[1].style.backgroundColor='white';stars[i].style.visibility='visible';sv[i]=50;break}}}for(let i=0;i<N;i++){if(sv[i])uStar(i);if(tv[i])uTiny(i)}setTimeout(sparkle,40)}function uStar(i){if(--sv[i]===25)stars[i].style.clip='rect(1px,4px,4px,1px)';if(sv[i]){ssy[i]+=1+Math.random()*3;ssx[i]+=(i%5-2)/5;if(ssy[i]<document.documentElement.scrollHeight){stars[i].style.top=ssy[i]+'px';stars[i].style.left=ssx[i]+'px'}else{stars[i].style.visibility='hidden';sv[i]=0;return}}else{tv[i]=50;tiny[i].style.top=(tty[i]=ssy[i])+'px';tiny[i].style.left=(ttx[i]=ssx[i])+'px';tiny[i].style.width='2px';tiny[i].style.height='2px';tiny[i].style.backgroundColor='white';stars[i].style.visibility='hidden';tiny[i].style.visibility='visible'}}function uTiny(i){if(--tv[i]===25){tiny[i].style.width='1px';tiny[i].style.height='1px'}if(tv[i]){tty[i]+=1+Math.random()*3;ttx[i]+=(i%5-2)/5;if(tty[i]<document.documentElement.scrollHeight){tiny[i].style.top=tty[i]+'px';tiny[i].style.left=ttx[i]+'px'}else{tiny[i].style.visibility='hidden';tv[i]=0;return}}else tiny[i].style.visibility='hidden'}sparkle();})();
+
+// ── Social click transitions ──
+document.querySelectorAll('.social-btn').forEach(el=>{
+  const href=el.getAttribute('href');
+  if(href&&href!=='#'){el.addEventListener('click',e=>{e.preventDefault();document.body.style.transition='transform .7s cubic-bezier(.7,0,.84,0),opacity .7s ease';document.body.style.transform='translateY(30%)';document.body.style.opacity='0';setTimeout(()=>{window.top.location.href=href},700)})}
+});
+</script>
 </body>
 </html>
