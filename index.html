@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* Your existing CSS stays exactly the same - copy from your current file */
 :root {
   --bg: #000000;
   --surface: #080808;
@@ -439,54 +440,54 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'discussion', COMMENT_INTENT = 'comment';
 let pendingAvatarFile = null, pendingBannerFile = null;
 
-// ── BOOT WITH HASH ROUTING FOR GITHUB PAGES ──────────
+// ── BOOT WITH CLEAN URL SUPPORT ───────────────────────
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) { ME = session.user; PROF = await getProfile(ME.id); }
   renderNav();
 
-  // Handle hash-based routing (works with GitHub Pages)
-  let hash = window.location.hash.substring(1);
+  // Get the current path without the domain
+  let fullPath = window.location.pathname;
   
-  // If no hash but URL has path, try to recover (for direct links)
-  if (!hash && window.location.pathname !== '/') {
-    let path = window.location.pathname;
-    // Convert /thread/id to thread/id
-    if (path.startsWith('/thread/')) {
-      hash = path.substring(1);
-      window.location.hash = hash;
-      window.location.pathname = '/';
-      return;
-    }
-    // Convert /users/@username to users/@username
-    if (path.startsWith('/users/@')) {
-      hash = path.substring(1);
-      window.location.hash = hash;
-      window.location.pathname = '/';
-      return;
-    }
+  // Also check if there's a saved route from 404 redirect
+  const savedRoute = sessionStorage.getItem('redirectRoute');
+  if (savedRoute) {
+    fullPath = savedRoute;
+    sessionStorage.removeItem('redirectRoute');
   }
   
-  if (hash.startsWith('thread/')) {
-    const threadId = hash.replace('thread/', '');
+  // Handle different route patterns
+  if (fullPath.startsWith('/thread/')) {
+    const threadId = fullPath.replace('/thread/', '');
     loadThread(threadId);
     showPage('thread');
+    // Update URL without reloading
+    window.history.pushState({}, '', fullPath);
   } 
-  else if (hash.startsWith('users/@')) {
-    const username = hash.replace('users/@', '');
+  else if (fullPath.startsWith('/users/@')) {
+    const username = fullPath.replace('/users/@', '');
     loadProfilePage(username);
+    showPage('profile');
+    // Update URL without reloading
+    window.history.pushState({}, '', fullPath);
   }
-  else if (hash === 'settings') {
+  else if (fullPath === '/settings') {
     if (ME) showPage('settings');
     else showPage('login');
+    window.history.pushState({}, '', fullPath);
   }
-  else if (hash === 'new') {
+  else if (fullPath === '/new') {
     if (ME) showPage('new');
     else showPage('login');
+    window.history.pushState({}, '', fullPath);
   }
   else {
     showPage('home');
     loadFeed();
+    // Only update if not already at root
+    if (fullPath !== '/') {
+      window.history.pushState({}, '', '/');
+    }
   }
 
   sb.auth.onAuthStateChange(async (ev, sess) => {
@@ -495,21 +496,21 @@ async function boot() {
   });
 }
 
-// Listen for hash changes
-window.addEventListener('hashchange', () => {
+// Handle browser back/forward buttons
+window.addEventListener('popstate', () => {
   boot();
 });
 
-// Update pushState for hash routing
+// Update pushState for clean URLs
 function pushState(path) {
-  path = path.replace(/^\//, '');
-  window.location.hash = path;
+  const fullPath = path.startsWith('/') ? path : '/' + path;
+  window.history.pushState({}, '', fullPath);
 }
 
 // ── NAV ───────────────────────────────────────────────
 function renderNav() {
   document.getElementById('nav-logo').onclick = () => { 
-    if (window.location.hash) window.location.hash = '';
+    pushState('');
     showPage('home'); 
     loadFeed(); 
   };
@@ -532,6 +533,21 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const el = document.getElementById('page-'+id);
   if (el) el.classList.add('active');
+  
+  // Update URL based on page
+  if (id === 'home') {
+    pushState('');
+  } else if (id === 'settings') {
+    pushState('settings');
+  } else if (id === 'new') {
+    pushState('new');
+  } else if (id === 'login') {
+    pushState('login');
+  } else if (id === 'register') {
+    pushState('register');
+  }
+  // profile and thread URLs are handled in their respective functions
+  
   window.scrollTo(0,0);
   if (id === 'home') loadFeed();
   if (id === 'new' && !ME) { showPage('login'); return; }
@@ -627,10 +643,9 @@ async function getProfile(uid) {
 
 async function loadProfilePage(username) {
   showPage('profile');
-  // Only update hash if we're not already on this user
-  if (!window.location.hash.includes(username)) {
-    pushState(`users/@${username}`);
-  }
+  // Update URL
+  pushState(`users/@${username}`);
+  
   const el = document.getElementById('prof-content');
   el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
   
@@ -948,7 +963,7 @@ async function delThread(id) {
   await sb.from('comments').delete().eq('thread_id',id);
   await sb.from('threads').delete().eq('id',id).eq('author_id',ME.id);
   toast('thread deleted');
-  if (window.location.hash) window.location.hash = '';
+  pushState('');
   showPage('home');
 }
 
