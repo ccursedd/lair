@@ -1,303 +1,1315 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>mev</title>
-  <link rel="icon" type="image/png" href="/fav/f0.png">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; height: 100vh; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lair.lat — threads & drops</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111113;
+    --surface2: #18181b;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #c8f135;
+    --accent2: #8fff6a;
+    --danger: #ff4d4d;
+    --tag-bg: rgba(200,241,53,0.08);
+    --tag-text: #c8f135;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  input, textarea, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    width: 100%;
+    transition: border .2s;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  button {
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 10px 18px;
+    transition: all .15s;
+  }
+  button:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0a0b;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(255,77,77,0.3);
+    font-size: 13px;
+    padding: 7px 14px;
+  }
+  .btn-danger:hover { background: rgba(255,77,77,0.1); }
 
-    #bg-video {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 2s ease;
-      pointer-events: none;
-    }
-    #bg-video.visible { opacity: 0.55; }
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,11,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  .nav-logo span { color: var(--text); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .nav-user:hover { color: var(--text); }
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-    #effect-canvas {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none;
-    }
+  /* LAYOUT */
+  .layout {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
 
-    .pfp-wrap {
-      margin-top: 22vh;
-      position: relative;
-      z-index: 10;
-      opacity: 0;
-      transform: scale(0.92);
-      animation: pfpIn 1.4s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    @keyframes pfpIn { to { opacity: 1; transform: scale(1); } }
-    .pfp { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; display: block; }
+  /* PAGE SECTIONS */
+  .page { display: none; }
+  .page.active { display: block; }
 
-    .enter-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: opacity 1.4s ease;
-    }
+  /* HOME FEED */
+  .feed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .feed-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .feed-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--tag-bg);
+    color: var(--accent);
+    border-color: rgba(200,241,53,0.2);
+  }
 
-    .player {
-      position: fixed;
-      bottom: 24px;
-      right: 28px;
-      align-items: flex-end;
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      opacity: 0;
-      animation: pfpIn 1s 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .player-title-wrap { height: 22px; overflow: hidden; }
-    .player-title-wrap canvas { display: block; }
-    .player-controls { display: flex; align-items: center; gap: 14px; }
-    .player-btn {
-      background: none; border: none; cursor: pointer; padding: 2px;
-      opacity: 0.18; transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .player-btn:hover { opacity: 0.55; transform: translateY(-1px); }
-    .player-btn canvas { display: block; }
+  /* THREAD CARD */
+  .thread-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .thread-card:hover { border-color: var(--border2); background: #131315; }
+  .thread-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .thread-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .thread-author {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .thread-time {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .thread-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.35;
+    letter-spacing: -0.2px;
+  }
+  .thread-body {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 12px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .thread-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .tag {
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border: 1px solid rgba(200,241,53,0.15);
+  }
+  .tag.buy { background: rgba(55,130,230,0.1); color: #5ba4f5; border-color: rgba(55,130,230,0.2); }
+  .tag.sell { background: rgba(250,180,0,0.1); color: #fab400; border-color: rgba(250,180,0,0.2); }
+  .tag.trade { background: rgba(180,100,255,0.1); color: #c47aff; border-color: rgba(180,100,255,0.2); }
+  .thread-stats {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .stat-item { display: flex; align-items: center; gap: 4px; }
 
-    .socials {
-      margin-top: 40px;
-      display: flex;
-      gap: 20px;
-      z-index: 10;
-      opacity: 0;
-      transform: translateY(8px);
-      animation: pfpIn 1s 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .social-icon { display: block; cursor: pointer; opacity: 0.2; transition: opacity 0.3s ease, transform 0.3s ease; }
-    .social-icon:hover { opacity: 0.6; transform: translateY(-2px); }
-    .social-icon canvas { display: block; }
-  </style>
+  /* THREAD VIEW */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: color .15s;
+  }
+  .back-btn:hover { color: var(--text); }
+  .thread-full {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .thread-full-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 14px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+  }
+  .thread-full-body {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #ccc;
+    white-space: pre-wrap;
+  }
+  .price-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    margin: 16px 0;
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .price-label { font-size: 12px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+
+  /* COMMENTS */
+  .comments-section { margin-top: 8px; }
+  .comments-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .comment-count {
+    background: var(--surface2);
+    border-radius: 99px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+  .comment-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 10px;
+  }
+  .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .comment-author { font-size: 13px; font-weight: 600; }
+  .comment-time { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .comment-text { font-size: 14px; color: #ccc; line-height: 1.6; }
+  .comment-intent {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 99px;
+  }
+  .intent-buy { background: rgba(55,130,230,0.1); color: #5ba4f5; }
+  .intent-offer { background: rgba(250,180,0,0.1); color: #fab400; }
+  .write-comment {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .write-comment textarea {
+    resize: vertical;
+    min-height: 80px;
+    margin-bottom: 10px;
+  }
+  .comment-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .intent-select { display: flex; gap: 6px; }
+  .intent-chip {
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    transition: all .15s;
+  }
+  .intent-chip.selected-buy { border-color: rgba(55,130,230,0.4); background: rgba(55,130,230,0.1); color: #5ba4f5; }
+  .intent-chip.selected-offer { border-color: rgba(250,180,0,0.4); background: rgba(250,180,0,0.1); color: #fab400; }
+  .intent-chip.selected-comment { border-color: rgba(200,241,53,0.3); background: var(--tag-bg); color: var(--accent); }
+
+  /* NEW THREAD */
+  .new-thread-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .form-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'DM Mono', monospace;
+  }
+  .type-selector { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .type-chip {
+    padding: 8px 16px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    transition: all .15s;
+  }
+  .type-chip.active-discussion { background: var(--tag-bg); color: var(--accent); border-color: rgba(200,241,53,0.3); }
+  .type-chip.active-selling { background: rgba(250,180,0,0.1); color: #fab400; border-color: rgba(250,180,0,0.3); }
+  .type-chip.active-buying { background: rgba(55,130,230,0.1); color: #5ba4f5; border-color: rgba(55,130,230,0.3); }
+  .type-chip.active-trading { background: rgba(180,100,255,0.1); color: #c47aff; border-color: rgba(180,100,255,0.3); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* AUTH */
+  .auth-wrap {
+    min-height: calc(100vh - 56px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .auth-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .auth-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .auth-subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  .auth-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .auth-switch {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .auth-switch a { color: var(--accent); cursor: pointer; }
+  .auth-switch a:hover { text-decoration: underline; }
+  .error-msg {
+    background: rgba(255,77,77,0.1);
+    border: 1px solid rgba(255,77,77,0.2);
+    color: #ff7070;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+  }
+
+  /* PROFILE */
+  .profile-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .profile-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid rgba(200,241,53,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .profile-info { flex: 1; }
+  .profile-username {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+  }
+  .profile-url {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 8px;
+  }
+  .profile-bio { font-size: 14px; color: #aaa; line-height: 1.5; }
+  .profile-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 14px;
+  }
+  .pstat { text-align: center; }
+  .pstat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .pstat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .section-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 11px;
+  }
+
+  /* SETTINGS */
+  .settings-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 12px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; margin-bottom: 16px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    font-size: 14px;
+    color: var(--text);
+    z-index: 9999;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all .25s;
+    max-width: 300px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: rgba(200,241,53,0.3); }
+  .toast.error { border-color: rgba(255,77,77,0.3); color: #ff7070; }
+
+  /* LOADING */
+  .spinner {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+  }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* MISC */
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mb-0 { margin-bottom: 0; }
+  .w-full { width: 100%; }
+  .text-muted { color: var(--muted); }
+  .text-sm { font-size: 13px; }
+  .font-mono { font-family: 'DM Mono', monospace; }
+
+  @media (max-width: 500px) {
+    .form-row { grid-template-columns: 1fr; }
+    .profile-header { flex-direction: column; }
+    nav { padding: 0 14px; }
+    .layout { padding: 20px 14px 60px; }
+  }
+</style>
 </head>
 <body>
 
-  <video id="bg-video" src="https://github.com/ccursedd/lair/raw/refs/heads/main/fun.mp4" loop playsinline></video>
-
-  <div class="enter-overlay" id="enter-overlay">
-    <canvas id="enter-text" width="280" height="20"></canvas>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="navigate('home')" style="cursor:pointer">lair<span>.lat</span></div>
+  <div class="nav-right" id="nav-right">
+    <button class="btn-ghost" onclick="navigate('login')" style="padding:7px 14px;font-size:13px">sign in</button>
+    <button class="btn-primary" onclick="navigate('register')" style="padding:7px 14px;font-size:13px">join</button>
   </div>
+</nav>
 
-  <div class="pfp-wrap">
-    <img class="pfp" src="https://cdn.discordapp.com/avatars/1463280835577774120/placeholder.png?size=256" alt="mev">
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PAGES -->
+
+<!-- HOME -->
+<div class="page active layout" id="page-home">
+  <div class="feed-header">
+    <div class="feed-title">threads</div>
+    <button class="btn-primary" id="new-thread-btn" style="display:none" onclick="navigate('new-thread')">+ new thread</button>
   </div>
+  <div class="feed-filters">
+    <button class="filter-btn active" data-filter="all">all</button>
+    <button class="filter-btn" data-filter="discussion">discussion</button>
+    <button class="filter-btn" data-filter="selling">selling</button>
+    <button class="filter-btn" data-filter="buying">buying</button>
+    <button class="filter-btn" data-filter="trading">trading</button>
+  </div>
+  <div id="thread-list">
+    <div class="loading-state"><div class="spinner"></div></div>
+  </div>
+</div>
 
-  <div class="player">
-    <div class="player-title-wrap"><canvas id="player-title-canvas" width="250" height="22"></canvas></div>
-    <div class="player-controls">
-      <button class="player-btn" id="player-prev"><canvas width="40" height="40"></canvas></button>
-      <button class="player-btn" id="player-toggle"><canvas width="44" height="44"></canvas></button>
-      <button class="player-btn" id="player-next"><canvas width="40" height="40"></canvas></button>
+<!-- THREAD VIEW -->
+<div class="page layout" id="page-thread">
+  <div class="back-btn" onclick="navigate('home')">← back</div>
+  <div id="thread-view-content"></div>
+</div>
+
+<!-- NEW THREAD -->
+<div class="page layout" id="page-new-thread">
+  <div class="back-btn" onclick="navigate('home')">← back</div>
+  <div class="new-thread-form">
+    <div class="form-title">new thread</div>
+    <div class="form-group">
+      <label class="form-label">type</label>
+      <div class="type-selector">
+        <button class="type-chip active-discussion" data-type="discussion" onclick="selectType(this,'discussion')">💬 discussion</button>
+        <button class="type-chip" data-type="selling" onclick="selectType(this,'selling')">🏷️ selling</button>
+        <button class="type-chip" data-type="buying" onclick="selectType(this,'buying')">🛒 buying</button>
+        <button class="type-chip" data-type="trading" onclick="selectType(this,'trading')">🔄 trading</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">title</label>
+      <input type="text" id="nt-title" placeholder="what's this thread about?" maxlength="120">
+    </div>
+    <div class="form-group">
+      <label class="form-label">body</label>
+      <textarea id="nt-body" style="min-height:120px;resize:vertical" placeholder="describe it..."></textarea>
+    </div>
+    <div id="price-row" class="form-row" style="display:none">
+      <div class="form-group mb-0">
+        <label class="form-label">price ($)</label>
+        <input type="number" id="nt-price" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group mb-0">
+        <label class="form-label">location (optional)</label>
+        <input type="text" id="nt-location" placeholder="city, country">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">tags (comma separated)</label>
+      <input type="text" id="nt-tags" placeholder="sneakers, size 10, nike">
+    </div>
+    <div id="nt-error" class="error-msg" style="display:none"></div>
+    <button class="btn-primary w-full" onclick="submitThread()" id="nt-submit">post thread</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="page" id="page-login">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">lair.lat</div>
+      <div class="auth-subtitle">threads & drops</div>
+      <div class="auth-title">sign in</div>
+      <div id="login-error" class="error-msg" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label">email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">password</label>
+        <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()">
+      </div>
+      <button class="btn-primary w-full" onclick="signIn()" id="login-btn">sign in</button>
+      <div class="auth-switch">don't have an account? <a onclick="navigate('register')">join now</a></div>
     </div>
   </div>
+</div>
 
-  <div class="socials">
-    <a class="social-icon" href="https://www.tiktok.com/@zl_y" data-icon="tiktok"><canvas width="64" height="64"></canvas></a>
+<!-- REGISTER -->
+<div class="page" id="page-register">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">lair.lat</div>
+      <div class="auth-subtitle">threads & drops</div>
+      <div class="auth-title">create account</div>
+      <div id="reg-error" class="error-msg" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label">username</label>
+        <input type="text" id="reg-username" placeholder="yourhandle" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label class="form-label">email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">password</label>
+        <input type="password" id="reg-pass" placeholder="min 6 characters" onkeydown="if(event.key==='Enter')signUp()">
+      </div>
+      <button class="btn-primary w-full" onclick="signUp()" id="reg-btn">create account</button>
+      <div class="auth-switch">already have an account? <a onclick="navigate('login')">sign in</a></div>
+    </div>
   </div>
+</div>
 
-  <audio id="player-audio" preload="auto" src="/mev/tracks/%23SILKROAD.mp3"></audio>
-  <canvas id="effect-canvas"></canvas>
+<!-- PROFILE -->
+<div class="page layout" id="page-profile">
+  <div id="profile-content"></div>
+</div>
 
-  <script>
-    // ── Discord avatar ──
-    ;(async () => {
-      const apis = [
-        { url: id => `https://japi.rest/discord/v1/user/${id}`, parse: j => j.data?.avatar },
-        { url: id => `https://discordlookup.mesalytic.moe/v1/user/${id}`, parse: j => j.avatar?.id },
-      ]
-      const img = document.querySelector('.pfp')
-      for (const api of apis) {
-        try {
-          const res = await fetch(api.url('1507165921989492919')); if (!res.ok) continue
-          const json = await res.json(); const av = api.parse(json)
-          if (av) { img.src = `https://cdn.discordapp.com/avatars/1507165921989492919/${av}.${av.startsWith('a_')?'gif':'png'}?size=256`; break }
-        } catch(e) {}
-      }
-    })()
+<!-- SETTINGS -->
+<div class="page layout" id="page-settings">
+  <div class="back-btn" onclick="navigate('home')">← back</div>
+  <div class="settings-form">
+    <div class="form-title">settings</div>
+    <div class="form-group">
+      <label class="form-label">username</label>
+      <input type="text" id="set-username" placeholder="yourhandle">
+    </div>
+    <div class="form-group">
+      <label class="form-label">bio</label>
+      <textarea id="set-bio" style="min-height:80px" placeholder="tell people a bit about yourself..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">avatar url (optional)</label>
+      <input type="text" id="set-avatar" placeholder="https://...">
+    </div>
+    <div id="set-error" class="error-msg" style="display:none"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-primary" onclick="saveSettings()">save changes</button>
+      <button class="btn-danger" onclick="signOut()">sign out</button>
+    </div>
+  </div>
+</div>
 
-    // ── Sketchy utils ──
-    function sketchLine(c, x1, y1, x2, y2, j) {
-      const segs = 4+Math.floor(Math.random()*3); c.beginPath()
-      c.moveTo(x1+(Math.random()-.5)*j, y1+(Math.random()-.5)*j)
-      for (let i=1;i<=segs;i++){const t=i/segs;c.lineTo(x1+(x2-x1)*t+(Math.random()-.5)*j,y1+(y2-y1)*t+(Math.random()-.5)*j)}
-      c.stroke()
+<script>
+const SUPA_URL = 'https://flmoswqpocsufircduiy.supabase.co';
+const SUPA_KEY = 'sb_publishable_g5hrheYjAQ2OKNjkJKPCHQ_D2f8fndS';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let currentProfile = null;
+let currentFilter = 'all';
+let selectedType = 'discussion';
+let selectedIntent = 'comment';
+let currentThreadId = null;
+
+// ─── INIT ───────────────────────────────────────────────
+async function init() {
+  await ensureSchema();
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadProfile(currentUser.id);
+  }
+  updateNav();
+
+  // Handle URL routing
+  const path = window.location.pathname;
+  const hash = window.location.hash;
+  if (path.includes('/users/@') || hash.includes('/users/@')) {
+    const username = (path.split('/users/@')[1] || hash.split('/users/@')[1] || '').split('/')[0];
+    if (username) { await showUserProfile(username); return; }
+  }
+  navigate('home');
+
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') {
+      currentUser = session.user;
+      await loadProfile(currentUser.id);
+      updateNav();
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      currentProfile = null;
+      updateNav();
     }
-    function sketchArc(c, cx, cy, r, start, end, j) {
-      const steps=16+Math.floor(Math.random()*8); c.beginPath()
-      for(let i=0;i<=steps;i++){const t=i/steps,a=start+(end-start)*t;const x=cx+Math.cos(a)*(r+(Math.random()-.5)*j),y=cy+Math.sin(a)*(r+(Math.random()-.5)*j);i===0?c.moveTo(x,y):c.lineTo(x,y)}
-      c.stroke()
+  });
+}
+
+// ─── SCHEMA ─────────────────────────────────────────────
+async function ensureSchema() {
+  // Tables are created via Supabase dashboard; we check and gracefully handle missing tables
+}
+
+// ─── NAV ─────────────────────────────────────────────────
+function updateNav() {
+  const navRight = document.getElementById('nav-right');
+  const ntBtn = document.getElementById('new-thread-btn');
+  if (currentUser && currentProfile) {
+    const initials = (currentProfile.username || 'U').slice(0,2).toUpperCase();
+    navRight.innerHTML = `
+      <div class="nav-user" onclick="navigate('settings')">
+        <div class="avatar">${currentProfile.avatar_url ? `<img src="${currentProfile.avatar_url}" onerror="this.style.display='none'">` : ''}${!currentProfile.avatar_url ? initials : ''}</div>
+        <span style="color:var(--text);font-size:13px;font-weight:500">@${currentProfile.username || 'you'}</span>
+      </div>
+    `;
+    if (ntBtn) ntBtn.style.display = 'flex';
+    // Fill settings
+    if (document.getElementById('set-username')) {
+      document.getElementById('set-username').value = currentProfile.username || '';
+      document.getElementById('set-bio').value = currentProfile.bio || '';
+      document.getElementById('set-avatar').value = currentProfile.avatar_url || '';
     }
-    function sketchPath(c, d, sc, ox, oy, j) {
-      const cmds=d.match(/[MLCZ][^MLCZ]*/gi); if(!cmds)return; c.beginPath()
-      for(const cmd of cmds){const type=cmd[0],nums=cmd.slice(1).trim().split(/[\s,]+/).map(Number)
-        if(type==='M')c.moveTo(nums[0]*sc+ox+(Math.random()-.5)*j,nums[1]*sc+oy+(Math.random()-.5)*j)
-        else if(type==='L')c.lineTo(nums[0]*sc+ox+(Math.random()-.5)*j,nums[1]*sc+oy+(Math.random()-.5)*j)
-        else if(type==='C'){for(let i=0;i<nums.length;i+=6)c.bezierCurveTo(nums[i]*sc+ox+(Math.random()-.5)*j,nums[i+1]*sc+oy+(Math.random()-.5)*j,nums[i+2]*sc+ox+(Math.random()-.5)*j,nums[i+3]*sc+oy+(Math.random()-.5)*j,nums[i+4]*sc+ox+(Math.random()-.5)*j,nums[i+5]*sc+oy+(Math.random()-.5)*j)}
-        else if(type==='Z'||type==='z')c.closePath()}
-      c.stroke()
-    }
+  } else {
+    navRight.innerHTML = `
+      <button class="btn-ghost" onclick="navigate('login')" style="padding:7px 14px;font-size:13px">sign in</button>
+      <button class="btn-primary" onclick="navigate('register')" style="padding:7px 14px;font-size:13px">join</button>
+    `;
+    if (ntBtn) ntBtn.style.display = 'none';
+  }
+}
 
-    // ── TikTok icon ──
-    function drawTiktok(c, s, j) {
-      j=j||0.6; c.clearRect(0,0,s,s); c.strokeStyle='#fff'; c.lineWidth=1.3; c.lineCap='round'; c.lineJoin='round'
-      sketchPath(c,'M19.59 6.69 C18.39 6.69 17.28 6.19 16.47 5.35 C15.67 4.5 15.2 3.37 15.2 2.12 L12.36 2.12 L12.36 15.26 C12.36 16.75 11.15 17.96 9.66 17.96 C8.17 17.96 6.96 16.75 6.96 15.26 C6.96 13.77 8.17 12.56 9.66 12.56 C9.98 12.56 10.29 12.61 10.57 12.7 L10.57 9.82 C10.27 9.78 9.97 9.76 9.66 9.76 C6.63 9.76 4.17 12.22 4.17 15.25 C4.17 18.28 6.63 20.74 9.66 20.74 C12.69 20.74 15.15 18.28 15.15 15.25 L15.15 8.53 C16.37 9.4 17.89 9.9 19.53 9.9 L19.53 7.06 C19.55 6.85 19.57 6.77 19.59 6.69 Z',s/24,0,0,j)
-    }
+// ─── NAVIGATE ────────────────────────────────────────────
+function navigate(page, data) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  window.scrollTo(0,0);
 
-    document.querySelectorAll('.social-icon').forEach(el => {
-      const cvs=el.querySelector('canvas'), c=cvs.getContext('2d')
-      drawTiktok(c, cvs.width, 0.6)
-      let hi=null
-      el.addEventListener('mouseenter',()=>{hi=setInterval(()=>drawTiktok(c,cvs.width,1.8),100)})
-      el.addEventListener('mouseleave',()=>{clearInterval(hi);drawTiktok(c,cvs.width,0.6)})
-      const href=el.getAttribute('href')
-      if(href&&href!=='#') el.addEventListener('click',e=>{e.preventDefault();document.body.style.transition='transform 0.7s cubic-bezier(0.7,0,0.84,0),opacity 0.7s ease';document.body.style.transform='translateY(30%)';document.body.style.opacity='0';setTimeout(()=>{window.top.location.href=href},700)})
-    })
+  if (page === 'home') loadThreads();
+  if (page === 'thread' && data) loadThread(data);
+  if (page === 'settings') updateNav();
+  if (page === 'new-thread' && !currentUser) { navigate('login'); return; }
+}
 
-    // ── Playlist ──
-    const playlist=[{title:'#SILKROAD',src:'/mev/tracks/%23SILKROAD.mp3'}]
-    let currentTrack=0, playing=false
-    const playerAudio=document.getElementById('player-audio')
-    playerAudio.src=playlist[0].src; playerAudio.volume=0.45
+// ─── TOAST ───────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
 
-    function loadTrack(i){currentTrack=((i%playlist.length)+playlist.length)%playlist.length;playerAudio.src=playlist[currentTrack].src;startTitleAnim()}
-    function togglePlay(){if(playing){playerAudio.pause();playing=false}else{playerAudio.play().catch(()=>{});playing=true};drawPlayPause()}
-    function nextTrack(){loadTrack(currentTrack+1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
-    function prevTrack(){loadTrack(currentTrack-1);playerAudio.play().catch(()=>{});playing=true;drawPlayPause()}
-    playerAudio.addEventListener('ended',nextTrack)
+// ─── AUTH ─────────────────────────────────────────────────
+async function signUp() {
+  const username = document.getElementById('reg-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const errEl = document.getElementById('reg-error');
+  errEl.style.display = 'none';
 
-    // ── Title scroll ──
-    const tc=document.getElementById('player-title-canvas').getContext('2d')
-    const TW=250,TH=22,TF='14px "JetBrains Mono",monospace'
-    let ttw=0,ttext='',toff=0,tphase='pause-start',tlt=0,tpe=0,trf=0,tre=0
-    function cubicBezier(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
-    function startTitleAnim(){ttext=playlist[currentTrack].title;tc.font=TF;ttw=Math.ceil(tc.measureText(ttext).width);toff=0;tphase='pause-start';tpe=0;tlt=0}
-    function drawTitle(now){
-      if(!tlt)tlt=now; const dt=Math.min(now-tlt,50);tlt=now
-      if(ttw>TW){const ms=ttw-TW;if(tphase==='pause-start'){tpe+=dt;if(tpe>=1500)tphase='scroll'}else if(tphase==='scroll'){toff+=35*(dt/1000);if(toff>=ms){toff=ms;tphase='pause-end';tpe=0}}else if(tphase==='pause-end'){tpe+=dt;if(tpe>=1500){tphase='reset';trf=toff;tre=0}}else if(tphase==='reset'){tre+=dt;const t=Math.min(1,tre/800);toff=trf*(1-cubicBezier(t));if(t>=1){toff=0;tphase='pause-start';tpe=0}}}
-      tc.clearRect(0,0,TW,TH);tc.save();tc.beginPath();tc.rect(0,0,TW,TH);tc.clip()
-      tc.font=TF;tc.textBaseline='middle';tc.fillStyle='rgba(255,255,255,0.35)'
-      tc.fillText(ttext,ttw<=TW?TW-ttw-1:-toff,TH/2);tc.restore();requestAnimationFrame(drawTitle)
-    }
-    requestAnimationFrame(drawTitle)
+  if (!username || username.length < 2) return showErr(errEl, 'username must be at least 2 characters');
+  if (!email) return showErr(errEl, 'email required');
+  if (pass.length < 6) return showErr(errEl, 'password must be at least 6 characters');
 
-    // ── Player buttons ──
-    function drawPlayPause(j){const cvs=document.getElementById('player-toggle').querySelector('canvas'),c=cvs.getContext('2d'),s=44;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.5;c.lineCap='round';if(playing){sketchLine(c,s*.33,s*.22,s*.33,s*.78,j);sketchLine(c,s*.67,s*.22,s*.67,s*.78,j)}else{sketchLine(c,s*.28,s*.18,s*.28,s*.82,j);sketchLine(c,s*.28,s*.18,s*.78,s*.5,j);sketchLine(c,s*.78,s*.5,s*.28,s*.82,j)}}
-    function drawPrev(j){const cvs=document.getElementById('player-prev').querySelector('canvas'),c=cvs.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.55,s*.22,s*.28,s*.5,j);sketchLine(c,s*.28,s*.5,s*.55,s*.78,j);sketchLine(c,s*.72,s*.22,s*.45,s*.5,j);sketchLine(c,s*.45,s*.5,s*.72,s*.78,j)}
-    function drawNext(j){const cvs=document.getElementById('player-next').querySelector('canvas'),c=cvs.getContext('2d'),s=40;j=j||1;c.clearRect(0,0,s,s);c.strokeStyle='#fff';c.lineWidth=1.4;c.lineCap='round';sketchLine(c,s*.28,s*.22,s*.55,s*.5,j);sketchLine(c,s*.55,s*.5,s*.28,s*.78,j);sketchLine(c,s*.45,s*.22,s*.72,s*.5,j);sketchLine(c,s*.72,s*.5,s*.45,s*.78,j)}
-    drawPlayPause();drawPrev();drawNext()
+  // Check username taken
+  const { data: existing } = await db.from('profiles').select('id').eq('username', username).single();
+  if (existing) return showErr(errEl, 'username already taken');
 
-    document.getElementById('player-toggle').addEventListener('click',togglePlay)
-    document.getElementById('player-prev').addEventListener('click',prevTrack)
-    document.getElementById('player-next').addEventListener('click',nextTrack)
-    ;[{id:'player-prev',fn:drawPrev},{id:'player-toggle',fn:drawPlayPause},{id:'player-next',fn:drawNext}].forEach(({id,fn})=>{
-      const el=document.getElementById(id); let iv=null
-      el.addEventListener('mouseenter',()=>{iv=setInterval(()=>fn(2.2),100)})
-      el.addEventListener('mouseleave',()=>{clearInterval(iv);fn()})
-    })
+  const btn = document.getElementById('reg-btn');
+  btn.textContent = 'creating...'; btn.disabled = true;
 
-    // ── Enter overlay ──
-    const overlay=document.getElementById('enter-overlay')
-    const bgVideo=document.getElementById('bg-video')
-    const eCvs=document.getElementById('enter-text'), eCtx=eCvs.getContext('2d')
+  const { data, error } = await db.auth.signUp({ email, password: pass });
+  if (error) { showErr(errEl, error.message); btn.textContent = 'create account'; btn.disabled = false; return; }
 
-    function drawEnterText(){
-      eCtx.clearRect(0,0,280,20); eCtx.font='12px "JetBrains Mono",monospace'; eCtx.textAlign='center'; eCtx.textBaseline='middle'
-      for(let p=0;p<3;p++){eCtx.fillStyle='rgba(255,255,255,'+(0.15+Math.random()*0.06)+')';eCtx.fillText('click to see motion',140+(Math.random()-.5)*1.2,10+(Math.random()-.5)*0.8)}
-    }
-    drawEnterText(); const eJitter=setInterval(drawEnterText,120)
+  // Create profile
+  if (data.user) {
+    await db.from('profiles').insert({
+      id: data.user.id,
+      username,
+      email,
+      created_at: new Date().toISOString()
+    });
+    currentUser = data.user;
+    await loadProfile(data.user.id);
+    updateNav();
+    toast('welcome to lair.lat! 🎉');
+    navigate('home');
+  }
+  btn.textContent = 'create account'; btn.disabled = false;
+}
 
-    overlay.addEventListener('click', () => {
-      clearInterval(eJitter)
-      overlay.style.opacity='0'
-      overlay.style.pointerEvents='none'
-      setTimeout(()=>overlay.remove(), 1400)
+async function signIn() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
 
-      // play video WITH sound
-      bgVideo.muted = false
-      bgVideo.volume = 0.75
-      const vp = bgVideo.play()
-      if (vp !== undefined) {
-        vp.catch(() => {
-          // autoplay blocked, fall back to muted
-          bgVideo.muted = true
-          bgVideo.play().catch(()=>{})
-        })
-      }
-      setTimeout(()=>{ bgVideo.classList.add('visible') }, 80)
+  const btn = document.getElementById('login-btn');
+  btn.textContent = 'signing in...'; btn.disabled = true;
 
-      // fade in audio track too
-      playerAudio.volume = 0
-      playerAudio.play().then(()=>{
-        playing=true; drawPlayPause(); startTitleAnim()
-        const start=performance.now()
-        ;(function tick(){const p=Math.min(1,(performance.now()-start)/3000);playerAudio.volume=p*p*0.45;if(p<1)requestAnimationFrame(tick)})()
-      }).catch(()=>{})
-    })
+  const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+  if (error) { showErr(errEl, error.message); btn.textContent = 'sign in'; btn.disabled = false; return; }
 
-    // ── Snow ──
-    const sc=document.getElementById('effect-canvas'), sctx=sc.getContext('2d')
-    function rsz(){sc.width=window.innerWidth;sc.height=window.innerHeight}
-    rsz(); window.addEventListener('resize',rsz)
-    const flakes=[]
-    for(let i=0;i<120;i++)flakes.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,r:0.5+Math.random()*2.5,speed:0.3+Math.random()*1,wind:(Math.random()-.5)*0.3,sway:Math.random()*Math.PI*2,swaySpeed:0.005+Math.random()*0.01,swayAmp:0.3+Math.random()*0.6,alpha:0.1+Math.random()*0.25})
-    function drawSnow(){
-      const W=sc.width,H=sc.height; sctx.clearRect(0,0,W,H)
-      for(const f of flakes){f.y+=f.speed;f.sway+=f.swaySpeed;f.x+=f.wind+Math.sin(f.sway)*f.swayAmp*0.3;if(f.y>H+5){f.y=-5;f.x=Math.random()*W}if(f.x>W+5)f.x=-5;if(f.x<-5)f.x=W+5;sctx.globalAlpha=f.alpha;sctx.fillStyle='#fff';sctx.font=`${f.r*5}px monospace`;sctx.textAlign='center';sctx.textBaseline='middle';sctx.fillText('*',f.x,f.y)}
-      requestAnimationFrame(drawSnow)
-    }
-    sc.style.opacity='0'; sc.style.transition='opacity 2s ease'
-    setTimeout(()=>{sc.style.opacity='1';drawSnow()},600)
+  currentUser = data.user;
+  await loadProfile(data.user.id);
+  updateNav();
+  toast('welcome back!');
+  navigate('home');
+  btn.textContent = 'sign in'; btn.disabled = false;
+}
 
-    // ── Cross cursor ──
-    ;(function(){
-      const SZ=32,FR=4,PX=2,cv=document.createElement('canvas'); cv.width=SZ; cv.height=SZ; const cx=cv.getContext('2d')
-      const cr=['...............','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......','.......'+'#'+'.......',`....#######....`,'.......'+'#'+'.......','.......#.......','.......'+'#'+'.......','.......#.......']
-      function df(f){cx.clearRect(0,0,SZ,SZ);const p=0.7+0.2*Math.sin(f*Math.PI/2);for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(0,0,0,0.7)';cx.fillRect(x*PX-1,y*PX,PX+2,PX+2);cx.fillRect(x*PX,y*PX-1,PX+2,PX+2)};for(let y=0;y<15;y++)for(let x=0;x<15;x++)if(cr[y]&&cr[y][x]==='#'){cx.fillStyle='rgba(255,255,255,'+p+')';cx.fillRect(x*PX+1,y*PX+1,PX,PX)};return cv.toDataURL('image/png')}
-      const fs=[];for(let i=0;i<FR;i++)fs.push(df(i));let cur=0
-      function ap(){document.body.style.cursor='url('+fs[cur]+') 15 21, crosshair';cur=(cur+1)%FR}
-      ap(); setInterval(ap,250)
-    })()
+async function signOut() {
+  await db.auth.signOut();
+  currentUser = null; currentProfile = null;
+  updateNav();
+  navigate('home');
+  toast('signed out');
+}
 
-    // ── Sparkle trail ──
-    ;(function(){
-      const N=50; let smx=400,smy=300,osmx=400,osmy=300
-      const stars=[],tiny=[],sv=[],tv=[],ssx=[],ssy=[],ttx=[],tty=[]
-      function mkDiv(w,h){const d=document.createElement('div');d.style.cssText=`position:absolute;width:${w}px;height:${h}px;overflow:hidden;pointer-events:none`;return d}
-      for(let i=0;i<N;i++){
-        const t=mkDiv(3,3);t.style.visibility='hidden';t.style.zIndex='9999';document.body.appendChild(t);tiny.push(t);sv[i]=0;tv[i]=0
-        const s=mkDiv(5,5);s.style.cssText+=';background:transparent;visibility:hidden;z-index:9999'
-        const h=mkDiv(5,1),v=mkDiv(1,5);h.style.cssText+='top:2px;left:0';v.style.cssText+='top:0;left:2px'
-        s.appendChild(h);s.appendChild(v);document.body.appendChild(s);stars.push(s)
-      }
-      document.addEventListener('mousemove',e=>{smx=e.pageX;smy=e.pageY})
-      function sparkle(){
-        if(Math.abs(smx-osmx)>1||Math.abs(smy-osmy)>1){osmx=smx;osmy=smy;for(let i=0;i<N;i++){if(!sv[i]){stars[i].style.left=(ssx[i]=smx)+'px';stars[i].style.top=(ssy[i]=smy)+'px';stars[i].style.clip='rect(0px,5px,5px,0px)';stars[i].childNodes[0].style.backgroundColor='white';stars[i].childNodes[1].style.backgroundColor='white';stars[i].style.visibility='visible';sv[i]=50;break}}}
-        for(let i=0;i<N;i++){if(sv[i])uStar(i);if(tv[i])uTiny(i)}
-        setTimeout(sparkle,40)
-      }
-      function uStar(i){if(--sv[i]===25)stars[i].style.clip='rect(1px,4px,4px,1px)';if(sv[i]){ssy[i]+=1+Math.random()*3;ssx[i]+=(i%5-2)/5;if(ssy[i]<document.documentElement.scrollHeight){stars[i].style.top=ssy[i]+'px';stars[i].style.left=ssx[i]+'px'}else{stars[i].style.visibility='hidden';sv[i]=0;return}}else{tv[i]=50;tiny[i].style.top=(tty[i]=ssy[i])+'px';tiny[i].style.left=(ttx[i]=ssx[i])+'px';tiny[i].style.width='2px';tiny[i].style.height='2px';tiny[i].style.backgroundColor='white';stars[i].style.visibility='hidden';tiny[i].style.visibility='visible'}}
-      function uTiny(i){if(--tv[i]===25){tiny[i].style.width='1px';tiny[i].style.height='1px'}if(tv[i]){tty[i]+=1+Math.random()*3;ttx[i]+=(i%5-2)/5;if(tty[i]<document.documentElement.scrollHeight){tiny[i].style.top=tty[i]+'px';tiny[i].style.left=ttx[i]+'px'}else{tiny[i].style.visibility='hidden';tv[i]=0;return}}else tiny[i].style.visibility='hidden'}
-      sparkle()
-    })()
-  </script>
+function showErr(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ─── PROFILE ─────────────────────────────────────────────
+async function loadProfile(userId) {
+  const { data } = await db.from('profiles').select('*').eq('id', userId).single();
+  if (data) currentProfile = data;
+  else {
+    // Profile might not exist yet
+    currentProfile = { id: userId, username: currentUser?.email?.split('@')[0] || 'user' };
+  }
+  return currentProfile;
+}
+
+async function showUserProfile(username) {
+  navigate('profile');
+  const content = document.getElementById('profile-content');
+  content.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+
+  const { data: profile } = await db.from('profiles').select('*').eq('username', username).single();
+  if (!profile) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-text">user not found</div></div>';
+    return;
+  }
+
+  const { data: threads } = await db.from('threads').select('*').eq('author_id', profile.id).order('created_at', { ascending: false });
+  const { data: comments } = await db.from('comments').select('id').eq('author_id', profile.id);
+
+  const initials = (profile.username || 'U').slice(0,2).toUpperCase();
+  const isOwn = currentUser && currentUser.id === profile.id;
+
+  content.innerHTML = `
+    <div class="back-btn" onclick="navigate('home')">← back</div>
+    <div class="profile-header">
+      <div class="profile-avatar">${profile.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : ''}${!profile.avatar_url ? initials : ''}</div>
+      <div class="profile-info">
+        <div class="profile-username">@${profile.username}</div>
+        <div class="profile-url font-mono">lair.lat/users/@${profile.username}</div>
+        ${profile.bio ? `<div class="profile-bio">${escHtml(profile.bio)}</div>` : ''}
+        <div class="profile-stats">
+          <div class="pstat"><div class="pstat-num">${threads?.length || 0}</div><div class="pstat-label">threads</div></div>
+          <div class="pstat"><div class="pstat-num">${comments?.length || 0}</div><div class="pstat-label">comments</div></div>
+        </div>
+        ${isOwn ? '<button class="btn-ghost" onclick="navigate(\'settings\')" style="margin-top:12px;font-size:13px;padding:7px 14px">edit profile</button>' : ''}
+      </div>
+    </div>
+    <div class="section-heading">threads</div>
+    <div id="profile-threads">
+      ${!threads || threads.length === 0 ? '<div class="empty-state" style="padding:30px"><div class="empty-text text-muted">no threads yet</div></div>' :
+        threads.map(t => renderThreadCard(t, profile)).join('')}
+    </div>
+  `;
+}
+
+async function saveSettings() {
+  const username = document.getElementById('set-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const bio = document.getElementById('set-bio').value.trim();
+  const avatar_url = document.getElementById('set-avatar').value.trim();
+  const errEl = document.getElementById('set-error');
+  errEl.style.display = 'none';
+
+  if (!username || username.length < 2) return showErr(errEl, 'username must be at least 2 chars');
+
+  // Check username taken by another
+  const { data: existing } = await db.from('profiles').select('id').eq('username', username).neq('id', currentUser.id).single();
+  if (existing) return showErr(errEl, 'username already taken');
+
+  const { error } = await db.from('profiles').upsert({
+    id: currentUser.id,
+    username, bio, avatar_url,
+    updated_at: new Date().toISOString()
+  });
+
+  if (error) return showErr(errEl, error.message);
+  await loadProfile(currentUser.id);
+  updateNav();
+  toast('profile updated!');
+}
+
+// ─── THREADS ─────────────────────────────────────────────
+async function loadThreads() {
+  const listEl = document.getElementById('thread-list');
+  listEl.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+
+  let query = db.from('threads').select('*, profiles(username, avatar_url)').order('created_at', { ascending: false });
+  if (currentFilter !== 'all') query = query.eq('type', currentFilter);
+
+  const { data, error } = await query.limit(50);
+
+  if (error || !data || data.length === 0) {
+    listEl.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🧵</div>
+      <div class="empty-text">${error ? 'could not load threads — check your database setup' : 'no threads yet. be the first!'}</div>
+      ${currentUser ? '<button class="btn-primary" onclick="navigate(\'new-thread\')">create first thread</button>' : ''}
+    </div>`;
+    return;
+  }
+
+  listEl.innerHTML = data.map(t => renderThreadCard(t, t.profiles)).join('');
+}
+
+function renderThreadCard(t, profile) {
+  const typeTag = t.type !== 'discussion' ? `<span class="tag ${t.type}">${t.type}</span>` : '';
+  const tags = t.tags ? t.tags.slice(0,3).map(tag => `<span class="tag">${escHtml(tag)}</span>`).join('') : '';
+  const authorName = (profile?.username) || 'unknown';
+  const initials = authorName.slice(0,2).toUpperCase();
+  const avatar = profile?.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : '';
+
+  return `<div class="thread-card" onclick="openThread('${t.id}')">
+    <div class="thread-card-header">
+      <div class="avatar" onclick="event.stopPropagation();showUserProfile('${authorName}')">${avatar}${!profile?.avatar_url ? initials : ''}</div>
+      <div class="thread-meta">
+        <span class="thread-author" onclick="event.stopPropagation();showUserProfile('${authorName}')">@${escHtml(authorName)}</span>
+        <span class="thread-time">${timeAgo(t.created_at)}</span>
+      </div>
+    </div>
+    <div class="thread-title">${escHtml(t.title)}</div>
+    <div class="thread-body">${escHtml(t.body || '')}</div>
+    <div class="thread-footer">
+      ${typeTag}${tags}
+      ${t.price ? `<span class="tag sell">$${Number(t.price).toFixed(2)}</span>` : ''}
+      <div class="thread-stats">
+        <span class="stat-item">💬 ${t.comment_count || 0}</span>
+        <span class="stat-item">👁 ${t.view_count || 0}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function openThread(id) {
+  currentThreadId = id;
+  navigate('thread', id);
+}
+
+async function loadThread(id) {
+  const content = document.getElementById('thread-view-content');
+  content.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+
+  // Increment view count
+  await db.rpc('increment_views', { thread_id: id }).catch(() => {});
+
+  const { data: thread } = await db.from('threads').select('*, profiles(username, avatar_url)').eq('id', id).single();
+  const { data: comments } = await db.from('comments').select('*, profiles(username, avatar_url)').eq('thread_id', id).order('created_at', { ascending: true });
+
+  if (!thread) {
+    content.innerHTML = '<div class="empty-state"><div class="empty-text">thread not found</div></div>';
+    return;
+  }
+
+  const profile = thread.profiles;
+  const authorName = profile?.username || 'unknown';
+  const initials = authorName.slice(0,2).toUpperCase();
+  const avatarHTML = profile?.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : '';
+  const isOwner = currentUser && thread.author_id === currentUser.id;
+
+  const commentsHTML = !comments || comments.length === 0
+    ? '<div style="text-align:center;padding:30px 0;color:var(--muted);font-size:14px">no comments yet</div>'
+    : comments.map(c => renderComment(c)).join('');
+
+  const writeHTML = currentUser ? `
+    <div class="write-comment">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div class="avatar" style="width:28px;height:28px;font-size:11px">${currentProfile?.avatar_url ? `<img src="${currentProfile.avatar_url}">` : (currentProfile?.username||'U').slice(0,2).toUpperCase()}</div>
+        <span style="font-size:13px;color:var(--muted)">@${currentProfile?.username || 'you'}</span>
+      </div>
+      <textarea id="comment-text" placeholder="write a comment..."></textarea>
+      <div class="comment-actions">
+        <div class="intent-select">
+          <button class="intent-chip selected-comment" data-intent="comment" onclick="selectIntent(this,'comment')">💬 comment</button>
+          <button class="intent-chip" data-intent="buy" onclick="selectIntent(this,'buy')">🛒 want to buy</button>
+          <button class="intent-chip" data-intent="offer" onclick="selectIntent(this,'offer')">💰 making offer</button>
+        </div>
+        <button class="btn-primary" onclick="submitComment('${id}')">post</button>
+      </div>
+    </div>
+  ` : `<div style="text-align:center;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-top:16px">
+    <div style="font-size:14px;color:var(--muted);margin-bottom:10px">sign in to comment</div>
+    <button class="btn-primary" onclick="navigate('login')">sign in</button>
+  </div>`;
+
+  content.innerHTML = `
+    <div class="thread-full">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div class="avatar" onclick="showUserProfile('${authorName}')" style="cursor:pointer">${avatarHTML}${!profile?.avatar_url ? initials : ''}</div>
+        <div>
+          <div class="thread-author" style="cursor:pointer" onclick="showUserProfile('${authorName}')">@${escHtml(authorName)}</div>
+          <div class="thread-time">${timeAgo(thread.created_at)}</div>
+        </div>
+        ${isOwner ? `<button class="btn-danger" onclick="deleteThread('${id}')" style="margin-left:auto">delete</button>` : ''}
+      </div>
+      <div class="thread-full-title">${escHtml(thread.title)}</div>
+      ${thread.price ? `<div class="price-display"><span class="price-label">price</span>$${Number(thread.price).toFixed(2)}${thread.location ? ` <span style="font-size:14px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400">· ${escHtml(thread.location)}</span>` : ''}</div>` : ''}
+      <div class="thread-full-body">${escHtml(thread.body || '')}</div>
+      ${thread.tags && thread.tags.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:16px">${thread.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+    </div>
+    <div class="comments-section">
+      <div class="comments-title">comments <span class="comment-count">${comments?.length || 0}</span></div>
+      <div id="comments-list">${commentsHTML}</div>
+      ${writeHTML}
+    </div>
+  `;
+}
+
+function renderComment(c) {
+  const profile = c.profiles;
+  const authorName = profile?.username || 'unknown';
+  const initials = authorName.slice(0,2).toUpperCase();
+  const avatarHTML = profile?.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : '';
+  const intentHTML = c.intent && c.intent !== 'comment'
+    ? `<span class="comment-intent intent-${c.intent}">${c.intent === 'buy' ? '🛒 wants to buy' : '💰 making offer'}</span>`
+    : '';
+  const isOwner = currentUser && c.author_id === currentUser.id;
+
+  return `<div class="comment-box" id="comment-${c.id}">
+    <div class="comment-header">
+      <div class="avatar" style="width:28px;height:28px;font-size:11px;cursor:pointer" onclick="showUserProfile('${authorName}')">${avatarHTML}${!profile?.avatar_url ? initials : ''}</div>
+      <span class="comment-author" style="cursor:pointer" onclick="showUserProfile('${authorName}')">@${escHtml(authorName)}</span>
+      <span class="comment-time">${timeAgo(c.created_at)}</span>
+      ${isOwner ? `<button class="btn-danger" onclick="deleteComment('${c.id}')" style="margin-left:auto;padding:4px 10px;font-size:11px">×</button>` : ''}
+    </div>
+    <div class="comment-text">${escHtml(c.body)}</div>
+    ${intentHTML}
+  </div>`;
+}
+
+// ─── NEW THREAD ───────────────────────────────────────────
+function selectType(el, type) {
+  document.querySelectorAll('.type-chip').forEach(c => c.className = 'type-chip');
+  el.classList.add('active-' + type);
+  selectedType = type;
+  const priceRow = document.getElementById('price-row');
+  priceRow.style.display = (type === 'selling' || type === 'buying') ? 'grid' : 'none';
+}
+
+async function submitThread() {
+  if (!currentUser) { navigate('login'); return; }
+  const title = document.getElementById('nt-title').value.trim();
+  const body = document.getElementById('nt-body').value.trim();
+  const price = document.getElementById('nt-price').value;
+  const location = document.getElementById('nt-location').value.trim();
+  const tagsRaw = document.getElementById('nt-tags').value.trim();
+  const errEl = document.getElementById('nt-error');
+  errEl.style.display = 'none';
+
+  if (!title) return showErr(errEl, 'title is required');
+  if (!body) return showErr(errEl, 'body is required');
+
+  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+  const btn = document.getElementById('nt-submit');
+  btn.textContent = 'posting...'; btn.disabled = true;
+
+  const { data, error } = await db.from('threads').insert({
+    title,
+    body,
+    type: selectedType,
+    price: price ? parseFloat(price) : null,
+    location: location || null,
+    tags,
+    author_id: currentUser.id,
+    comment_count: 0,
+    view_count: 0,
+    created_at: new Date().toISOString()
+  }).select().single();
+
+  btn.textContent = 'post thread'; btn.disabled = false;
+
+  if (error) return showErr(errEl, error.message);
+
+  // Reset form
+  document.getElementById('nt-title').value = '';
+  document.getElementById('nt-body').value = '';
+  document.getElementById('nt-price').value = '';
+  document.getElementById('nt-location').value = '';
+  document.getElementById('nt-tags').value = '';
+  toast('thread posted! 🎉');
+  openThread(data.id);
+}
+
+// ─── COMMENTS ────────────────────────────────────────────
+function selectIntent(el, intent) {
+  selectedIntent = intent;
+  document.querySelectorAll('.intent-chip').forEach(c => {
+    c.className = 'intent-chip';
+  });
+  el.classList.add('selected-' + intent);
+}
+
+async function submitComment(threadId) {
+  if (!currentUser) { navigate('login'); return; }
+  const text = document.getElementById('comment-text').value.trim();
+  if (!text) return;
+
+  const { data, error } = await db.from('comments').insert({
+    thread_id: threadId,
+    author_id: currentUser.id,
+    body: text,
+    intent: selectedIntent,
+    created_at: new Date().toISOString()
+  }).select('*, profiles(username, avatar_url)').single();
+
+  if (error) { toast('error: ' + error.message, 'error'); return; }
+
+  document.getElementById('comment-text').value = '';
+  // Update comment count
+  await db.from('threads').update({ comment_count: db.raw ? undefined : undefined }).eq('id', threadId);
+  await db.rpc('increment_comments', { thread_id: threadId }).catch(() => {});
+
+  const list = document.getElementById('comments-list');
+  const emptyDiv = list.querySelector('div[style*="text-align"]');
+  if (emptyDiv) list.innerHTML = '';
+  list.insertAdjacentHTML('beforeend', renderComment(data));
+  list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Update comment count display
+  const countEl = document.querySelector('.comment-count');
+  if (countEl) countEl.textContent = parseInt(countEl.textContent || 0) + 1;
+}
+
+async function deleteComment(commentId) {
+  if (!confirm('delete this comment?')) return;
+  const { error } = await db.from('comments').delete().eq('id', commentId).eq('author_id', currentUser.id);
+  if (error) { toast('error deleting comment', 'error'); return; }
+  document.getElementById('comment-' + commentId)?.remove();
+  toast('comment deleted');
+}
+
+async function deleteThread(threadId) {
+  if (!confirm('delete this thread? this cannot be undone.')) return;
+  await db.from('comments').delete().eq('thread_id', threadId);
+  const { error } = await db.from('threads').delete().eq('id', threadId).eq('author_id', currentUser.id);
+  if (error) { toast('error deleting thread', 'error'); return; }
+  toast('thread deleted');
+  navigate('home');
+}
+
+// ─── FILTERS ─────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    loadThreads();
+  });
+});
+
+// ─── UTILS ───────────────────────────────────────────────
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = (Date.now() - new Date(ts)) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── START ───────────────────────────────────────────────
+init();
+</script>
+
 </body>
 </html>
