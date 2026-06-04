@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Your existing CSS stays exactly the same - copy from your current file */
 :root {
   --bg: #000000;
   --surface: #080808;
@@ -196,24 +195,13 @@ nav{
 .auth-sw{text-align:center;margin-top:14px;font-size:12px;color:var(--text3);}
 .auth-sw a{color:var(--text2);cursor:pointer;text-decoration:underline;}
 
-/* PROFILE PAGE */
-.prof-banner{
-  width:100%;height:160px;
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  overflow:hidden;
-  margin-bottom:0;
-  position:relative;
-}
-.prof-banner img{width:100%;height:100%;object-fit:cover;}
-.prof-banner-placeholder{width:100%;height:100%;background:linear-gradient(135deg,#0f0f0f 0%,#161616 100%);}
+/* PROFILE PAGE (banner removed) */
 .prof-head{
   display:flex;align-items:flex-end;gap:14px;
   padding:0 2px;
-  margin-top:-30px;
   margin-bottom:16px;
   position:relative;
+  margin-top: 0;
 }
 .prof-av-wrap{
   position:relative;
@@ -257,19 +245,6 @@ nav{
 .file-btn:hover{border-color:var(--border3);color:#fff;}
 .file-input-hidden{display:none;}
 
-/* BANNER UPLOAD */
-.banner-upload-area{
-  position:relative;margin-bottom:14px;
-}
-.banner-preview{
-  width:100%;height:100px;border-radius:var(--r);
-  background:var(--surface2);border:1px solid var(--border);
-  overflow:hidden;display:flex;align-items:center;justify-content:center;
-  color:var(--text3);font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;
-}
-.banner-preview img{width:100%;height:100%;object-fit:cover;}
-.banner-preview:hover{border-color:var(--border2);}
-
 /* ERROR/TOAST */
 .err{background:rgba(255,51,51,.06);border:1px solid rgba(255,51,51,.2);color:#ff6666;font-size:12px;padding:9px 12px;border-radius:var(--r);margin-bottom:12px;}
 .toast{
@@ -295,7 +270,7 @@ nav{
   nav{padding:0 14px;}
   .layout{padding:18px 14px 60px;}
   .auth-box{padding:22px 18px;}
-  .prof-head{flex-direction:column;align-items:flex-start;margin-top:-20px;}
+  .prof-head{flex-direction:column;align-items:flex-start;margin-top:0;}
 }
 </style>
 </head>
@@ -414,14 +389,6 @@ nav{
       </div>
     </div>
 
-    <label class="fl">banner image</label>
-    <div class="banner-upload-area" style="margin-bottom:14px;">
-      <div class="banner-preview" id="set-banner-preview" onclick="document.getElementById('set-banner-file').click()">
-        <span id="set-banner-placeholder">click to upload banner</span>
-      </div>
-      <input type="file" id="set-banner-file" class="file-input-hidden" accept="image/*" onchange="previewBanner(this)">
-    </div>
-
     <div class="fg"><label class="fl">username</label><input id="set-user" placeholder="yourhandle" maxlength="30"></div>
     <div class="fg"><label class="fl">bio</label><textarea id="set-bio" style="min-height:70px" placeholder="tell people about yourself..."></textarea></div>
     <div class="err" id="set-err" style="display:none"></div>
@@ -438,7 +405,7 @@ const SB_KEY = 'sb_publishable_g5hrheYjAQ2OKNjkJKPCHQ_D2f8fndS';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'discussion', COMMENT_INTENT = 'comment';
-let pendingAvatarFile = null, pendingBannerFile = null;
+let pendingAvatarFile = null;
 
 // ── BOOT WITH CLEAN URL SUPPORT ───────────────────────
 async function boot() {
@@ -461,14 +428,12 @@ async function boot() {
     const threadId = fullPath.replace('/thread/', '');
     loadThread(threadId);
     showPage('thread');
-    // Update URL without reloading
     window.history.pushState({}, '', fullPath);
   } 
   else if (fullPath.startsWith('/users/@')) {
     const username = fullPath.replace('/users/@', '');
     loadProfilePage(username);
     showPage('profile');
-    // Update URL without reloading
     window.history.pushState({}, '', fullPath);
   }
   else if (fullPath === '/settings') {
@@ -484,7 +449,6 @@ async function boot() {
   else {
     showPage('home');
     loadFeed();
-    // Only update if not already at root
     if (fullPath !== '/') {
       window.history.pushState({}, '', '/');
     }
@@ -496,12 +460,8 @@ async function boot() {
   });
 }
 
-// Handle browser back/forward buttons
-window.addEventListener('popstate', () => {
-  boot();
-});
+window.addEventListener('popstate', () => { boot(); });
 
-// Update pushState for clean URLs
 function pushState(path) {
   const fullPath = path.startsWith('/') ? path : '/' + path;
   window.history.pushState({}, '', fullPath);
@@ -534,7 +494,6 @@ function showPage(id) {
   const el = document.getElementById('page-'+id);
   if (el) el.classList.add('active');
   
-  // Update URL based on page
   if (id === 'home') {
     pushState('');
   } else if (id === 'settings') {
@@ -546,7 +505,6 @@ function showPage(id) {
   } else if (id === 'register') {
     pushState('register');
   }
-  // profile and thread URLs are handled in their respective functions
   
   window.scrollTo(0,0);
   if (id === 'home') loadFeed();
@@ -628,22 +586,18 @@ async function doLogin() {
 
 async function doLogout() {
   await sb.auth.signOut();
-  ME=null; PROF=null; pendingAvatarFile=null; pendingBannerFile=null;
+  ME=null; PROF=null; pendingAvatarFile=null;
   renderNav(); toast('signed out'); showPage('home');
 }
 
 // ── PROFILE ───────────────────────────────────────────
 async function getProfile(uid) {
   const { data } = await sb.from('profiles').select('*').eq('id',uid).maybeSingle();
-  if (data && !data.hasOwnProperty('banner_url')) {
-    data.banner_url = null;
-  }
-  return data || { id: uid, username: ME?.email?.split('@')[0]||'user', banner_url: null };
+  return data || { id: uid, username: ME?.email?.split('@')[0]||'user' };
 }
 
 async function loadProfilePage(username) {
   showPage('profile');
-  // Update URL
   pushState(`users/@${username}`);
   
   const el = document.getElementById('prof-content');
@@ -663,17 +617,9 @@ async function loadProfilePage(username) {
   const isOwn = ME && ME.id === prof.id;
   const init = (prof.username||'?').slice(0,2).toUpperCase();
   const avImg = prof.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
-  
-  const hasBanner = prof.hasOwnProperty('banner_url') && prof.banner_url;
-  const bannerHtml = hasBanner 
-    ? `<img src="${esc(prof.banner_url)}" onerror="this.parentElement.innerHTML='<div class=prof-banner-placeholder></div>'">` 
-    : '<div class="prof-banner-placeholder"></div>';
 
   el.innerHTML = `
     <div class="back" onclick="showPage('home')">← back</div>
-    <div class="prof-banner">
-      ${bannerHtml}
-    </div>
     <div class="prof-head">
       <div class="prof-av-wrap">
         <div class="av av-lg">${avImg}${!prof.avatar_url?init:''}</div>
@@ -703,17 +649,6 @@ function fillSettings() {
   if(prev) {
     prev.innerHTML = PROF.avatar_url ? `<img src="${esc(PROF.avatar_url)}" onerror="this.style.display='none'">` : init;
   }
-  const bprev = document.getElementById('set-banner-preview');
-  if(bprev) {
-    const hasBanner = PROF.hasOwnProperty('banner_url') && PROF.banner_url;
-    if(hasBanner) {
-      bprev.innerHTML = `<img src="${esc(PROF.banner_url)}" style="width:100%;height:100%;object-fit:cover">`;
-      const placeholder = document.getElementById('set-banner-placeholder');
-      if(placeholder) placeholder.style.display = 'none';
-    } else {
-      bprev.innerHTML = '<span id="set-banner-placeholder">click to upload banner</span>';
-    }
-  }
   if(document.getElementById('set-user')) document.getElementById('set-user').value = PROF.username||'';
   if(document.getElementById('set-bio')) document.getElementById('set-bio').value = PROF.bio||'';
 }
@@ -725,18 +660,6 @@ function previewAvatar(input) {
   const reader = new FileReader();
   reader.onload = e => {
     const prev = document.getElementById('set-av-preview');
-    prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-function previewBanner(input) {
-  if(!input.files[0]) return;
-  if(input.files[0].size > 4*1024*1024) { toast('banner too large (max 4mb)', 'er'); input.value=''; return; }
-  pendingBannerFile = input.files[0];
-  const reader = new FileReader();
-  reader.onload = e => {
-    const prev = document.getElementById('set-banner-preview');
     prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
   };
   reader.readAsDataURL(input.files[0]);
@@ -766,17 +689,11 @@ async function saveSettings() {
     else toast('avatar upload failed — check storage bucket', 'er');
   }
 
-  if(pendingBannerFile) {
-    const url = await uploadFile(pendingBannerFile, 'avatars', `${ME.id}/banner`);
-    if(url) updates.banner_url = url;
-    else toast('banner upload failed — check storage bucket', 'er');
-  }
-
   const { error } = await sb.from('profiles').upsert(updates);
   if(error) return showErr('set-err', error.message);
 
   PROF = await getProfile(ME.id);
-  pendingAvatarFile = null; pendingBannerFile = null;
+  pendingAvatarFile = null;
   renderNav();
   toast('profile saved!');
 }
