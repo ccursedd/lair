@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* Your existing CSS - keeping it compact but complete */
 :root {
   --bg: #000000;
   --surface: #080808;
@@ -407,50 +408,52 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'discussion', COMMENT_INTENT = 'comment';
 let pendingAvatarFile = null;
 
-// ── BOOT WITH CLEAN URL SUPPORT ───────────────────────
+// ── FIXED BOOT WITH PROPER ROUTING ───────────────────
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (session) { ME = session.user; PROF = await getProfile(ME.id); }
   renderNav();
 
-  // Get the current path without the domain
-  let fullPath = window.location.pathname;
-  
-  // Also check if there's a saved route from 404 redirect
-  const savedRoute = sessionStorage.getItem('redirectRoute');
-  if (savedRoute) {
-    fullPath = savedRoute;
+  // CRITICAL FIX: Check for saved route FIRST
+  let fullPath = sessionStorage.getItem('redirectRoute');
+  if (fullPath) {
     sessionStorage.removeItem('redirectRoute');
+    console.log('Restoring route:', fullPath);
+  } else {
+    fullPath = window.location.pathname;
   }
+  
+  console.log('Current path:', fullPath);
   
   // Handle different route patterns
   if (fullPath.startsWith('/thread/')) {
     const threadId = fullPath.replace('/thread/', '');
-    loadThread(threadId);
+    await loadThread(threadId);
     showPage('thread');
-    window.history.pushState({}, '', fullPath);
+    // Update URL without triggering another redirect
+    window.history.replaceState({}, '', fullPath);
   } 
   else if (fullPath.startsWith('/users/@')) {
     const username = fullPath.replace('/users/@', '');
-    loadProfilePage(username);
+    await loadProfilePage(username);
     showPage('profile');
-    window.history.pushState({}, '', fullPath);
+    window.history.replaceState({}, '', fullPath);
   }
   else if (fullPath === '/settings') {
     if (ME) showPage('settings');
     else showPage('login');
-    window.history.pushState({}, '', fullPath);
+    window.history.replaceState({}, '', fullPath);
   }
   else if (fullPath === '/new') {
     if (ME) showPage('new');
     else showPage('login');
-    window.history.pushState({}, '', fullPath);
+    window.history.replaceState({}, '', fullPath);
   }
   else {
     showPage('home');
     loadFeed();
     if (fullPath !== '/') {
-      window.history.pushState({}, '', '/');
+      window.history.replaceState({}, '', '/');
     }
   }
 
@@ -460,7 +463,10 @@ async function boot() {
   });
 }
 
-window.addEventListener('popstate', () => { boot(); });
+// Listen for popstate (back/forward buttons)
+window.addEventListener('popstate', () => {
+  boot();
+});
 
 function pushState(path) {
   const fullPath = path.startsWith('/') ? path : '/' + path;
@@ -597,13 +603,15 @@ async function getProfile(uid) {
 }
 
 async function loadProfilePage(username) {
+  // Remove @ if present
+  username = username.replace('@', '');
+  console.log('Loading profile for username:', username);
+  
   showPage('profile');
   pushState(`users/@${username}`);
   
   const el = document.getElementById('prof-content');
   el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
-  
-  username = username.replace('@', '');
   
   const { data: prof } = await sb.from('profiles').select('*').eq('username', username).maybeSingle();
   if(!prof) { 
