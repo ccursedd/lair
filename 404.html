@@ -5,19 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting...</title>
     <script>
-        // Get the current path (e.g., /thread/821e6aaf-dfa4-4a16-aac5-9bd694f639b6)
+        // Save the full path and redirect to home
         var path = window.location.pathname;
         var search = window.location.search;
-        var hash = window.location.hash;
         
-        // Save the full URL to sessionStorage before redirect
-        sessionStorage.setItem('redirectUrl', path + search + hash);
-        
-        // Redirect to the main page
+        if (path !== '/' && path !== '/index.html') {
+            var fullRoute = path + search;
+            sessionStorage.setItem('redirectRoute', fullRoute);
+        }
         window.location.href = '/';
     </script>
 </head>
 <body>
-    <p>Redirecting...</p>
+    <p>Redirecting to lair.lat...</p>
 </body>
 </html>
