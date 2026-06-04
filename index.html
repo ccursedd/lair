@@ -3,700 +3,356 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>lair.lat — threads & drops</title>
+<title>lair.lat</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0b;
-    --surface: #111113;
-    --surface2: #18181b;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.12);
-    --text: #f0f0f0;
-    --muted: #888;
-    --accent: #c8f135;
-    --accent2: #8fff6a;
-    --danger: #ff4d4d;
-    --tag-bg: rgba(200,241,53,0.08);
-    --tag-text: #c8f135;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
-  a { color: inherit; text-decoration: none; }
-  input, textarea, select {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius-sm);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    padding: 10px 14px;
-    outline: none;
-    width: 100%;
-    transition: border .2s;
-  }
-  input:focus, textarea:focus { border-color: var(--accent); }
-  button {
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    border: none;
-    border-radius: var(--radius-sm);
-    padding: 10px 18px;
-    transition: all .15s;
-  }
-  button:active { transform: scale(0.98); }
-  .btn-primary {
-    background: var(--accent);
-    color: #0a0a0b;
-    font-weight: 600;
-  }
-  .btn-primary:hover { background: var(--accent2); }
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
-  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
-  .btn-danger {
-    background: transparent;
-    color: var(--danger);
-    border: 1px solid rgba(255,77,77,0.3);
-    font-size: 13px;
-    padding: 7px 14px;
-  }
-  .btn-danger:hover { background: rgba(255,77,77,0.1); }
+:root {
+  --bg: #000000;
+  --surface: #080808;
+  --surface2: #0f0f0f;
+  --surface3: #161616;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --border3: rgba(255,255,255,0.25);
+  --text: #ffffff;
+  --text2: #aaaaaa;
+  --text3: #666666;
+  --accent: #ffffff;
+  --danger: #ff3333;
+  --r: 4px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+a{color:inherit;text-decoration:none;}
+::selection{background:#fff;color:#000;}
+input,textarea,select{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:var(--r);
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:14px;
+  padding:10px 12px;
+  outline:none;
+  width:100%;
+  transition:border .15s;
+  -webkit-appearance:none;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--border3);}
+input::placeholder,textarea::placeholder{color:var(--text3);}
+button{
+  cursor:pointer;
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;
+  font-weight:500;
+  border:1px solid var(--border2);
+  border-radius:var(--r);
+  padding:9px 16px;
+  transition:all .12s;
+  background:transparent;
+  color:var(--text2);
+}
+button:hover{border-color:var(--border3);color:var(--text);}
+button:active{opacity:.7;}
+.btn-white{background:#fff;color:#000;border-color:#fff;font-weight:600;}
+.btn-white:hover{background:#e0e0e0;border-color:#e0e0e0;color:#000;}
+.btn-danger{color:var(--danger);border-color:rgba(255,51,51,.25);}
+.btn-danger:hover{background:rgba(255,51,51,.08);border-color:rgba(255,51,51,.5);color:var(--danger);}
+.btn-sm{padding:6px 12px;font-size:12px;}
 
-  /* NAV */
-  nav {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(10,10,11,0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .nav-logo {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-  }
-  .nav-logo span { color: var(--text); }
-  .nav-right { display: flex; align-items: center; gap: 10px; }
-  .nav-user {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--muted);
-    cursor: pointer;
-  }
-  .nav-user:hover { color: var(--text); }
-  .avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
-    font-family: 'Syne', sans-serif;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(0,0,0,.92);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  height:52px;padding:0 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.logo{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:16px;font-weight:600;
+  letter-spacing:-.5px;color:#fff;cursor:pointer;
+}
+.logo span{color:var(--text3);}
+.nav-r{display:flex;align-items:center;gap:8px;}
 
-  /* LAYOUT */
-  .layout {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 32px 20px 80px;
-  }
+/* AVATAR */
+.av{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--surface3);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  overflow:hidden;flex-shrink:0;cursor:pointer;
+}
+.av img{width:100%;height:100%;object-fit:cover;}
+.av-lg{width:80px;height:80px;font-size:22px;font-weight:700;border:1px solid var(--border2);}
 
-  /* PAGE SECTIONS */
-  .page { display: none; }
-  .page.active { display: block; }
+/* LAYOUT */
+.layout{max-width:700px;margin:0 auto;padding:28px 18px 80px;}
+.page{display:none;animation:fadeIn .15s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
-  /* HOME FEED */
-  .feed-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
-  .feed-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
-  .feed-filters {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .filter-btn {
-    padding: 6px 14px;
-    border-radius: 99px;
-    font-size: 13px;
-    font-weight: 500;
-    background: var(--surface2);
-    color: var(--muted);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: all .15s;
-  }
-  .filter-btn.active, .filter-btn:hover {
-    background: var(--tag-bg);
-    color: var(--accent);
-    border-color: rgba(200,241,53,0.2);
-  }
+/* FEED */
+.feed-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.feed-title{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;letter-spacing:-.5px;}
+.filters{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+.fbtn{
+  padding:5px 12px;border-radius:2px;font-size:12px;font-weight:500;
+  font-family:'IBM Plex Mono',monospace;
+  background:transparent;color:var(--text3);border:1px solid transparent;cursor:pointer;
+  transition:all .12s;
+}
+.fbtn:hover{color:var(--text2);}
+.fbtn.on{color:#fff;border-color:var(--border2);background:var(--surface3);}
 
-  /* THREAD CARD */
-  .thread-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-  }
-  .thread-card:hover { border-color: var(--border2); background: #131315; }
-  .thread-card-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .thread-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .thread-author {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .thread-time {
-    font-size: 12px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-  .thread-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 6px;
-    line-height: 1.35;
-    letter-spacing: -0.2px;
-  }
-  .thread-body {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.55;
-    margin-bottom: 12px;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-  .thread-footer {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .tag {
-    padding: 3px 10px;
-    border-radius: 99px;
-    font-size: 12px;
-    font-weight: 500;
-    background: var(--tag-bg);
-    color: var(--tag-text);
-    border: 1px solid rgba(200,241,53,0.15);
-  }
-  .tag.buy { background: rgba(55,130,230,0.1); color: #5ba4f5; border-color: rgba(55,130,230,0.2); }
-  .tag.sell { background: rgba(250,180,0,0.1); color: #fab400; border-color: rgba(250,180,0,0.2); }
-  .tag.trade { background: rgba(180,100,255,0.1); color: #c47aff; border-color: rgba(180,100,255,0.2); }
-  .thread-stats {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-left: auto;
-    font-size: 12px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-  .stat-item { display: flex; align-items: center; gap: 4px; }
+/* THREAD CARD */
+.tcard{
+  border-bottom:1px solid var(--border);
+  padding:16px 0;cursor:pointer;
+  transition:background .1s;
+}
+.tcard:first-child{border-top:1px solid var(--border);}
+.tcard:hover{background:var(--surface);}
+.tcard:hover .tcard-inner{padding:0 12px;}
+.tcard-inner{padding:0 2px;transition:padding .1s;}
+.tcard-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.tcard-author{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
+.tcard-author b{color:var(--text2);font-weight:500;}
+.tcard-title{font-size:15px;font-weight:600;line-height:1.35;margin-bottom:5px;color:#fff;}
+.tcard-body{font-size:13px;color:var(--text3);line-height:1.5;margin-bottom:10px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.tcard-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.tag{
+  display:inline-block;padding:2px 8px;
+  font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:500;
+  border-radius:2px;border:1px solid var(--border2);color:var(--text3);
+}
+.tag-sell{border-color:rgba(255,255,255,.2);color:#aaa;}
+.tag-buy{border-color:rgba(255,255,255,.2);color:#aaa;}
+.tag-trade{border-color:rgba(255,255,255,.2);color:#aaa;}
+.tcard-stats{margin-left:auto;display:flex;gap:12px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
 
-  /* THREAD VIEW */
-  .back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--muted);
-    font-size: 13px;
-    margin-bottom: 20px;
-    cursor: pointer;
-    transition: color .15s;
-  }
-  .back-btn:hover { color: var(--text); }
-  .thread-full {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 16px;
-  }
-  .thread-full-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 24px;
-    font-weight: 800;
-    margin-bottom: 14px;
-    letter-spacing: -0.5px;
-    line-height: 1.3;
-  }
-  .thread-full-body {
-    font-size: 15px;
-    line-height: 1.7;
-    color: #ccc;
-    white-space: pre-wrap;
-  }
-  .price-display {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 16px;
-    margin: 16px 0;
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--accent);
-  }
-  .price-label { font-size: 12px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+/* THREAD VIEW */
+.back{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);cursor:pointer;margin-bottom:20px;}
+.back:hover{color:#fff;}
+.thread-full{border-bottom:1px solid var(--border);padding-bottom:24px;margin-bottom:24px;}
+.thread-full-title{font-size:22px;font-weight:700;line-height:1.3;margin-bottom:14px;letter-spacing:-.3px;}
+.thread-full-body{font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap;}
+.price-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  border:1px solid var(--border2);padding:10px 16px;border-radius:var(--r);
+  margin:14px 0;font-family:'IBM Plex Mono',monospace;
+}
+.price-num{font-size:20px;font-weight:600;color:#fff;}
+.price-loc{font-size:12px;color:var(--text3);}
 
-  /* COMMENTS */
-  .comments-section { margin-top: 8px; }
-  .comments-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .comment-count {
-    background: var(--surface2);
-    border-radius: 99px;
-    padding: 2px 8px;
-    font-size: 12px;
-    font-family: 'DM Mono', monospace;
-    color: var(--muted);
-  }
-  .comment-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px;
-    margin-bottom: 10px;
-  }
-  .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .comment-author { font-size: 13px; font-weight: 600; }
-  .comment-time { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
-  .comment-text { font-size: 14px; color: #ccc; line-height: 1.6; }
-  .comment-intent {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 6px;
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 99px;
-  }
-  .intent-buy { background: rgba(55,130,230,0.1); color: #5ba4f5; }
-  .intent-offer { background: rgba(250,180,0,0.1); color: #fab400; }
-  .write-comment {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-top: 16px;
-  }
-  .write-comment textarea {
-    resize: vertical;
-    min-height: 80px;
-    margin-bottom: 10px;
-  }
-  .comment-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .intent-select { display: flex; gap: 6px; }
-  .intent-chip {
-    padding: 6px 12px;
-    border-radius: 99px;
-    font-size: 12px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    transition: all .15s;
-  }
-  .intent-chip.selected-buy { border-color: rgba(55,130,230,0.4); background: rgba(55,130,230,0.1); color: #5ba4f5; }
-  .intent-chip.selected-offer { border-color: rgba(250,180,0,0.4); background: rgba(250,180,0,0.1); color: #fab400; }
-  .intent-chip.selected-comment { border-color: rgba(200,241,53,0.3); background: var(--tag-bg); color: var(--accent); }
+/* COMMENTS */
+.comments-hd{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.cbox{border-bottom:1px solid var(--border);padding:14px 0;}
+.cbox:last-child{border-bottom:none;}
+.cbox-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.cbox-author{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text2);cursor:pointer;}
+.cbox-author:hover{color:#fff;}
+.cbox-time{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.cbox-body{font-size:13px;color:var(--text2);line-height:1.6;}
+.intent-tag{display:inline-block;margin-top:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;padding:2px 8px;border:1px solid var(--border2);border-radius:2px;color:var(--text3);}
 
-  /* NEW THREAD */
-  .new-thread-form {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-  }
-  .form-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    margin-bottom: 20px;
-    letter-spacing: -0.3px;
-  }
-  .form-group { margin-bottom: 16px; }
-  .form-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-family: 'DM Mono', monospace;
-  }
-  .type-selector { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .type-chip {
-    padding: 8px 16px;
-    border-radius: 99px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--surface2);
-    color: var(--muted);
-    transition: all .15s;
-  }
-  .type-chip.active-discussion { background: var(--tag-bg); color: var(--accent); border-color: rgba(200,241,53,0.3); }
-  .type-chip.active-selling { background: rgba(250,180,0,0.1); color: #fab400; border-color: rgba(250,180,0,0.3); }
-  .type-chip.active-buying { background: rgba(55,130,230,0.1); color: #5ba4f5; border-color: rgba(55,130,230,0.3); }
-  .type-chip.active-trading { background: rgba(180,100,255,0.1); color: #c47aff; border-color: rgba(180,100,255,0.3); }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.write-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:16px;}
+.write-box textarea{min-height:70px;resize:vertical;margin-bottom:10px;background:var(--surface2);}
+.write-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.intents{display:flex;gap:4px;}
+.ichip{
+  padding:5px 10px;border-radius:2px;font-size:11px;font-family:'IBM Plex Mono',monospace;
+  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .12s;
+}
+.ichip:hover{color:var(--text2);border-color:var(--border2);}
+.ichip.on{background:var(--surface3);color:#fff;border-color:var(--border2);}
 
-  /* AUTH */
-  .auth-wrap {
-    min-height: calc(100vh - 56px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-  }
-  .auth-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px;
-    width: 100%;
-    max-width: 400px;
-  }
-  .auth-logo {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--accent);
-    text-align: center;
-    margin-bottom: 6px;
-    letter-spacing: -0.5px;
-  }
-  .auth-subtitle {
-    text-align: center;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 28px;
-  }
-  .auth-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 20px;
-  }
-  .auth-switch {
-    text-align: center;
-    margin-top: 16px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .auth-switch a { color: var(--accent); cursor: pointer; }
-  .auth-switch a:hover { text-decoration: underline; }
-  .error-msg {
-    background: rgba(255,77,77,0.1);
-    border: 1px solid rgba(255,77,77,0.2);
-    color: #ff7070;
-    font-size: 13px;
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    margin-bottom: 14px;
-  }
+/* NEW THREAD */
+.form-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;}
+.form-title{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;margin-bottom:20px;}
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.type-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
+.tchip{
+  padding:6px 14px;border-radius:2px;font-size:12px;font-family:'IBM Plex Mono',monospace;
+  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .12s;
+}
+.tchip:hover{color:var(--text);}
+.tchip.on{background:var(--surface3);color:#fff;border-color:var(--border2);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-  /* PROFILE */
-  .profile-header {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-  }
-  .profile-avatar {
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 2px solid rgba(200,241,53,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--accent);
-    font-family: 'Syne', sans-serif;
-    flex-shrink: 0;
-    overflow: hidden;
-  }
-  .profile-info { flex: 1; }
-  .profile-username {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    margin-bottom: 4px;
-  }
-  .profile-url {
-    font-size: 12px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    margin-bottom: 8px;
-  }
-  .profile-bio { font-size: 14px; color: #aaa; line-height: 1.5; }
-  .profile-stats {
-    display: flex;
-    gap: 20px;
-    margin-top: 14px;
-  }
-  .pstat { text-align: center; }
-  .pstat-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--accent);
-  }
-  .pstat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .section-heading {
-    font-family: 'Syne', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 14px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 11px;
-  }
+/* AUTH */
+.auth-wrap{min-height:calc(100vh - 52px);display:flex;align-items:center;justify-content:center;padding:40px 18px;}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;width:100%;max-width:360px;}
+.auth-logo{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;text-align:center;margin-bottom:4px;}
+.auth-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:24px;font-family:'IBM Plex Mono',monospace;}
+.auth-hed{font-size:15px;font-weight:600;margin-bottom:18px;}
+.auth-sw{text-align:center;margin-top:14px;font-size:12px;color:var(--text3);}
+.auth-sw a{color:var(--text2);cursor:pointer;text-decoration:underline;}
 
-  /* SETTINGS */
-  .settings-form {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 12px;
-  }
+/* PROFILE PAGE */
+.prof-banner{
+  width:100%;height:160px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden;
+  margin-bottom:0;
+  position:relative;
+}
+.prof-banner img{width:100%;height:100%;object-fit:cover;}
+.prof-banner-placeholder{width:100%;height:100%;background:linear-gradient(135deg,#0f0f0f 0%,#161616 100%);}
+.prof-head{
+  display:flex;align-items:flex-end;gap:14px;
+  padding:0 2px;
+  margin-top:-30px;
+  margin-bottom:16px;
+  position:relative;
+}
+.prof-av-wrap{
+  position:relative;
+  width:80px;height:80px;flex-shrink:0;
+}
+.prof-av-wrap .av-lg{
+  border:3px solid var(--bg);
+  background:var(--surface3);
+}
+.prof-info{padding-bottom:4px;flex:1;min-width:0;}
+.prof-name{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.3px;}
+.prof-url{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin:2px 0 6px;}
+.prof-bio{font-size:13px;color:var(--text2);line-height:1.5;}
+.prof-stats{display:flex;gap:18px;margin-top:10px;}
+.pst{display:flex;flex-direction:column;}
+.pst-n{font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#fff;}
+.pst-l{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.sec-hed{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
 
-  /* EMPTY STATE */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; }
-  .empty-text { font-size: 15px; margin-bottom: 16px; }
+/* SETTINGS */
+.set-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:12px;}
 
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    padding: 12px 18px;
-    font-size: 14px;
-    color: var(--text);
-    z-index: 9999;
-    transform: translateY(20px);
-    opacity: 0;
-    transition: all .25s;
-    max-width: 300px;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.success { border-color: rgba(200,241,53,0.3); }
-  .toast.error { border-color: rgba(255,77,77,0.3); color: #ff7070; }
+/* AVATAR UPLOAD */
+.av-upload-area{
+  display:flex;align-items:center;gap:16px;margin-bottom:14px;
+}
+.av-preview{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--surface3);border:1px solid var(--border2);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:600;color:#fff;font-family:'IBM Plex Mono',monospace;
+  flex-shrink:0;
+}
+.av-preview img{width:100%;height:100%;object-fit:cover;}
+.file-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border:1px solid var(--border2);border-radius:var(--r);
+  font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text2);
+  cursor:pointer;transition:all .12s;background:var(--surface2);
+}
+.file-btn:hover{border-color:var(--border3);color:#fff;}
+.file-input-hidden{display:none;}
 
-  /* LOADING */
-  .spinner {
-    display: inline-block;
-    width: 20px; height: 20px;
-    border: 2px solid var(--border2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin .6s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-state {
-    text-align: center;
-    padding: 40px;
-    color: var(--muted);
-  }
+/* BANNER UPLOAD */
+.banner-upload-area{
+  position:relative;margin-bottom:14px;
+}
+.banner-preview{
+  width:100%;height:100px;border-radius:var(--r);
+  background:var(--surface2);border:1px solid var(--border);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  color:var(--text3);font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;
+}
+.banner-preview img{width:100%;height:100%;object-fit:cover;}
+.banner-preview:hover{border-color:var(--border2);}
 
-  /* DIVIDER */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 20px 0;
-  }
+/* ERROR/TOAST */
+.err{background:rgba(255,51,51,.06);border:1px solid rgba(255,51,51,.2);color:#ff6666;font-size:12px;padding:9px 12px;border-radius:var(--r);margin-bottom:12px;}
+.toast{
+  position:fixed;bottom:20px;right:20px;
+  background:var(--surface3);border:1px solid var(--border2);
+  border-radius:var(--r);padding:11px 16px;font-size:13px;
+  z-index:9999;opacity:0;transform:translateY(8px);
+  transition:all .2s;pointer-events:none;max-width:280px;
+  font-family:'IBM Plex Mono',monospace;
+}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{border-color:rgba(255,255,255,.25);color:#fff;}
+.toast.er{border-color:rgba(255,51,51,.3);color:#ff6666;}
 
-  /* MISC */
-  .flex { display: flex; }
-  .gap-8 { gap: 8px; }
-  .gap-12 { gap: 12px; }
-  .mb-0 { margin-bottom: 0; }
-  .w-full { width: 100%; }
-  .text-muted { color: var(--muted); }
-  .text-sm { font-size: 13px; }
-  .font-mono { font-family: 'DM Mono', monospace; }
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:50px 20px;color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.spin{display:inline-block;width:18px;height:18px;border:1.5px solid var(--border2);border-top-color:#fff;border-radius:50%;animation:sp .5s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:40px;color:var(--text3);}
 
-  @media (max-width: 500px) {
-    .form-row { grid-template-columns: 1fr; }
-    .profile-header { flex-direction: column; }
-    nav { padding: 0 14px; }
-    .layout { padding: 20px 14px 60px; }
-  }
+@media(max-width:480px){
+  .frow{grid-template-columns:1fr;}
+  nav{padding:0 14px;}
+  .layout{padding:18px 14px 60px;}
+  .auth-box{padding:22px 18px;}
+  .prof-head{flex-direction:column;align-items:flex-start;margin-top:-20px;}
+}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <div class="nav-logo" onclick="navigate('home')" style="cursor:pointer">lair<span>.lat</span></div>
-  <div class="nav-right" id="nav-right">
-    <button class="btn-ghost" onclick="navigate('login')" style="padding:7px 14px;font-size:13px">sign in</button>
-    <button class="btn-primary" onclick="navigate('register')" style="padding:7px 14px;font-size:13px">join</button>
+  <div class="logo" id="nav-logo">lair<span>.lat</span></div>
+  <div class="nav-r" id="nav-r">
+    <button onclick="showPage('login')">sign in</button>
+    <button class="btn-white" onclick="showPage('register')">join</button>
   </div>
 </nav>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
-
-<!-- PAGES -->
 
 <!-- HOME -->
 <div class="page active layout" id="page-home">
-  <div class="feed-header">
+  <div class="feed-top">
     <div class="feed-title">threads</div>
-    <button class="btn-primary" id="new-thread-btn" style="display:none" onclick="navigate('new-thread')">+ new thread</button>
+    <button class="btn-white btn-sm" id="new-btn" style="display:none" onclick="showPage('new')">+ new thread</button>
   </div>
-  <div class="feed-filters">
-    <button class="filter-btn active" data-filter="all">all</button>
-    <button class="filter-btn" data-filter="discussion">discussion</button>
-    <button class="filter-btn" data-filter="selling">selling</button>
-    <button class="filter-btn" data-filter="buying">buying</button>
-    <button class="filter-btn" data-filter="trading">trading</button>
+  <div class="filters">
+    <button class="fbtn on" data-f="all">all</button>
+    <button class="fbtn" data-f="discussion">discussion</button>
+    <button class="fbtn" data-f="selling">selling</button>
+    <button class="fbtn" data-f="buying">buying</button>
+    <button class="fbtn" data-f="trading">trading</button>
   </div>
-  <div id="thread-list">
-    <div class="loading-state"><div class="spinner"></div></div>
-  </div>
+  <div id="feed"></div>
 </div>
 
-<!-- THREAD VIEW -->
+<!-- THREAD -->
 <div class="page layout" id="page-thread">
-  <div class="back-btn" onclick="navigate('home')">← back</div>
-  <div id="thread-view-content"></div>
+  <div class="back" onclick="showPage('home')">← back</div>
+  <div id="thread-body"></div>
 </div>
 
 <!-- NEW THREAD -->
-<div class="page layout" id="page-new-thread">
-  <div class="back-btn" onclick="navigate('home')">← back</div>
-  <div class="new-thread-form">
+<div class="page layout" id="page-new">
+  <div class="back" onclick="showPage('home')">← back</div>
+  <div class="form-box">
     <div class="form-title">new thread</div>
-    <div class="form-group">
-      <label class="form-label">type</label>
-      <div class="type-selector">
-        <button class="type-chip active-discussion" data-type="discussion" onclick="selectType(this,'discussion')">💬 discussion</button>
-        <button class="type-chip" data-type="selling" onclick="selectType(this,'selling')">🏷️ selling</button>
-        <button class="type-chip" data-type="buying" onclick="selectType(this,'buying')">🛒 buying</button>
-        <button class="type-chip" data-type="trading" onclick="selectType(this,'trading')">🔄 trading</button>
-      </div>
+    <label class="fl">type</label>
+    <div class="type-row">
+      <button class="tchip on" data-t="discussion" onclick="pickType(this,'discussion')">discussion</button>
+      <button class="tchip" data-t="selling" onclick="pickType(this,'selling')">selling</button>
+      <button class="tchip" data-t="buying" onclick="buying(this,'buying')">buying</button>
+      <button class="tchip" data-t="trading" onclick="pickType(this,'trading')">trading</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">title</label>
-      <input type="text" id="nt-title" placeholder="what's this thread about?" maxlength="120">
+    <div class="fg"><label class="fl">title</label><input id="nt-title" placeholder="what is this about?" maxlength="120"></div>
+    <div class="fg"><label class="fl">body</label><textarea id="nt-body" style="min-height:110px;resize:vertical" placeholder="describe it in detail..."></textarea></div>
+    <div id="nt-price-row" class="frow" style="display:none;margin-bottom:14px;">
+      <div><label class="fl">price ($)</label><input type="number" id="nt-price" placeholder="0.00" step="0.01" min="0"></div>
+      <div><label class="fl">location</label><input id="nt-loc" placeholder="city, state"></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">body</label>
-      <textarea id="nt-body" style="min-height:120px;resize:vertical" placeholder="describe it..."></textarea>
-    </div>
-    <div id="price-row" class="form-row" style="display:none">
-      <div class="form-group mb-0">
-        <label class="form-label">price ($)</label>
-        <input type="number" id="nt-price" placeholder="0.00" step="0.01" min="0">
-      </div>
-      <div class="form-group mb-0">
-        <label class="form-label">location (optional)</label>
-        <input type="text" id="nt-location" placeholder="city, country">
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">tags (comma separated)</label>
-      <input type="text" id="nt-tags" placeholder="sneakers, size 10, nike">
-    </div>
-    <div id="nt-error" class="error-msg" style="display:none"></div>
-    <button class="btn-primary w-full" onclick="submitThread()" id="nt-submit">post thread</button>
+    <div class="fg"><label class="fl">tags (comma separated)</label><input id="nt-tags" placeholder="sneakers, nike, size 10"></div>
+    <div class="err" id="nt-err" style="display:none"></div>
+    <button class="btn-white" style="width:100%" onclick="postThread()" id="nt-btn">post thread</button>
   </div>
 </div>
 
@@ -705,19 +361,13 @@
   <div class="auth-wrap">
     <div class="auth-box">
       <div class="auth-logo">lair.lat</div>
-      <div class="auth-subtitle">threads & drops</div>
-      <div class="auth-title">sign in</div>
-      <div id="login-error" class="error-msg" style="display:none"></div>
-      <div class="form-group">
-        <label class="form-label">email</label>
-        <input type="email" id="login-email" placeholder="you@example.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">password</label>
-        <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()">
-      </div>
-      <button class="btn-primary w-full" onclick="signIn()" id="login-btn">sign in</button>
-      <div class="auth-switch">don't have an account? <a onclick="navigate('register')">join now</a></div>
+      <div class="auth-sub">threads & drops</div>
+      <div class="auth-hed">sign in</div>
+      <div class="err" id="li-err" style="display:none"></div>
+      <div class="fg"><label class="fl">email</label><input type="email" id="li-email" placeholder="you@example.com"></div>
+      <div class="fg"><label class="fl">password</label><input type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn-white" style="width:100%" onclick="doLogin()" id="li-btn">sign in</button>
+      <div class="auth-sw">no account? <a onclick="showPage('register')">join now</a></div>
     </div>
   </div>
 </div>
@@ -727,589 +377,559 @@
   <div class="auth-wrap">
     <div class="auth-box">
       <div class="auth-logo">lair.lat</div>
-      <div class="auth-subtitle">threads & drops</div>
-      <div class="auth-title">create account</div>
-      <div id="reg-error" class="error-msg" style="display:none"></div>
-      <div class="form-group">
-        <label class="form-label">username</label>
-        <input type="text" id="reg-username" placeholder="yourhandle" maxlength="30">
-      </div>
-      <div class="form-group">
-        <label class="form-label">email</label>
-        <input type="email" id="reg-email" placeholder="you@example.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">password</label>
-        <input type="password" id="reg-pass" placeholder="min 6 characters" onkeydown="if(event.key==='Enter')signUp()">
-      </div>
-      <button class="btn-primary w-full" onclick="signUp()" id="reg-btn">create account</button>
-      <div class="auth-switch">already have an account? <a onclick="navigate('login')">sign in</a></div>
+      <div class="auth-sub">threads & drops</div>
+      <div class="auth-hed">create account</div>
+      <div class="err" id="reg-err" style="display:none"></div>
+      <div class="fg"><label class="fl">username</label><input id="reg-user" placeholder="yourhandle" maxlength="30"></div>
+      <div class="fg"><label class="fl">email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
+      <div class="fg"><label class="fl">password</label><input type="password" id="reg-pass" placeholder="min 6 characters" onkeydown="if(event.key==='Enter')doRegister()"></div>
+      <button class="btn-white" style="width:100%" onclick="doRegister()" id="reg-btn">create account</button>
+      <div class="auth-sw">have an account? <a onclick="showPage('login')">sign in</a></div>
     </div>
   </div>
 </div>
 
 <!-- PROFILE -->
 <div class="page layout" id="page-profile">
-  <div id="profile-content"></div>
+  <div id="prof-content"></div>
 </div>
 
 <!-- SETTINGS -->
 <div class="page layout" id="page-settings">
-  <div class="back-btn" onclick="navigate('home')">← back</div>
-  <div class="settings-form">
-    <div class="form-title">settings</div>
-    <div class="form-group">
-      <label class="form-label">username</label>
-      <input type="text" id="set-username" placeholder="yourhandle">
+  <div class="back" onclick="showPage('home')">← back</div>
+  <div class="set-box">
+    <div class="form-title">edit profile</div>
+
+    <label class="fl">profile photo</label>
+    <div class="av-upload-area">
+      <div class="av-preview" id="set-av-preview">??</div>
+      <div>
+        <label class="file-btn" for="set-av-file">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          choose photo
+        </label>
+        <input type="file" id="set-av-file" class="file-input-hidden" accept="image/*" onchange="previewAvatar(this)">
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;font-family:'IBM Plex Mono',monospace">jpg, png, gif — max 2mb</div>
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">bio</label>
-      <textarea id="set-bio" style="min-height:80px" placeholder="tell people a bit about yourself..."></textarea>
+
+    <label class="fl">banner image</label>
+    <div class="banner-upload-area" style="margin-bottom:14px;">
+      <div class="banner-preview" id="set-banner-preview" onclick="document.getElementById('set-banner-file').click()">
+        <span id="set-banner-placeholder">click to upload banner</span>
+      </div>
+      <input type="file" id="set-banner-file" class="file-input-hidden" accept="image/*" onchange="previewBanner(this)">
     </div>
-    <div class="form-group">
-      <label class="form-label">avatar url (optional)</label>
-      <input type="text" id="set-avatar" placeholder="https://...">
-    </div>
-    <div id="set-error" class="error-msg" style="display:none"></div>
-    <div style="display:flex;gap:10px">
-      <button class="btn-primary" onclick="saveSettings()">save changes</button>
-      <button class="btn-danger" onclick="signOut()">sign out</button>
+
+    <div class="fg"><label class="fl">username</label><input id="set-user" placeholder="yourhandle" maxlength="30"></div>
+    <div class="fg"><label class="fl">bio</label><textarea id="set-bio" style="min-height:70px" placeholder="tell people about yourself..."></textarea></div>
+    <div class="err" id="set-err" style="display:none"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-white" onclick="saveSettings()">save changes</button>
+      <button class="btn-danger" onclick="doLogout()">sign out</button>
     </div>
   </div>
 </div>
 
 <script>
-const SUPA_URL = 'https://flmoswqpocsufircduiy.supabase.co';
-const SUPA_KEY = 'sb_publishable_g5hrheYjAQ2OKNjkJKPCHQ_D2f8fndS';
-const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+const SB_URL = 'https://flmoswqpocsufircduiy.supabase.co';
+const SB_KEY = 'sb_publishable_g5hrheYjAQ2OKNjkJKPCHQ_D2f8fndS';
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-let currentUser = null;
-let currentProfile = null;
-let currentFilter = 'all';
-let selectedType = 'discussion';
-let selectedIntent = 'comment';
-let currentThreadId = null;
+let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'discussion', COMMENT_INTENT = 'comment';
+let pendingAvatarFile = null, pendingBannerFile = null;
 
-// ─── INIT ───────────────────────────────────────────────
-async function init() {
-  await ensureSchema();
-  const { data: { session } } = await db.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    await loadProfile(currentUser.id);
-  }
-  updateNav();
+// ── BOOT ──────────────────────────────────────────────
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { ME = session.user; PROF = await getProfile(ME.id); }
+  renderNav();
 
-  // Handle URL routing
+  // URL routing
   const path = window.location.pathname;
-  const hash = window.location.hash;
-  if (path.includes('/users/@') || hash.includes('/users/@')) {
-    const username = (path.split('/users/@')[1] || hash.split('/users/@')[1] || '').split('/')[0];
-    if (username) { await showUserProfile(username); return; }
-  }
-  navigate('home');
+  const search = window.location.search;
+  const hash = window.location.hash.replace('#','');
 
-  db.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') {
-      currentUser = session.user;
-      await loadProfile(currentUser.id);
-      updateNav();
-    } else if (event === 'SIGNED_OUT') {
-      currentUser = null;
-      currentProfile = null;
-      updateNav();
-    }
+  // /users/@username OR ?user=username OR #users/@username
+  const userMatch = path.match(/\/users\/@([^\/\?#]+)/) || hash.match(/users\/@([^\/\?#]+)/);
+  const threadMatch = path.match(/\/thread\/([^\/\?#]+)/) || hash.match(/thread\/([^\/\?#]+)/);
+  const qUser = new URLSearchParams(search).get('user');
+
+  if (userMatch) { loadProfilePage(userMatch[1]); return; }
+  if (qUser) { loadProfilePage(qUser); return; }
+  if (threadMatch) { loadThread(threadMatch[1]); showPage('thread'); return; }
+
+  showPage('home');
+  loadFeed();
+
+  sb.auth.onAuthStateChange(async (ev, sess) => {
+    if (ev === 'SIGNED_IN') { ME = sess.user; PROF = await getProfile(ME.id); renderNav(); }
+    if (ev === 'SIGNED_OUT') { ME = null; PROF = null; renderNav(); }
   });
 }
 
-// ─── SCHEMA ─────────────────────────────────────────────
-async function ensureSchema() {
-  // Tables are created via Supabase dashboard; we check and gracefully handle missing tables
-}
+window.addEventListener('popstate', () => boot());
 
-// ─── NAV ─────────────────────────────────────────────────
-function updateNav() {
-  const navRight = document.getElementById('nav-right');
-  const ntBtn = document.getElementById('new-thread-btn');
-  if (currentUser && currentProfile) {
-    const initials = (currentProfile.username || 'U').slice(0,2).toUpperCase();
-    navRight.innerHTML = `
-      <div class="nav-user" onclick="navigate('settings')">
-        <div class="avatar">${currentProfile.avatar_url ? `<img src="${currentProfile.avatar_url}" onerror="this.style.display='none'">` : ''}${!currentProfile.avatar_url ? initials : ''}</div>
-        <span style="color:var(--text);font-size:13px;font-weight:500">@${currentProfile.username || 'you'}</span>
-      </div>
-    `;
-    if (ntBtn) ntBtn.style.display = 'flex';
-    // Fill settings
-    if (document.getElementById('set-username')) {
-      document.getElementById('set-username').value = currentProfile.username || '';
-      document.getElementById('set-bio').value = currentProfile.bio || '';
-      document.getElementById('set-avatar').value = currentProfile.avatar_url || '';
-    }
+// ── NAV ───────────────────────────────────────────────
+function renderNav() {
+  document.getElementById('nav-logo').onclick = () => { pushState('/'); showPage('home'); loadFeed(); };
+  const nr = document.getElementById('nav-r');
+  const nb = document.getElementById('new-btn');
+  if (ME && PROF) {
+    const init = (PROF.username||'?').slice(0,2).toUpperCase();
+    const imgHTML = PROF.avatar_url ? `<img src="${PROF.avatar_url}" onerror="this.style.display='none'">` : '';
+    nr.innerHTML = `<div class="av" onclick="showPage('settings')" title="settings">${imgHTML}${!PROF.avatar_url?init:''}</div>`;
+    if(nb) nb.style.display='inline-flex';
+    fillSettings();
   } else {
-    navRight.innerHTML = `
-      <button class="btn-ghost" onclick="navigate('login')" style="padding:7px 14px;font-size:13px">sign in</button>
-      <button class="btn-primary" onclick="navigate('register')" style="padding:7px 14px;font-size:13px">join</button>
-    `;
-    if (ntBtn) ntBtn.style.display = 'none';
+    nr.innerHTML = `<button onclick="showPage('login')">sign in</button><button class="btn-white" onclick="showPage('register')">join</button>`;
+    if(nb) nb.style.display='none';
   }
 }
 
-// ─── NAVIGATE ────────────────────────────────────────────
-function navigate(page, data) {
+// ── PAGE ──────────────────────────────────────────────
+function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById('page-' + page);
+  const el = document.getElementById('page-'+id);
   if (el) el.classList.add('active');
   window.scrollTo(0,0);
-
-  if (page === 'home') loadThreads();
-  if (page === 'thread' && data) loadThread(data);
-  if (page === 'settings') updateNav();
-  if (page === 'new-thread' && !currentUser) { navigate('login'); return; }
+  if (id === 'home') loadFeed();
+  if (id === 'new' && !ME) { showPage('login'); return; }
 }
 
-// ─── TOAST ───────────────────────────────────────────────
-function toast(msg, type = 'success') {
+function pushState(path) {
+  window.history.pushState({}, '', path);
+}
+
+// ── TOAST ─────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type='ok') {
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.className = 'toast show ' + type;
-  setTimeout(() => el.classList.remove('show'), 3000);
+  el.className = 'toast show '+type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
-// ─── AUTH ─────────────────────────────────────────────────
-async function signUp() {
-  const username = document.getElementById('reg-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
-  const email = document.getElementById('reg-email').value.trim();
-  const pass = document.getElementById('reg-pass').value;
-  const errEl = document.getElementById('reg-error');
-  errEl.style.display = 'none';
-
-  if (!username || username.length < 2) return showErr(errEl, 'username must be at least 2 characters');
-  if (!email) return showErr(errEl, 'email required');
-  if (pass.length < 6) return showErr(errEl, 'password must be at least 6 characters');
-
-  // Check username taken
-  const { data: existing } = await db.from('profiles').select('id').eq('username', username).single();
-  if (existing) return showErr(errEl, 'username already taken');
-
-  const btn = document.getElementById('reg-btn');
-  btn.textContent = 'creating...'; btn.disabled = true;
-
-  const { data, error } = await db.auth.signUp({ email, password: pass });
-  if (error) { showErr(errEl, error.message); btn.textContent = 'create account'; btn.disabled = false; return; }
-
-  // Create profile
-  if (data.user) {
-    await db.from('profiles').insert({
-      id: data.user.id,
-      username,
-      email,
-      created_at: new Date().toISOString()
-    });
-    currentUser = data.user;
-    await loadProfile(data.user.id);
-    updateNav();
-    toast('welcome to lair.lat! 🎉');
-    navigate('home');
-  }
-  btn.textContent = 'create account'; btn.disabled = false;
+function esc(s) {
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-async function signIn() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass = document.getElementById('login-pass').value;
-  const errEl = document.getElementById('login-error');
-  errEl.style.display = 'none';
-
-  const btn = document.getElementById('login-btn');
-  btn.textContent = 'signing in...'; btn.disabled = true;
-
-  const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
-  if (error) { showErr(errEl, error.message); btn.textContent = 'sign in'; btn.disabled = false; return; }
-
-  currentUser = data.user;
-  await loadProfile(data.user.id);
-  updateNav();
-  toast('welcome back!');
-  navigate('home');
-  btn.textContent = 'sign in'; btn.disabled = false;
-}
-
-async function signOut() {
-  await db.auth.signOut();
-  currentUser = null; currentProfile = null;
-  updateNav();
-  navigate('home');
-  toast('signed out');
-}
-
-function showErr(el, msg) {
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-// ─── PROFILE ─────────────────────────────────────────────
-async function loadProfile(userId) {
-  const { data } = await db.from('profiles').select('*').eq('id', userId).single();
-  if (data) currentProfile = data;
-  else {
-    // Profile might not exist yet
-    currentProfile = { id: userId, username: currentUser?.email?.split('@')[0] || 'user' };
-  }
-  return currentProfile;
-}
-
-async function showUserProfile(username) {
-  navigate('profile');
-  const content = document.getElementById('profile-content');
-  content.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
-
-  const { data: profile } = await db.from('profiles').select('*').eq('username', username).single();
-  if (!profile) {
-    content.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-text">user not found</div></div>';
-    return;
-  }
-
-  const { data: threads } = await db.from('threads').select('*').eq('author_id', profile.id).order('created_at', { ascending: false });
-  const { data: comments } = await db.from('comments').select('id').eq('author_id', profile.id);
-
-  const initials = (profile.username || 'U').slice(0,2).toUpperCase();
-  const isOwn = currentUser && currentUser.id === profile.id;
-
-  content.innerHTML = `
-    <div class="back-btn" onclick="navigate('home')">← back</div>
-    <div class="profile-header">
-      <div class="profile-avatar">${profile.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : ''}${!profile.avatar_url ? initials : ''}</div>
-      <div class="profile-info">
-        <div class="profile-username">@${profile.username}</div>
-        <div class="profile-url font-mono">lair.lat/users/@${profile.username}</div>
-        ${profile.bio ? `<div class="profile-bio">${escHtml(profile.bio)}</div>` : ''}
-        <div class="profile-stats">
-          <div class="pstat"><div class="pstat-num">${threads?.length || 0}</div><div class="pstat-label">threads</div></div>
-          <div class="pstat"><div class="pstat-num">${comments?.length || 0}</div><div class="pstat-label">comments</div></div>
-        </div>
-        ${isOwn ? '<button class="btn-ghost" onclick="navigate(\'settings\')" style="margin-top:12px;font-size:13px;padding:7px 14px">edit profile</button>' : ''}
-      </div>
-    </div>
-    <div class="section-heading">threads</div>
-    <div id="profile-threads">
-      ${!threads || threads.length === 0 ? '<div class="empty-state" style="padding:30px"><div class="empty-text text-muted">no threads yet</div></div>' :
-        threads.map(t => renderThreadCard(t, profile)).join('')}
-    </div>
-  `;
-}
-
-async function saveSettings() {
-  const username = document.getElementById('set-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
-  const bio = document.getElementById('set-bio').value.trim();
-  const avatar_url = document.getElementById('set-avatar').value.trim();
-  const errEl = document.getElementById('set-error');
-  errEl.style.display = 'none';
-
-  if (!username || username.length < 2) return showErr(errEl, 'username must be at least 2 chars');
-
-  // Check username taken by another
-  const { data: existing } = await db.from('profiles').select('id').eq('username', username).neq('id', currentUser.id).single();
-  if (existing) return showErr(errEl, 'username already taken');
-
-  const { error } = await db.from('profiles').upsert({
-    id: currentUser.id,
-    username, bio, avatar_url,
-    updated_at: new Date().toISOString()
-  });
-
-  if (error) return showErr(errEl, error.message);
-  await loadProfile(currentUser.id);
-  updateNav();
-  toast('profile updated!');
-}
-
-// ─── THREADS ─────────────────────────────────────────────
-async function loadThreads() {
-  const listEl = document.getElementById('thread-list');
-  listEl.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
-
-  let query = db.from('threads').select('*, profiles(username, avatar_url)').order('created_at', { ascending: false });
-  if (currentFilter !== 'all') query = query.eq('type', currentFilter);
-
-  const { data, error } = await query.limit(50);
-
-  if (error || !data || data.length === 0) {
-    listEl.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">🧵</div>
-      <div class="empty-text">${error ? 'could not load threads — check your database setup' : 'no threads yet. be the first!'}</div>
-      ${currentUser ? '<button class="btn-primary" onclick="navigate(\'new-thread\')">create first thread</button>' : ''}
-    </div>`;
-    return;
-  }
-
-  listEl.innerHTML = data.map(t => renderThreadCard(t, t.profiles)).join('');
-}
-
-function renderThreadCard(t, profile) {
-  const typeTag = t.type !== 'discussion' ? `<span class="tag ${t.type}">${t.type}</span>` : '';
-  const tags = t.tags ? t.tags.slice(0,3).map(tag => `<span class="tag">${escHtml(tag)}</span>`).join('') : '';
-  const authorName = (profile?.username) || 'unknown';
-  const initials = authorName.slice(0,2).toUpperCase();
-  const avatar = profile?.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : '';
-
-  return `<div class="thread-card" onclick="openThread('${t.id}')">
-    <div class="thread-card-header">
-      <div class="avatar" onclick="event.stopPropagation();showUserProfile('${authorName}')">${avatar}${!profile?.avatar_url ? initials : ''}</div>
-      <div class="thread-meta">
-        <span class="thread-author" onclick="event.stopPropagation();showUserProfile('${authorName}')">@${escHtml(authorName)}</span>
-        <span class="thread-time">${timeAgo(t.created_at)}</span>
-      </div>
-    </div>
-    <div class="thread-title">${escHtml(t.title)}</div>
-    <div class="thread-body">${escHtml(t.body || '')}</div>
-    <div class="thread-footer">
-      ${typeTag}${tags}
-      ${t.price ? `<span class="tag sell">$${Number(t.price).toFixed(2)}</span>` : ''}
-      <div class="thread-stats">
-        <span class="stat-item">💬 ${t.comment_count || 0}</span>
-        <span class="stat-item">👁 ${t.view_count || 0}</span>
-      </div>
-    </div>
-  </div>`;
-}
-
-async function openThread(id) {
-  currentThreadId = id;
-  navigate('thread', id);
-}
-
-async function loadThread(id) {
-  const content = document.getElementById('thread-view-content');
-  content.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
-
-  // Increment view count
-  await db.rpc('increment_views', { thread_id: id }).catch(() => {});
-
-  const { data: thread } = await db.from('threads').select('*, profiles(username, avatar_url)').eq('id', id).single();
-  const { data: comments } = await db.from('comments').select('*, profiles(username, avatar_url)').eq('thread_id', id).order('created_at', { ascending: true });
-
-  if (!thread) {
-    content.innerHTML = '<div class="empty-state"><div class="empty-text">thread not found</div></div>';
-    return;
-  }
-
-  const profile = thread.profiles;
-  const authorName = profile?.username || 'unknown';
-  const initials = authorName.slice(0,2).toUpperCase();
-  const avatarHTML = profile?.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : '';
-  const isOwner = currentUser && thread.author_id === currentUser.id;
-
-  const commentsHTML = !comments || comments.length === 0
-    ? '<div style="text-align:center;padding:30px 0;color:var(--muted);font-size:14px">no comments yet</div>'
-    : comments.map(c => renderComment(c)).join('');
-
-  const writeHTML = currentUser ? `
-    <div class="write-comment">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <div class="avatar" style="width:28px;height:28px;font-size:11px">${currentProfile?.avatar_url ? `<img src="${currentProfile.avatar_url}">` : (currentProfile?.username||'U').slice(0,2).toUpperCase()}</div>
-        <span style="font-size:13px;color:var(--muted)">@${currentProfile?.username || 'you'}</span>
-      </div>
-      <textarea id="comment-text" placeholder="write a comment..."></textarea>
-      <div class="comment-actions">
-        <div class="intent-select">
-          <button class="intent-chip selected-comment" data-intent="comment" onclick="selectIntent(this,'comment')">💬 comment</button>
-          <button class="intent-chip" data-intent="buy" onclick="selectIntent(this,'buy')">🛒 want to buy</button>
-          <button class="intent-chip" data-intent="offer" onclick="selectIntent(this,'offer')">💰 making offer</button>
-        </div>
-        <button class="btn-primary" onclick="submitComment('${id}')">post</button>
-      </div>
-    </div>
-  ` : `<div style="text-align:center;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-top:16px">
-    <div style="font-size:14px;color:var(--muted);margin-bottom:10px">sign in to comment</div>
-    <button class="btn-primary" onclick="navigate('login')">sign in</button>
-  </div>`;
-
-  content.innerHTML = `
-    <div class="thread-full">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <div class="avatar" onclick="showUserProfile('${authorName}')" style="cursor:pointer">${avatarHTML}${!profile?.avatar_url ? initials : ''}</div>
-        <div>
-          <div class="thread-author" style="cursor:pointer" onclick="showUserProfile('${authorName}')">@${escHtml(authorName)}</div>
-          <div class="thread-time">${timeAgo(thread.created_at)}</div>
-        </div>
-        ${isOwner ? `<button class="btn-danger" onclick="deleteThread('${id}')" style="margin-left:auto">delete</button>` : ''}
-      </div>
-      <div class="thread-full-title">${escHtml(thread.title)}</div>
-      ${thread.price ? `<div class="price-display"><span class="price-label">price</span>$${Number(thread.price).toFixed(2)}${thread.location ? ` <span style="font-size:14px;color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400">· ${escHtml(thread.location)}</span>` : ''}</div>` : ''}
-      <div class="thread-full-body">${escHtml(thread.body || '')}</div>
-      ${thread.tags && thread.tags.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:16px">${thread.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
-    </div>
-    <div class="comments-section">
-      <div class="comments-title">comments <span class="comment-count">${comments?.length || 0}</span></div>
-      <div id="comments-list">${commentsHTML}</div>
-      ${writeHTML}
-    </div>
-  `;
-}
-
-function renderComment(c) {
-  const profile = c.profiles;
-  const authorName = profile?.username || 'unknown';
-  const initials = authorName.slice(0,2).toUpperCase();
-  const avatarHTML = profile?.avatar_url ? `<img src="${profile.avatar_url}" onerror="this.style.display='none'">` : '';
-  const intentHTML = c.intent && c.intent !== 'comment'
-    ? `<span class="comment-intent intent-${c.intent}">${c.intent === 'buy' ? '🛒 wants to buy' : '💰 making offer'}</span>`
-    : '';
-  const isOwner = currentUser && c.author_id === currentUser.id;
-
-  return `<div class="comment-box" id="comment-${c.id}">
-    <div class="comment-header">
-      <div class="avatar" style="width:28px;height:28px;font-size:11px;cursor:pointer" onclick="showUserProfile('${authorName}')">${avatarHTML}${!profile?.avatar_url ? initials : ''}</div>
-      <span class="comment-author" style="cursor:pointer" onclick="showUserProfile('${authorName}')">@${escHtml(authorName)}</span>
-      <span class="comment-time">${timeAgo(c.created_at)}</span>
-      ${isOwner ? `<button class="btn-danger" onclick="deleteComment('${c.id}')" style="margin-left:auto;padding:4px 10px;font-size:11px">×</button>` : ''}
-    </div>
-    <div class="comment-text">${escHtml(c.body)}</div>
-    ${intentHTML}
-  </div>`;
-}
-
-// ─── NEW THREAD ───────────────────────────────────────────
-function selectType(el, type) {
-  document.querySelectorAll('.type-chip').forEach(c => c.className = 'type-chip');
-  el.classList.add('active-' + type);
-  selectedType = type;
-  const priceRow = document.getElementById('price-row');
-  priceRow.style.display = (type === 'selling' || type === 'buying') ? 'grid' : 'none';
-}
-
-async function submitThread() {
-  if (!currentUser) { navigate('login'); return; }
-  const title = document.getElementById('nt-title').value.trim();
-  const body = document.getElementById('nt-body').value.trim();
-  const price = document.getElementById('nt-price').value;
-  const location = document.getElementById('nt-location').value.trim();
-  const tagsRaw = document.getElementById('nt-tags').value.trim();
-  const errEl = document.getElementById('nt-error');
-  errEl.style.display = 'none';
-
-  if (!title) return showErr(errEl, 'title is required');
-  if (!body) return showErr(errEl, 'body is required');
-
-  const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
-  const btn = document.getElementById('nt-submit');
-  btn.textContent = 'posting...'; btn.disabled = true;
-
-  const { data, error } = await db.from('threads').insert({
-    title,
-    body,
-    type: selectedType,
-    price: price ? parseFloat(price) : null,
-    location: location || null,
-    tags,
-    author_id: currentUser.id,
-    comment_count: 0,
-    view_count: 0,
-    created_at: new Date().toISOString()
-  }).select().single();
-
-  btn.textContent = 'post thread'; btn.disabled = false;
-
-  if (error) return showErr(errEl, error.message);
-
-  // Reset form
-  document.getElementById('nt-title').value = '';
-  document.getElementById('nt-body').value = '';
-  document.getElementById('nt-price').value = '';
-  document.getElementById('nt-location').value = '';
-  document.getElementById('nt-tags').value = '';
-  toast('thread posted! 🎉');
-  openThread(data.id);
-}
-
-// ─── COMMENTS ────────────────────────────────────────────
-function selectIntent(el, intent) {
-  selectedIntent = intent;
-  document.querySelectorAll('.intent-chip').forEach(c => {
-    c.className = 'intent-chip';
-  });
-  el.classList.add('selected-' + intent);
-}
-
-async function submitComment(threadId) {
-  if (!currentUser) { navigate('login'); return; }
-  const text = document.getElementById('comment-text').value.trim();
-  if (!text) return;
-
-  const { data, error } = await db.from('comments').insert({
-    thread_id: threadId,
-    author_id: currentUser.id,
-    body: text,
-    intent: selectedIntent,
-    created_at: new Date().toISOString()
-  }).select('*, profiles(username, avatar_url)').single();
-
-  if (error) { toast('error: ' + error.message, 'error'); return; }
-
-  document.getElementById('comment-text').value = '';
-  // Update comment count
-  await db.from('threads').update({ comment_count: db.raw ? undefined : undefined }).eq('id', threadId);
-  await db.rpc('increment_comments', { thread_id: threadId }).catch(() => {});
-
-  const list = document.getElementById('comments-list');
-  const emptyDiv = list.querySelector('div[style*="text-align"]');
-  if (emptyDiv) list.innerHTML = '';
-  list.insertAdjacentHTML('beforeend', renderComment(data));
-  list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  // Update comment count display
-  const countEl = document.querySelector('.comment-count');
-  if (countEl) countEl.textContent = parseInt(countEl.textContent || 0) + 1;
-}
-
-async function deleteComment(commentId) {
-  if (!confirm('delete this comment?')) return;
-  const { error } = await db.from('comments').delete().eq('id', commentId).eq('author_id', currentUser.id);
-  if (error) { toast('error deleting comment', 'error'); return; }
-  document.getElementById('comment-' + commentId)?.remove();
-  toast('comment deleted');
-}
-
-async function deleteThread(threadId) {
-  if (!confirm('delete this thread? this cannot be undone.')) return;
-  await db.from('comments').delete().eq('thread_id', threadId);
-  const { error } = await db.from('threads').delete().eq('id', threadId).eq('author_id', currentUser.id);
-  if (error) { toast('error deleting thread', 'error'); return; }
-  toast('thread deleted');
-  navigate('home');
-}
-
-// ─── FILTERS ─────────────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentFilter = btn.dataset.filter;
-    loadThreads();
-  });
-});
-
-// ─── UTILS ───────────────────────────────────────────────
-function timeAgo(ts) {
-  if (!ts) return '';
-  const diff = (Date.now() - new Date(ts)) / 1000;
-  if (diff < 60) return 'just now';
-  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+function ago(ts) {
+  if(!ts) return '';
+  const d = (Date.now() - new Date(ts))/1000;
+  if(d<60) return 'just now';
+  if(d<3600) return Math.floor(d/60)+'m ago';
+  if(d<86400) return Math.floor(d/3600)+'h ago';
+  if(d<604800) return Math.floor(d/86400)+'d ago';
   return new Date(ts).toLocaleDateString();
 }
 
-function escHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideErr(id) { document.getElementById(id).style.display='none'; }
+
+// ── AUTH ──────────────────────────────────────────────
+async function doRegister() {
+  hideErr('reg-err');
+  let username = document.getElementById('reg-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  if(username.length < 2) return showErr('reg-err','username needs at least 2 characters');
+  if(!email) return showErr('reg-err','email required');
+  if(pass.length < 6) return showErr('reg-err','password must be at least 6 characters');
+
+  const { data: ex } = await sb.from('profiles').select('id').eq('username',username).maybeSingle();
+  if(ex) return showErr('reg-err','username taken, try another');
+
+  const btn = document.getElementById('reg-btn');
+  btn.textContent='creating...'; btn.disabled=true;
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  if(error) { showErr('reg-err', error.message); btn.textContent='create account'; btn.disabled=false; return; }
+
+  if(data.user) {
+    await sb.from('profiles').insert({ id: data.user.id, username, email, created_at: new Date().toISOString() });
+    ME = data.user;
+    PROF = await getProfile(ME.id);
+    renderNav();
+    toast('welcome to lair.lat!');
+    showPage('home');
+  }
+  btn.textContent='create account'; btn.disabled=false;
 }
 
-// ─── START ───────────────────────────────────────────────
-init();
-</script>
+async function doLogin() {
+  hideErr('li-err');
+  const email = document.getElementById('li-email').value.trim();
+  const pass = document.getElementById('li-pass').value;
+  const btn = document.getElementById('li-btn');
+  btn.textContent='signing in...'; btn.disabled=true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error) { showErr('li-err', error.message); btn.textContent='sign in'; btn.disabled=false; return; }
+  ME = data.user; PROF = await getProfile(ME.id);
+  renderNav(); toast('welcome back!'); showPage('home');
+  btn.textContent='sign in'; btn.disabled=false;
+}
 
+async function doLogout() {
+  await sb.auth.signOut();
+  ME=null; PROF=null; pendingAvatarFile=null; pendingBannerFile=null;
+  renderNav(); toast('signed out'); showPage('home');
+}
+
+// ── PROFILE ───────────────────────────────────────────
+async function getProfile(uid) {
+  const { data } = await sb.from('profiles').select('*').eq('id',uid).maybeSingle();
+  return data || { id: uid, username: ME?.email?.split('@')[0]||'user' };
+}
+
+async function loadProfilePage(username) {
+  showPage('profile');
+  pushState(`/users/@${username}`);
+  const el = document.getElementById('prof-content');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+
+  const { data: prof } = await sb.from('profiles').select('*').eq('username', username).maybeSingle();
+  if(!prof) { el.innerHTML='<div class="empty">user not found</div>'; return; }
+
+  const { data: threads } = await sb.from('threads').select('*, profiles(username,avatar_url)').eq('author_id', prof.id).order('created_at',{ascending:false});
+  const { data: comCnt } = await sb.from('comments').select('id').eq('author_id', prof.id);
+
+  const isOwn = ME && ME.id === prof.id;
+  const init = (prof.username||'?').slice(0,2).toUpperCase();
+  const avImg = prof.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+
+  el.innerHTML = `
+    <div class="back" onclick="showPage('home')">← back</div>
+    <div class="prof-banner">
+      ${prof.banner_url ? `<img src="${esc(prof.banner_url)}" onerror="this.parentElement.innerHTML='<div class=prof-banner-placeholder></div>'">` : '<div class="prof-banner-placeholder"></div>'}
+    </div>
+    <div class="prof-head">
+      <div class="prof-av-wrap">
+        <div class="av av-lg">${avImg}${!prof.avatar_url?init:''}</div>
+      </div>
+      <div class="prof-info">
+        <div class="prof-name">@${esc(prof.username)}</div>
+        <div class="prof-url">lair.lat/users/@${esc(prof.username)}</div>
+        ${prof.bio ? `<div class="prof-bio">${esc(prof.bio)}</div>` : ''}
+        <div class="prof-stats">
+          <div class="pst"><div class="pst-n">${threads?.length||0}</div><div class="pst-l">threads</div></div>
+          <div class="pst"><div class="pst-n">${comCnt?.length||0}</div><div class="pst-l">comments</div></div>
+        </div>
+        ${isOwn ? `<button onclick="showPage('settings')" style="margin-top:10px;font-size:12px;padding:6px 12px">edit profile</button>` : ''}
+      </div>
+    </div>
+    <div class="sec-hed">threads</div>
+    <div>${!threads||threads.length===0?'<div class="empty" style="padding:30px 0">no threads yet</div>':threads.map(t=>cardHTML(t,prof)).join('')}</div>
+  `;
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+function fillSettings() {
+  if(!PROF) return;
+  const init = (PROF.username||'?').slice(0,2).toUpperCase();
+  const prev = document.getElementById('set-av-preview');
+  if(prev) {
+    prev.innerHTML = PROF.avatar_url ? `<img src="${esc(PROF.avatar_url)}" onerror="this.style.display='none'">` : init;
+  }
+  const bprev = document.getElementById('set-banner-preview');
+  if(bprev && PROF.banner_url) {
+    bprev.innerHTML = `<img src="${esc(PROF.banner_url)}" style="width:100%;height:100%;object-fit:cover">`;
+    document.getElementById('set-banner-placeholder').style.display='none';
+  }
+  if(document.getElementById('set-user')) document.getElementById('set-user').value = PROF.username||'';
+  if(document.getElementById('set-bio')) document.getElementById('set-bio').value = PROF.bio||'';
+}
+
+function previewAvatar(input) {
+  if(!input.files[0]) return;
+  if(input.files[0].size > 2*1024*1024) { toast('image too large (max 2mb)', 'er'); input.value=''; return; }
+  pendingAvatarFile = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('set-av-preview');
+    prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function previewBanner(input) {
+  if(!input.files[0]) return;
+  if(input.files[0].size > 4*1024*1024) { toast('banner too large (max 4mb)', 'er'); input.value=''; return; }
+  pendingBannerFile = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('set-banner-preview');
+    prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function uploadFile(file, bucket, path) {
+  const { data, error } = await sb.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type });
+  if(error) return null;
+  const { data: urlData } = sb.storage.from(bucket).getPublicUrl(path);
+  return urlData.publicUrl + '?t=' + Date.now();
+}
+
+async function saveSettings() {
+  hideErr('set-err');
+  const username = document.getElementById('set-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const bio = document.getElementById('set-bio').value.trim();
+  if(username.length < 2) return showErr('set-err','username needs at least 2 characters');
+
+  const { data: ex } = await sb.from('profiles').select('id').eq('username',username).neq('id',ME.id).maybeSingle();
+  if(ex) return showErr('set-err','username already taken');
+
+  const updates = { id: ME.id, username, bio, updated_at: new Date().toISOString() };
+
+  // Upload avatar if pending
+  if(pendingAvatarFile) {
+    const url = await uploadFile(pendingAvatarFile, 'avatars', `${ME.id}/avatar`);
+    if(url) updates.avatar_url = url;
+    else toast('avatar upload failed — check storage bucket', 'er');
+  }
+
+  // Upload banner if pending
+  if(pendingBannerFile) {
+    const url = await uploadFile(pendingBannerFile, 'avatars', `${ME.id}/banner`);
+    if(url) updates.banner_url = url;
+    else toast('banner upload failed — check storage bucket', 'er');
+  }
+
+  const { error } = await sb.from('profiles').upsert(updates);
+  if(error) return showErr('set-err', error.message);
+
+  PROF = await getProfile(ME.id);
+  pendingAvatarFile = null; pendingBannerFile = null;
+  renderNav();
+  toast('profile saved!');
+}
+
+// ── FEED ──────────────────────────────────────────────
+async function loadFeed() {
+  const el = document.getElementById('feed');
+  if(!el) return;
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  let q = sb.from('threads').select('*, profiles(username,avatar_url)').order('created_at',{ascending:false}).limit(60);
+  if(FILTER !== 'all') q = q.eq('type', FILTER);
+  const { data, error } = await q;
+  if(error||!data||data.length===0) {
+    el.innerHTML = `<div class="empty">${error?'could not load — run the SQL setup first':'no threads yet. be the first!'}</div>`;
+    return;
+  }
+  el.innerHTML = data.map(t => cardHTML(t, t.profiles)).join('');
+}
+
+function cardHTML(t, prof) {
+  const author = prof?.username||'unknown';
+  const init = author.slice(0,2).toUpperCase();
+  const avImg = prof?.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+  const typeTag = t.type !== 'discussion' ? `<span class="tag tag-${t.type}">${t.type}</span>` : '';
+  const tagsHTML = (t.tags||[]).slice(0,3).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
+  const priceTag = t.price ? `<span class="tag">\$${Number(t.price).toFixed(2)}</span>` : '';
+  return `<div class="tcard" onclick="openThread('${t.id}')">
+    <div class="tcard-inner">
+      <div class="tcard-top">
+        <div class="av" style="width:24px;height:24px;font-size:10px" onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div>
+        <span class="tcard-author"><b onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">@${esc(author)}</b> · ${ago(t.created_at)}</span>
+      </div>
+      <div class="tcard-title">${esc(t.title)}</div>
+      ${t.body?`<div class="tcard-body">${esc(t.body)}</div>`:''}
+      <div class="tcard-foot">${typeTag}${tagsHTML}${priceTag}<div class="tcard-stats"><span>💬 ${t.comment_count||0}</span><span>👁 ${t.view_count||0}</span></div></div>
+    </div>
+  </div>`;
+}
+
+document.querySelectorAll('.fbtn').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    FILTER = b.dataset.f;
+    loadFeed();
+  };
+});
+
+// ── THREAD ────────────────────────────────────────────
+async function openThread(id) {
+  pushState(`/thread/${id}`);
+  showPage('thread');
+  loadThread(id);
+}
+
+async function loadThread(id) {
+  const el = document.getElementById('thread-body');
+  if(!el) return;
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+
+  await sb.rpc('increment_views',{thread_id:id}).catch(()=>{});
+
+  const { data: t } = await sb.from('threads').select('*, profiles(username,avatar_url)').eq('id',id).maybeSingle();
+  const { data: comments } = await sb.from('comments').select('*, profiles(username,avatar_url)').eq('thread_id',id).order('created_at',{ascending:true});
+
+  if(!t) { el.innerHTML='<div class="empty">thread not found</div>'; return; }
+
+  const prof = t.profiles;
+  const author = prof?.username||'unknown';
+  const init = author.slice(0,2).toUpperCase();
+  const avImg = prof?.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+  const isOwn = ME && ME.id === t.author_id;
+
+  const cmtsHTML = !comments||comments.length===0
+    ? '<div style="padding:20px 0;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;font-size:12px">no comments yet</div>'
+    : comments.map(c=>commentHTML(c)).join('');
+
+  const writeHTML = ME
+    ? `<div class="write-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div class="av" style="width:24px;height:24px;font-size:10px">${PROF?.avatar_url?`<img src="${esc(PROF.avatar_url)}">`:((PROF?.username||'?').slice(0,2).toUpperCase())}</div>
+          <span style="font-size:12px;color:var(--text3);font-family:'IBM Plex Mono',monospace">@${esc(PROF?.username||'you')}</span>
+        </div>
+        <textarea id="c-text" placeholder="write a comment..."></textarea>
+        <div class="write-foot">
+          <div class="intents">
+            <button class="ichip on" data-i="comment" onclick="pickIntent(this,'comment')">comment</button>
+            <button class="ichip" data-i="buy" onclick="pickIntent(this,'buy')">want to buy</button>
+            <button class="ichip" data-i="offer" onclick="pickIntent(this,'offer')">make offer</button>
+          </div>
+          <button class="btn-white btn-sm" onclick="postComment('${id}')">post</button>
+        </div>
+      </div>`
+    : `<div style="text-align:center;padding:18px;border:1px solid var(--border);border-radius:var(--r);margin-top:14px">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:10px;font-family:'IBM Plex Mono',monospace">sign in to comment</div>
+        <button class="btn-white btn-sm" onclick="showPage('login')">sign in</button>
+      </div>`;
+
+  const typeTag = t.type !== 'discussion' ? `<span class="tag">${t.type}</span>` : '';
+  const tagsHTML = (t.tags||[]).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
+
+  el.innerHTML = `
+    <div class="thread-full">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <div class="av" onclick="loadProfilePage('${esc(author)}')" style="cursor:pointer">${avImg}${!prof?.avatar_url?init:''}</div>
+        <div>
+          <div style="font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;color:var(--text2)" onclick="loadProfilePage('${esc(author)}')">@${esc(author)}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace">${ago(t.created_at)}</div>
+        </div>
+        ${typeTag}
+        ${isOwn?`<button class="btn-danger btn-sm" onclick="delThread('${id}')" style="margin-left:auto">delete</button>`:''}
+      </div>
+      <div class="thread-full-title">${esc(t.title)}</div>
+      ${t.price?`<div class="price-badge"><span class="price-num">\$${Number(t.price).toFixed(2)}</span>${t.location?`<span class="price-loc">· ${esc(t.location)}</span>`:''}</div>`:''}
+      <div class="thread-full-body">${esc(t.body||'')}</div>
+      ${tagsHTML?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:14px">${tagsHTML}</div>`:''}
+    </div>
+    <div class="comments-hd">comments <span style="color:var(--text3)" id="ccount">${comments?.length||0}</span></div>
+    <div id="clist">${cmtsHTML}</div>
+    ${writeHTML}
+  `;
+  COMMENT_INTENT = 'comment';
+}
+
+function commentHTML(c) {
+  const prof = c.profiles;
+  const author = prof?.username||'unknown';
+  const init = author.slice(0,2).toUpperCase();
+  const avImg = prof?.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+  const isOwn = ME && ME.id === c.author_id;
+  const intentMap = { buy:'wants to buy', offer:'making offer' };
+  const intentTag = c.intent && c.intent !== 'comment' ? `<span class="intent-tag">${intentMap[c.intent]||c.intent}</span>` : '';
+  return `<div class="cbox" id="c-${c.id}">
+    <div class="cbox-top">
+      <div class="av" style="width:22px;height:22px;font-size:9px;cursor:pointer" onclick="loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div>
+      <span class="cbox-author" onclick="loadProfilePage('${esc(author)}')">${esc(author)}</span>
+      <span class="cbox-time">${ago(c.created_at)}</span>
+      ${isOwn?`<button class="btn-danger btn-sm" style="margin-left:auto;padding:3px 8px;font-size:11px" onclick="delComment('${c.id}')">×</button>`:''}
+    </div>
+    <div class="cbox-body">${esc(c.body)}</div>
+    ${intentTag}
+  </div>`;
+}
+
+function pickIntent(el, intent) {
+  COMMENT_INTENT = intent;
+  document.querySelectorAll('.ichip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+
+async function postComment(threadId) {
+  if(!ME) { showPage('login'); return; }
+  const text = document.getElementById('c-text').value.trim();
+  if(!text) return;
+  const { data, error } = await sb.from('comments').insert({
+    thread_id: threadId, author_id: ME.id, body: text,
+    intent: COMMENT_INTENT, created_at: new Date().toISOString()
+  }).select('*, profiles(username,avatar_url)').single();
+  if(error) { toast('error: '+error.message,'er'); return; }
+  document.getElementById('c-text').value = '';
+  await sb.rpc('increment_comments',{thread_id:threadId}).catch(()=>{});
+  const list = document.getElementById('clist');
+  const noMsg = list.querySelector('div[style*="padding"]');
+  if(noMsg) list.innerHTML = '';
+  list.insertAdjacentHTML('beforeend', commentHTML(data));
+  const cc = document.getElementById('ccount');
+  if(cc) cc.textContent = parseInt(cc.textContent||0)+1;
+  COMMENT_INTENT = 'comment';
+}
+
+async function delComment(id) {
+  if(!confirm('delete this comment?')) return;
+  await sb.from('comments').delete().eq('id',id).eq('author_id',ME.id);
+  document.getElementById('c-'+id)?.remove();
+  toast('deleted');
+}
+
+async function delThread(id) {
+  if(!confirm('delete this thread?')) return;
+  await sb.from('comments').delete().eq('thread_id',id);
+  await sb.from('threads').delete().eq('id',id).eq('author_id',ME.id);
+  toast('thread deleted');
+  pushState('/');
+  showPage('home');
+}
+
+// ── NEW THREAD ────────────────────────────────────────
+function pickType(el, type) {
+  document.querySelectorAll('.tchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  THREAD_TYPE = type;
+  document.getElementById('nt-price-row').style.display = (type==='selling'||type==='buying')?'grid':'none';
+}
+
+// fix typo in the buying button
+function buying(el, type) { pickType(el, type); }
+
+async function postThread() {
+  if(!ME) { showPage('login'); return; }
+  hideErr('nt-err');
+  const title = document.getElementById('nt-title').value.trim();
+  const body = document.getElementById('nt-body').value.trim();
+  const price = document.getElementById('nt-price').value;
+  const loc = document.getElementById('nt-loc').value.trim();
+  const tagsRaw = document.getElementById('nt-tags').value.trim();
+  if(!title) return showErr('nt-err','title is required');
+  if(!body) return showErr('nt-err','body is required');
+  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean) : [];
+  const btn = document.getElementById('nt-btn');
+  btn.textContent='posting...'; btn.disabled=true;
+  const { data, error } = await sb.from('threads').insert({
+    title, body, type: THREAD_TYPE,
+    price: price ? parseFloat(price) : null,
+    location: loc||null, tags,
+    author_id: ME.id, comment_count:0, view_count:0,
+    created_at: new Date().toISOString()
+  }).select().single();
+  btn.textContent='post thread'; btn.disabled=false;
+  if(error) return showErr('nt-err', error.message);
+  ['nt-title','nt-body','nt-price','nt-loc','nt-tags'].forEach(id=>document.getElementById(id).value='');
+  toast('thread posted!');
+  openThread(data.id);
+}
+
+boot();
+</script>
 </body>
 </html>
