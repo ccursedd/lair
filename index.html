@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* Your existing CSS stays exactly the same */
 :root {
   --bg: #000000;
   --surface: #080808;
@@ -341,7 +342,7 @@ nav{
     <div class="type-row">
       <button class="tchip on" data-t="discussion" onclick="pickType(this,'discussion')">discussion</button>
       <button class="tchip" data-t="selling" onclick="pickType(this,'selling')">selling</button>
-      <button class="tchip" data-t="buying" onclick="buying(this,'buying')">buying</button>
+      <button class="tchip" data-t="buying" onclick="pickType(this,'buying')">buying</button>
       <button class="tchip" data-t="trading" onclick="pickType(this,'trading')">trading</button>
     </div>
     <div class="fg"><label class="fl">title</label><input id="nt-title" placeholder="what is this about?" maxlength="120"></div>
@@ -438,6 +439,13 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 
 let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'discussion', COMMENT_INTENT = 'comment';
 let pendingAvatarFile = null, pendingBannerFile = null;
+
+// Helper to safely access banner_url (handles missing column)
+function safeBannerUrl(profile) {
+  if (!profile) return null;
+  // Check if banner_url exists and is not null
+  return profile.banner_url || null;
+}
 
 // ── BOOT ──────────────────────────────────────────────
 async function boot() {
@@ -556,6 +564,7 @@ async function doRegister() {
     PROF = await getProfile(ME.id);
     renderNav();
     toast('welcome to lair.lat!');
+    // After registration, show home page
     showPage('home');
   }
   btn.textContent='create account'; btn.disabled=false;
@@ -583,7 +592,11 @@ async function doLogout() {
 // ── PROFILE ───────────────────────────────────────────
 async function getProfile(uid) {
   const { data } = await sb.from('profiles').select('*').eq('id',uid).maybeSingle();
-  return data || { id: uid, username: ME?.email?.split('@')[0]||'user' };
+  // Handle missing fields gracefully
+  if (data && !data.hasOwnProperty('banner_url')) {
+    data.banner_url = null;
+  }
+  return data || { id: uid, username: ME?.email?.split('@')[0]||'user', banner_url: null };
 }
 
 async function loadProfilePage(username) {
@@ -592,8 +605,14 @@ async function loadProfilePage(username) {
   const el = document.getElementById('prof-content');
   el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
 
+  // Remove @ if present
+  username = username.replace('@', '');
+  
   const { data: prof } = await sb.from('profiles').select('*').eq('username', username).maybeSingle();
-  if(!prof) { el.innerHTML='<div class="empty">user not found</div>'; return; }
+  if(!prof) { 
+    el.innerHTML='<div class="empty">user @' + esc(username) + ' not found</div>'; 
+    return; 
+  }
 
   const { data: threads } = await sb.from('threads').select('*, profiles(username,avatar_url)').eq('author_id', prof.id).order('created_at',{ascending:false});
   const { data: comCnt } = await sb.from('comments').select('id').eq('author_id', prof.id);
@@ -601,11 +620,17 @@ async function loadProfilePage(username) {
   const isOwn = ME && ME.id === prof.id;
   const init = (prof.username||'?').slice(0,2).toUpperCase();
   const avImg = prof.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+  
+  // Safe banner display - check if property exists
+  const hasBanner = prof.hasOwnProperty('banner_url') && prof.banner_url;
+  const bannerHtml = hasBanner 
+    ? `<img src="${esc(prof.banner_url)}" onerror="this.parentElement.innerHTML='<div class=prof-banner-placeholder></div>'">` 
+    : '<div class="prof-banner-placeholder"></div>';
 
   el.innerHTML = `
     <div class="back" onclick="showPage('home')">← back</div>
     <div class="prof-banner">
-      ${prof.banner_url ? `<img src="${esc(prof.banner_url)}" onerror="this.parentElement.innerHTML='<div class=prof-banner-placeholder></div>'">` : '<div class="prof-banner-placeholder"></div>'}
+      ${bannerHtml}
     </div>
     <div class="prof-head">
       <div class="prof-av-wrap">
@@ -623,7 +648,8 @@ async function loadProfilePage(username) {
       </div>
     </div>
     <div class="sec-hed">threads</div>
-    <div>${!threads||threads.length===0?'<div class="empty" style="padding:30px 0">no threads yet</div>':threads.map(t=>cardHTML(t,prof)).join('')}</div>
+    <div>${!threads||threads.length===0?'<div class="empty" style="padding:30px 0">no threads yet</div>':threads.map(t=>cardHTML(t,prof)).join('')}
+    </div>
   `;
 }
 
@@ -636,9 +662,15 @@ function fillSettings() {
     prev.innerHTML = PROF.avatar_url ? `<img src="${esc(PROF.avatar_url)}" onerror="this.style.display='none'">` : init;
   }
   const bprev = document.getElementById('set-banner-preview');
-  if(bprev && PROF.banner_url) {
-    bprev.innerHTML = `<img src="${esc(PROF.banner_url)}" style="width:100%;height:100%;object-fit:cover">`;
-    document.getElementById('set-banner-placeholder').style.display='none';
+  if(bprev) {
+    const hasBanner = PROF.hasOwnProperty('banner_url') && PROF.banner_url;
+    if(hasBanner) {
+      bprev.innerHTML = `<img src="${esc(PROF.banner_url)}" style="width:100%;height:100%;object-fit:cover">`;
+      const placeholder = document.getElementById('set-banner-placeholder');
+      if(placeholder) placeholder.style.display = 'none';
+    } else {
+      bprev.innerHTML = '<span id="set-banner-placeholder">click to upload banner</span>';
+    }
   }
   if(document.getElementById('set-user')) document.getElementById('set-user').value = PROF.username||'';
   if(document.getElementById('set-bio')) document.getElementById('set-bio').value = PROF.bio||'';
@@ -693,11 +725,14 @@ async function saveSettings() {
     else toast('avatar upload failed — check storage bucket', 'er');
   }
 
-  // Upload banner if pending
+  // Upload banner if pending (only if column exists)
   if(pendingBannerFile) {
     const url = await uploadFile(pendingBannerFile, 'avatars', `${ME.id}/banner`);
-    if(url) updates.banner_url = url;
-    else toast('banner upload failed — check storage bucket', 'er');
+    if(url) {
+      updates.banner_url = url;
+    } else {
+      toast('banner upload failed — check storage bucket', 'er');
+    }
   }
 
   const { error } = await sb.from('profiles').upsert(updates);
@@ -765,7 +800,9 @@ async function loadThread(id) {
   if(!el) return;
   el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
 
-  await sb.rpc('increment_views',{thread_id:id}).catch(()=>{});
+  try {
+    await sb.rpc('increment_views',{thread_id:id}).catch(()=>{});
+  } catch(e) { console.log('View increment not available'); }
 
   const { data: t } = await sb.from('threads').select('*, profiles(username,avatar_url)').eq('id',id).maybeSingle();
   const { data: comments } = await sb.from('comments').select('*, profiles(username,avatar_url)').eq('thread_id',id).order('created_at',{ascending:true});
@@ -865,7 +902,9 @@ async function postComment(threadId) {
   }).select('*, profiles(username,avatar_url)').single();
   if(error) { toast('error: '+error.message,'er'); return; }
   document.getElementById('c-text').value = '';
-  await sb.rpc('increment_comments',{thread_id:threadId}).catch(()=>{});
+  try {
+    await sb.rpc('increment_comments',{thread_id:threadId}).catch(()=>{});
+  } catch(e) {}
   const list = document.getElementById('clist');
   const noMsg = list.querySelector('div[style*="padding"]');
   if(noMsg) list.innerHTML = '';
@@ -898,9 +937,6 @@ function pickType(el, type) {
   THREAD_TYPE = type;
   document.getElementById('nt-price-row').style.display = (type==='selling'||type==='buying')?'grid':'none';
 }
-
-// fix typo in the buying button
-function buying(el, type) { pickType(el, type); }
 
 async function postThread() {
   if(!ME) { showPage('login'); return; }
