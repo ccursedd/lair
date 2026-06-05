@@ -294,8 +294,6 @@ nav{
     <button class="btn-white btn-sm" id="new-btn" style="display:none" onclick="showPage('new')">+ new thread</button>
   </div>
   <div class="filters">
-    <button class="fbtn on" data-f="all">all</button>
-    <button class="fbtn" data-f="discussion">discussion</button>
     <button class="fbtn" data-f="selling">selling</button>
     <button class="fbtn" data-f="buying">buying</button>
     <button class="fbtn" data-f="trading">trading</button>
@@ -316,7 +314,6 @@ nav{
     <div class="form-title">new thread</div>
     <label class="fl">type</label>
     <div class="type-row">
-      <button class="tchip on" data-t="discussion" onclick="pickType(this,'discussion')">discussion</button>
       <button class="tchip" data-t="selling" onclick="pickType(this,'selling')">selling</button>
       <button class="tchip" data-t="buying" onclick="pickType(this,'buying')">buying</button>
       <button class="tchip" data-t="trading" onclick="pickType(this,'trading')">trading</button>
@@ -325,7 +322,7 @@ nav{
     <div class="fg"><label class="fl">body</label><textarea id="nt-body" style="min-height:110px;resize:vertical" placeholder="describe it in detail..."></textarea></div>
     <div id="nt-price-row" class="frow" style="display:none;margin-bottom:14px;">
       <div><label class="fl">price ($)</label><input type="number" id="nt-price" placeholder="0.00" step="0.01" min="0"></div>
-      <div><label class="fl">location</label><input id="nt-loc" placeholder="city, state"></div>
+      <div><label class="fl">discord/tele</label><input id="nt-loc" placeholder="@username to buy from"></div>
     </div>
     <div class="fg"><label class="fl">tags (comma separated)</label><input id="nt-tags" placeholder="sneakers, nike, size 10"></div>
     <div class="err" id="nt-err" style="display:none"></div>
@@ -405,7 +402,6 @@ const SB_URL = 'https://flmoswqpocsufircduiy.supabase.co';
 const SB_KEY = 'sb_publishable_g5hrheYjAQ2OKNjkJKPCHQ_D2f8fndS';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'discussion', COMMENT_INTENT = 'comment';
 let pendingAvatarFile = null;
 
 // ── FIXED BOOT WITH PROPER ROUTING ───────────────────
@@ -725,7 +721,6 @@ function cardHTML(t, prof) {
   const author = prof?.username||'unknown';
   const init = author.slice(0,2).toUpperCase();
   const avImg = prof?.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
-  const typeTag = t.type !== 'discussion' ? `<span class="tag tag-${t.type}">${t.type}</span>` : '';
   const tagsHTML = (t.tags||[]).slice(0,3).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
   const priceTag = t.price ? `<span class="tag">\$${Number(t.price).toFixed(2)}</span>` : '';
   return `<div class="tcard" onclick="openThread('${t.id}')">
@@ -802,7 +797,6 @@ async function loadThread(id) {
         <button class="btn-white btn-sm" onclick="showPage('login')">sign in</button>
       </div>`;
 
-  const typeTag = t.type !== 'discussion' ? `<span class="tag">${t.type}</span>` : '';
   const tagsHTML = (t.tags||[]).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
 
   el.innerHTML = `
