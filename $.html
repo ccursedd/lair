@@ -91,7 +91,7 @@
 </head>
 <body>
 
-  <video id="bg-video" src="https://github.com/ccursedd/lair/raw/refs/heads/main/fun.mp4" loop playsinline></video>
+  <video id="bg-video" src="https://github.com/ccursedd/lair/raw/refs/heads/main/l2rp.mp4" loop playsinline></video>
 
   <div class="enter-overlay" id="enter-overlay">
     <canvas id="enter-text" width="280" height="20"></canvas>
@@ -127,9 +127,9 @@
       const img = document.querySelector('.pfp')
       for (const api of apis) {
         try {
-          const res = await fetch(api.url('1507165921989492919')); if (!res.ok) continue
+          const res = await fetch(api.url('1509266673717346448')); if (!res.ok) continue
           const json = await res.json(); const av = api.parse(json)
-          if (av) { img.src = `https://cdn.discordapp.com/avatars/1507165921989492919/${av}.${av.startsWith('a_')?'gif':'png'}?size=256`; break }
+          if (av) { img.src = `https://cdn.discordapp.com/avatars/1509266673717346448/${av}.${av.startsWith('a_')?'gif':'png'}?size=256`; break }
         } catch(e) {}
       }
     })()
