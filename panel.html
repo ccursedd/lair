@@ -522,38 +522,69 @@ body::after {
 <div class="toast" id="toast"><span class="toast-dot" id="toastDot"></span><span id="toastMsg"></span></div>
 
 <script>
+// FIXED - Replace the entire script section from line starting with "const SUPABASE_URL"
+
 const SUPABASE_URL = 'https://oshnejscjqcwqikvyife.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_KYBR9PRDrb1qSLsX6ttu_w_9OB-pRGx';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zaG5lanNjanFjd3Fpa3Z5aWZlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDY5MTE2NSwiZXhwIjoyMDk2MjY3MTY1fQ.OcJYhoCJvYvFsANQd4UfmNIis-ity1qbxuRno3liBOo';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentUser = null;
-let players = [];
-let logs = [];
-let kickTarget = null;
-let tpTarget = null;
-let autoRefreshTimer = null;
-let sessionStats = { kicked: 0, actions: 0 };
-
-// Helper Functions
-function showToast(msg, color) {
-  const toast = document.getElementById('toast');
-  const dot = document.getElementById('toastDot');
-  const text = document.getElementById('toastMsg');
-  dot.className = 'toast-dot' + (color === 'red' ? ' red' : color === 'amber' ? ' amber' : '');
-  text.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2800);
+// Fix the player fetch - active_players table might be empty initially
+async function refreshPlayers() {
+  console.log('Refreshing players...');
+  const { data, error } = await sb.from('active_players').select('*').order('joined_at', { ascending: false });
+  if (error) {
+    console.error('Error:', error);
+    showToast('DB Error: ' + error.message, 'red');
+    return;
+  }
+  console.log('Players data:', data);
+  players = data || [];
+  renderPlayers();
 }
 
-function escHtml(s) { return String(s).replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
+// Fix the events subscription - need to also fetch existing logs
+async function loadExistingLogs() {
+  const { data, error } = await sb.from('player_events').select('*').order('created_at', { ascending: false }).limit(50);
+  if (!error && data) {
+    logs = data.map(ev => ({
+      type: ev.type,
+      player: ev.player_name,
+      msg: `${ev.player_name} ${ev.type === 'join' ? 'joined' : 'left'} the game`,
+      time: new Date(ev.created_at)
+    }));
+    renderLogs();
+    document.getElementById('logCount').textContent = logs.length;
+  }
+}
 
-function fmtTime(d) { return new Date(d).toTimeString().slice(0,8); }
+// Call this after login
+loadExistingLogs();
 
-function timeAgo(iso) {
-  const diff = (Date.now() - new Date(iso)) / 1000;
-  if (diff < 60) return `${Math.floor(diff)}s`;
-  if (diff < 3600) return `${Math.floor(diff/60)}m`;
-  return `${Math.floor(diff/3600)}h`;
+// Also fix the realtime subscription - add proper error handling
+function subscribeToEvents() {
+  const channel = sb.channel('roblox-events');
+  channel
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'player_events' }, payload => {
+      console.log('Event received:', payload);
+      const ev = payload.new;
+      refreshPlayers(); // Refresh full list on any event
+      addLog(ev.type, ev.player_name, `${ev.player_name} ${ev.type === 'join' ? 'joined' : 'left'} the game`);
+    })
+    .subscribe((status, err) => {
+      console.log('Subscription status:', status, err);
+      const dot = document.getElementById('serverDot');
+      const lbl = document.getElementById('serverStatus');
+      if (status === 'SUBSCRIBED') {
+        dot.style.background = 'var(--green)';
+        lbl.textContent = 'live';
+      } else if (status === 'CHANNEL_ERROR') {
+        dot.style.background = 'var(--red)';
+        lbl.textContent = 'error';
+      } else {
+        dot.style.background = 'rgba(255,180,50,0.8)';
+        lbl.textContent = 'connecting';
+      }
+    });
 }
 
 // Login
