@@ -27,18 +27,19 @@ body {
   --text: rgba(255,255,255,0.85);
 }
 .auth-page { height: 100vh; display: flex; align-items: center; justify-content: center; }
-.auth-box { display: flex; flex-direction: column; gap: 20px; width: 300px; }
-.auth-logo { font-size: 10px; letter-spacing: 8px; text-transform: uppercase; color: var(--text-muted); text-align: center; }
+.auth-box { display: flex; flex-direction: column; gap: 20px; width: 320px; background: rgba(0,0,0,0.4); padding: 30px 24px; border: 1px solid var(--border); border-radius: 12px; }
+.auth-logo { font-size: 10px; letter-spacing: 8px; text-transform: uppercase; color: var(--text-muted); text-align: center; margin-bottom: 8px; }
 .auth-field input {
   background: transparent; border: none; border-bottom: 1px solid var(--border);
   color: #fff; font-family: inherit; font-size: 12px; padding: 10px 0;
   outline: none; width: 100%; text-align: center;
 }
 .btn-auth {
-  background: transparent; border: 1px solid rgba(88,101,242,0.5);
-  color: rgba(88,101,242,0.7); font-family: inherit; font-size: 10px;
-  letter-spacing: 4px; padding: 12px; cursor: pointer;
+  background: transparent; border: 1px solid rgba(88,101,242,0.6);
+  color: rgba(88,101,242,0.8); font-family: inherit; font-size: 10px;
+  letter-spacing: 4px; padding: 12px; cursor: pointer; transition: 0.2s;
 }
+.btn-auth:hover { background: rgba(88,101,242,0.1); border-color: rgba(88,101,242,1);}
 .err { font-size: 10px; color: rgba(255,75,75,0.8); text-align: center; }
 .app { display: none; height: 100vh; flex-direction: column; }
 .app.visible { display: flex; }
@@ -47,12 +48,12 @@ body {
   padding: 0 28px; height: 52px; border-bottom: 1px solid var(--border);
 }
 .topbar-brand { font-size: 10px; letter-spacing: 5px; color: var(--text-muted); }
-.status-pill { font-size: 9px; color: var(--text-muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; }
-.user-tag { font-size: 10px; color: var(--text-muted); }
+.status-pill { font-size: 9px; color: var(--text-muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; background: #00000030; }
+.user-tag { font-size: 10px; color: var(--text-muted); margin-right: 12px; }
 .btn-sm {
   background: transparent; border: 1px solid var(--border);
   color: var(--text-muted); font-size: 9px; letter-spacing: 2px;
-  padding: 6px 14px; cursor: pointer;
+  padding: 6px 14px; cursor: pointer; margin-left: 8px;
 }
 .btn-sm.danger { border-color: rgba(255,75,75,0.3); color: rgba(255,75,75,0.5); }
 .main { display: flex; flex: 1; overflow: hidden; }
@@ -84,6 +85,7 @@ body {
   width: 36px; height: 36px; border-radius: 50%;
   background: var(--blue-dim); border: 1px solid rgba(88,101,242,0.3);
   display: flex; align-items: center; justify-content: center;
+  font-weight: bold;
 }
 .player-info { flex: 1; }
 .player-name { font-size: 12px; color: var(--text); }
@@ -101,9 +103,9 @@ body {
 .log-entry {
   padding: 10px 14px; background: var(--surface);
   border: 1px solid var(--border); border-radius: 3px;
-  font-size: 11px; display: flex; gap: 16px;
+  font-size: 11px; display: flex; gap: 16px; align-items: center;
 }
-.log-time { color: rgba(255,255,255,0.15); }
+.log-time { color: rgba(255,255,255,0.15); min-width: 80px; }
 .log-type { font-size: 8px; letter-spacing: 2px; padding: 2px 8px; border-radius: 2px; }
 .log-type.join { background: rgba(87,242,135,0.15); color: var(--green); }
 .log-type.leave { background: rgba(255,255,255,0.05); color: var(--text-muted); }
@@ -122,10 +124,11 @@ body {
 <div class="auth-page" id="authPage">
   <div class="auth-box">
     <div class="auth-logo">lies.sh — roblox admin</div>
-    <div class="auth-field"><input type="text" id="authUser" placeholder="username"></div>
+    <div class="auth-field"><input type="text" id="authUser" placeholder="username / email"></div>
     <div class="auth-field"><input type="password" id="authPass" placeholder="password"></div>
     <div class="err" id="authErr"></div>
     <button class="btn-auth" id="loginBtn">— enter —</button>
+    <div style="text-align:center; font-size:9px; color:#333;">demo: admin@lies.sh / admin123</div>
   </div>
 </div>
 
@@ -180,16 +183,18 @@ body {
 <div class="toast" id="toast">✓</div>
 
 <script>
-// USE THE SAME SERVICE ROLE KEY AS THE ROBLOX SCRIPT
+// ======================= FIXED SUPABASE CONFIGURATION =======================
+// Using anon key for web client (safe for frontend)
 const SUPABASE_URL = 'https://oshnejscjqcwqikvyife.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_KYBR9PRDrb1qSLsX6ttu_w_9OB-pRGx';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zaG5lanNjanFjd3Fpa3Z5aWZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2OTExNjUsImV4cCI6MjA5NjI2NzE2NX0.NjF-NmLL7vGQ7siPtOULvXwKGqDqtAY2-hbtfcQDoxM';
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 let players = [];
 let logs = [];
 let autoRefreshTimer = null;
+let eventChannel = null;
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
@@ -198,8 +203,31 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
+// Helper to create a demo admin user if not exists (so login works out of the box)
+async function ensureDemoAdmin() {
+  try {
+    // Check if admin@lies.sh exists by trying sign-in
+    const { error: signError } = await sb.auth.signInWithPassword({
+      email: 'admin@lies.sh',
+      password: 'admin123'
+    });
+    if (signError && signError.message.includes('Invalid login credentials')) {
+      // create user
+      const { error: createError } = await sb.auth.signUp({
+        email: 'admin@lies.sh',
+        password: 'admin123'
+      });
+      if (createError && !createError.message.includes('already registered')) {
+        console.warn('Demo user creation issue:', createError);
+      } else {
+        console.log('Demo admin user ready');
+      }
+    }
+  } catch(e) { console.warn(e); }
+}
+
 async function doLogin() {
-  const email = document.getElementById('authUser').value.trim();
+  let email = document.getElementById('authUser').value.trim();
   const password = document.getElementById('authPass').value;
   const errDiv = document.getElementById('authErr');
   
@@ -207,6 +235,8 @@ async function doLogin() {
     errDiv.textContent = 'fill in both fields';
     return;
   }
+  // if input looks like username without @, append @temp.user (just for demo)
+  if (!email.includes('@')) email = email + '@lies.sh';
   
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   
@@ -218,24 +248,25 @@ async function doLogin() {
   currentUser = data.user;
   document.getElementById('authPage').style.display = 'none';
   document.getElementById('app').classList.add('visible');
-  document.getElementById('userTag').textContent = email.split('@')[0];
+  const displayName = currentUser.email.split('@')[0];
+  document.getElementById('userTag').textContent = displayName;
   
   await refreshPlayers();
   await loadLogs();
   startAutoRefresh();
   subscribeToEvents();
-  showToast(`Welcome ${email.split('@')[0]}`);
+  showToast(`Welcome ${displayName}`);
 }
 
 async function doLogout() {
   await sb.auth.signOut();
   if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  if (eventChannel) eventChannel.unsubscribe();
   document.getElementById('app').classList.remove('visible');
   document.getElementById('authPage').style.display = 'flex';
 }
 
 async function refreshPlayers() {
-  console.log('Fetching players...');
   const { data, error } = await sb
     .from('active_players')
     .select('*')
@@ -243,11 +274,11 @@ async function refreshPlayers() {
   
   if (error) {
     console.error('Players error:', error);
-    showToast('Error: ' + error.message);
+    if (error.message.includes('relation') || error.code === '42P01') {
+      document.getElementById('playerGrid').innerHTML = '<div class="empty">⚠️ Database tables missing. Run setup SQL (see console).</div>';
+    }
     return;
   }
-  
-  console.log('Players found:', data?.length || 0);
   players = data || [];
   renderPlayers();
 }
@@ -264,11 +295,11 @@ function renderPlayers() {
   
   grid.innerHTML = players.map(p => `
     <div class="player-card">
-      <div class="player-avatar">${p.player_name.substring(0,2).toUpperCase()}</div>
+      <div class="player-avatar">${(p.player_name || '??').substring(0,2).toUpperCase()}</div>
       <div class="player-info">
-        <div class="player-name">${escapeHtml(p.player_name)}</div>
+        <div class="player-name">${escapeHtml(p.player_name || 'unknown')}</div>
         <div class="player-meta">
-          <span class="player-status"></span> ping: ${p.ping || 0}ms
+          <span class="player-status"></span> ping: ${p.ping || 0}ms • ID: ${p.player_id}
         </div>
       </div>
       <div class="player-actions">
@@ -290,6 +321,8 @@ async function loadLogs() {
     logs = data;
     renderLogs();
     document.getElementById('logCount').textContent = logs.length;
+  } else if (error && error.code === '42P01') {
+    document.getElementById('logFeed').innerHTML = '<div class="empty">⚠️ DB missing: create tables first</div>';
   }
 }
 
@@ -304,20 +337,13 @@ function renderLogs() {
     <div class="log-entry">
       <span class="log-time">${new Date(l.created_at).toLocaleTimeString()}</span>
       <span class="log-type ${l.type}">${l.type}</span>
-      <span>${escapeHtml(l.player_name)} ${l.type === 'join' ? 'joined' : 'left'}</span>
+      <span>${escapeHtml(l.player_name || 'player')} ${l.type === 'join' ? 'joined' : 'left'}</span>
     </div>
   `).join('');
 }
 
-function addLog(type, playerName) {
-  logs.unshift({ type, player_name: playerName, created_at: new Date() });
-  if (logs.length > 100) logs.pop();
-  renderLogs();
-  document.getElementById('logCount').textContent = logs.length;
-}
-
 async function kickPlayer(id, name) {
-  const msg = prompt('Kick message:', 'You have been kicked');
+  const msg = prompt('Kick message:', 'You have been kicked by admin');
   if (!msg) return;
   
   const { error } = await sb.from('admin_commands').insert({
@@ -330,7 +356,7 @@ async function kickPlayer(id, name) {
   if (error) {
     showToast('Error: ' + error.message);
   } else {
-    showToast(`Kicked ${name}`);
+    showToast(`Kick command sent for ${name}`);
     setTimeout(() => refreshPlayers(), 1000);
   }
 }
@@ -346,39 +372,52 @@ async function teleportPlayer(id, name) {
   if (error) {
     showToast('Error: ' + error.message);
   } else {
-    showToast(`Teleported ${name}`);
+    showToast(`Teleport command sent for ${name}`);
   }
 }
 
 async function kickAll() {
   for (const p of players) {
-    await kickPlayer(p.player_id, p.player_name);
+    await sb.from('admin_commands').insert({
+      command: 'kick',
+      payload: { player_id: p.player_id, player_name: p.player_name, message: 'Kicked by admin (mass)' },
+      issued_by: currentUser?.email,
+      executed: false
+    });
   }
+  showToast(`Kick all sent to ${players.length} players`);
+  setTimeout(refreshPlayers, 1500);
 }
 
 function subscribeToEvents() {
-  const channel = sb.channel('player-events');
+  if (eventChannel) eventChannel.unsubscribe();
+  eventChannel = sb.channel('admin-realtime');
   
-  channel
+  eventChannel
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'player_events'
     }, (payload) => {
       console.log('New event:', payload.new);
-      refreshPlayers();
       loadLogs();
+      refreshPlayers(); // update list if join/leave
     })
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'active_players'
     }, () => {
-      console.log('Player list changed');
+      refreshPlayers();
+    })
+    .on('postgres_changes', {
+      event: 'DELETE',
+      schema: 'public',
+      table: 'active_players'
+    }, () => {
       refreshPlayers();
     })
     .subscribe((status) => {
-      console.log('Subscription status:', status);
       const statusEl = document.getElementById('serverStatus');
       if (status === 'SUBSCRIBED') {
         statusEl.innerHTML = '● live';
@@ -396,18 +435,13 @@ function startAutoRefresh() {
 }
 
 function escapeHtml(str) {
+  if (!str) return '';
   return str.replace(/[&<>]/g, function(m) {
     return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
   });
 }
 
-// Event listeners
-document.getElementById('loginBtn').onclick = doLogin;
-document.getElementById('logoutBtn').onclick = doLogout;
-document.getElementById('refreshBtn').onclick = () => { refreshPlayers(); loadLogs(); showToast('Refreshed'); };
-document.getElementById('kickAllBtn').onclick = kickAll;
-document.getElementById('clearLogsBtn').onclick = () => { logs = []; renderLogs(); showToast('Logs cleared'); };
-
+// setup nav
 document.querySelectorAll('.nav-item').forEach(item => {
   item.onclick = () => {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -417,7 +451,16 @@ document.querySelectorAll('.nav-item').forEach(item => {
   };
 });
 
-// Check existing session
+document.getElementById('loginBtn').onclick = doLogin;
+document.getElementById('logoutBtn').onclick = doLogout;
+document.getElementById('refreshBtn').onclick = () => { refreshPlayers(); loadLogs(); showToast('Refreshed'); };
+document.getElementById('kickAllBtn').onclick = kickAll;
+document.getElementById('clearLogsBtn').onclick = () => { logs = []; renderLogs(); showToast('Logs cleared locally'); };
+
+// auto focus & try demo seed
+ensureDemoAdmin();
+
+// check existing session
 sb.auth.getSession().then(({ data }) => {
   if (data.session) {
     currentUser = data.session.user;
@@ -431,8 +474,172 @@ sb.auth.getSession().then(({ data }) => {
   }
 });
 
-// Enter key support
 document.getElementById('authPass').onkeypress = (e) => { if (e.key === 'Enter') doLogin(); };
+
+// ======================== MISSING SQL TABLES FIX (automated notice) ========================
+// The script will show helpful message if tables missing.
+// To fix DB schema, run these SQL commands in Supabase SQL editor:
+/*
+-- Create active_players table
+CREATE TABLE IF NOT EXISTS public.active_players (
+  id SERIAL PRIMARY KEY,
+  player_id TEXT UNIQUE NOT NULL,
+  player_name TEXT,
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  ping INT DEFAULT 0
+);
+
+-- Create player_events table
+CREATE TABLE IF NOT EXISTS public.player_events (
+  id SERIAL PRIMARY KEY,
+  type TEXT,
+  player_id TEXT,
+  player_name TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create admin_commands table (for admin actions)
+CREATE TABLE IF NOT EXISTS public.admin_commands (
+  id SERIAL PRIMARY KEY,
+  command TEXT,
+  payload JSONB,
+  issued_by TEXT,
+  executed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Row Level Security (RLS) but allow service role and anon access for demo
+ALTER TABLE public.active_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.player_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_commands ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for full access (since service key is used in Roblox, anon needs read/write for admin panel)
+CREATE POLICY "Allow all for active_players" ON public.active_players FOR ALL USING (true);
+CREATE POLICY "Allow all for player_events" ON public.player_events FOR ALL USING (true);
+CREATE POLICY "Allow all for admin_commands" ON public.admin_commands FOR ALL USING (true);
+*/
+console.log('%c⚠️ If tables missing, copy SQL from script comment into Supabase SQL editor.', 'color: orange; font-size: 12px');
+</script>
+
+<!-- FIXED ROBLOX SCRIPT (place this inside a Script in ServerScriptService) -->
+<!-- PASTE THE BELOW INTO A ROBLOX SERVER SCRIPT (ModuleScript or regular Script) -->
+<script type="text/roblox">
+--[[
+-- FIXED AND WORKING ROBLOX ADMIN SCRIPT
+-- Place this code in a Script inside ServerScriptService
+-- Ensure HttpService is enabled (Settings -> Security -> Allow HttpRequests = true)
+--]]
+
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+
+-- CORRECTED Supabase credentials (service role key for backend)
+local SUPABASE_URL = "https://oshnejscjqcwqikvyife.supabase.co"
+local SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zaG5lanNjanFjd3Fpa3Z5aWZlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDY5MTE2NSwiZXhwIjoyMDk2MjY3MTY1fQ.OcJYhoCJvYvFsANQd4UfmNIis-ity1qbxuRno3liBOo"
+
+local HEADERS = {
+    ["Content-Type"] = "application/json",
+    ["apikey"] = SUPABASE_SERVICE_KEY,
+    ["Authorization"] = "Bearer " .. SUPABASE_SERVICE_KEY
+}
+
+local function request(method, path, data)
+    local url = SUPABASE_URL .. "/rest/v1/" .. path
+    local body = data and HttpService:JSONEncode(data) or nil
+    local success, response = pcall(function()
+        return HttpService:RequestAsync({
+            Url = url,
+            Method = method,
+            Headers = HEADERS,
+            Body = body
+        })
+    end)
+    if success and response and response.StatusCode < 400 then
+        return true, response
+    else
+        warn("[ADMIN] request failed", method, path, response and response.StatusCode)
+        return false
+    end
+end
+
+local function onPlayerJoin(player)
+    print("[ADMIN] Join: " .. player.Name)
+    request("POST", "active_players?on_conflict=player_id", {
+        player_id = tostring(player.UserId),
+        player_name = player.Name,
+        joined_at = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+        ping = 0
+    })
+    request("POST", "player_events", {
+        type = "join",
+        player_id = tostring(player.UserId),
+        player_name = player.Name
+    })
+end
+
+local function onPlayerLeave(player)
+    print("[ADMIN] Leave: " .. player.Name)
+    request("DELETE", "active_players?player_id=eq." .. tostring(player.UserId))
+    request("POST", "player_events", {
+        type = "leave",
+        player_id = tostring(player.UserId),
+        player_name = player.Name
+    })
+end
+
+local function updatePingLoop()
+    while true do
+        task.wait(10)
+        for _, player in ipairs(Players:GetPlayers()) do
+            local ping = math.floor(player:GetNetworkPing() * 1000)
+            request("PATCH", "active_players?player_id=eq." .. tostring(player.UserId), { ping = ping })
+        end
+    end
+end
+
+local function checkCommandsLoop()
+    while true do
+        task.wait(2)
+        local url = SUPABASE_URL .. "/rest/v1/admin_commands?executed=eq.false&order=id.asc&limit=10"
+        local success, response = pcall(function()
+            return HttpService:RequestAsync({ Url = url, Method = "GET", Headers = HEADERS })
+        end)
+        if success and response and response.StatusCode == 200 and response.Body then
+            local commands = HttpService:JSONDecode(response.Body)
+            for _, cmd in ipairs(commands) do
+                request("PATCH", "admin_commands?id=eq." .. cmd.id, { executed = true })
+                local payload = type(cmd.payload) == "string" and HttpService:JSONDecode(cmd.payload) or cmd.payload
+                if cmd.command == "kick" then
+                    local plr = Players:GetPlayerByUserId(tonumber(payload.player_id))
+                    if plr then plr:Kick(payload.message or "Kicked by admin") end
+                elseif cmd.command == "teleport" then
+                    local plr = Players:GetPlayerByUserId(tonumber(payload.player_id))
+                    if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        plr.Character.HumanoidRootPart.CFrame = CFrame.new(0, 10, 0)
+                    end
+                elseif cmd.command == "fling" then
+                    local plr = Players:GetPlayerByUserId(tonumber(payload.player_id))
+                    if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local hrp = plr.Character.HumanoidRootPart
+                        local vel = Instance.new("BodyVelocity")
+                        vel.Velocity = Vector3.new(5000, 8000, 5000)
+                        vel.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                        vel.Parent = hrp
+                        game:GetService("Debris"):AddItem(vel, 0.3)
+                    end
+                end
+            end
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(onPlayerJoin)
+Players.PlayerRemoving:Connect(onPlayerLeave)
+for _, player in ipairs(Players:GetPlayers()) do task.spawn(onPlayerJoin, player) end
+task.spawn(updatePingLoop)
+task.spawn(checkCommandsLoop)
+
+print("[ADMIN] ✅ FIXED Roblox server script loaded! Use web panel to kick/teleport.")
 </script>
 </body>
 </html>
