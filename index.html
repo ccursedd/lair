@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>lair.lat · encrypted marketplace</title>
+<title>lair.lat · confirm email to trade</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* --- minimal dark system --- */
 :root {
   --bg: #000000;
   --surface: #080808;
@@ -50,6 +49,7 @@ button{
   padding:9px 16px;
   background:transparent;
   color:var(--text2);
+  transition:all .12s;
 }
 button:hover{border-color:var(--border3);color:var(--text);}
 .btn-white{background:#fff;color:#000;border-color:#fff;font-weight:600;}
@@ -176,17 +176,17 @@ nav{
 <nav><div class="logo" id="nav-logo">lair<span>.lat</span></div><div class="nav-r" id="nav-r"><button onclick="showPage('login')">sign in</button><button class="btn-white" onclick="showPage('register')">join</button></div></nav>
 <div class="toast" id="toast"></div>
 
-<!-- home -->
+<!-- home feed -->
 <div class="page active layout" id="page-home">
   <div class="feed-top"><div class="feed-title">marketplace</div><button class="btn-white btn-sm" id="new-btn" style="display:none" onclick="showPage('new')">+ sell / buy</button></div>
   <div class="filters"><button class="fbtn on" data-f="all">all</button><button class="fbtn" data-f="selling">selling</button><button class="fbtn" data-f="buying">buying</button><button class="fbtn" data-f="trading">trading</button></div>
   <div id="feed"></div>
 </div>
 
-<!-- thread view -->
+<!-- single thread -->
 <div class="page layout" id="page-thread"><div class="back" onclick="showPage('home')">← back</div><div id="thread-body"></div></div>
 
-<!-- new thread (sell/buy) -->
+<!-- create thread with discord/tele -->
 <div class="page layout" id="page-new">
   <div class="back" onclick="showPage('home')">← back</div>
   <div class="form-box">
@@ -196,24 +196,26 @@ nav{
       <button class="tchip" data-t="buying" onclick="pickType(this,'buying')">buying</button>
       <button class="tchip" data-t="trading" onclick="pickType(this,'trading')">trading</button>
     </div>
-    <div class="fg"><label class="fl">title</label><input id="nt-title" placeholder="e.g. Supreme hoodie size L" maxlength="120"></div>
-    <div class="fg"><label class="fl">description</label><textarea id="nt-body" style="min-height:100px" placeholder="condition, details, etc..."></textarea></div>
+    <div class="fg"><label class="fl">title</label><input id="nt-title" placeholder="e.g. Off-White hoodie L" maxlength="120"></div>
+    <div class="fg"><label class="fl">description</label><textarea id="nt-body" style="min-height:100px" placeholder="condition, details, price negotiation..."></textarea></div>
     <div id="nt-price-row" class="frow" style="display:none;margin-bottom:14px;">
       <div><label class="fl">price ($)</label><input type="number" id="nt-price" placeholder="0.00" step="0.01" min="0"></div>
       <div><label class="fl">discord / telegram</label><input id="nt-contact" placeholder="@username or dm link"></div>
     </div>
-    <div class="fg"><label class="fl">tags (comma)</label><input id="nt-tags" placeholder="sneakers, pc, rare"></div>
+    <div class="fg"><label class="fl">tags (comma)</label><input id="nt-tags" placeholder="rare, size L, ds"></div>
     <div class="err" id="nt-err"></div>
     <button class="btn-white" style="width:100%" onclick="postThread()">publish</button>
   </div>
 </div>
 
-<!-- auth pages -->
-<div class="page" id="page-login"><div class="auth-wrap"><div class="auth-box"><div class="auth-logo">lair.lat</div><div class="auth-sub">threads & drops</div><div class="err" id="li-err"></div><div class="fg"><label class="fl">email</label><input id="li-email" type="email" placeholder="you@example.com"></div><div class="fg"><label class="fl">password</label><input id="li-pass" type="password" onkeydown="if(event.key==='Enter')doLogin()"></div><button class="btn-white" style="width:100%" onclick="doLogin()">sign in</button><div class="auth-sw" style="text-align:center;margin-top:14px;font-size:12px;">no account? <a onclick="showPage('register')" style="cursor:pointer;text-decoration:underline;">join</a></div></div></div></div>
-<div class="page" id="page-register"><div class="auth-wrap"><div class="auth-box"><div class="auth-logo">lair.lat</div><div class="auth-sub">verify email after signup</div><div class="err" id="reg-err"></div><div class="fg"><label class="fl">username</label><input id="reg-user" placeholder="handle" maxlength="30"></div><div class="fg"><label class="fl">email</label><input id="reg-email" type="email" placeholder="you@example.com"></div><div class="fg"><label class="fl">password</label><input id="reg-pass" type="password" onkeydown="if(event.key==='Enter')doRegister()"></div><button class="btn-white" style="width:100%" onclick="doRegister()">create account</button><div class="auth-sw" style="margin-top:14px;font-size:12px;">already have an account? <a onclick="showPage('login')" style="cursor:pointer;text-decoration:underline;">sign in</a></div></div></div></div>
+<!-- login & register with email confirmation BLOCK -->
+<div class="page" id="page-login"><div class="auth-wrap"><div class="auth-box"><div class="auth-logo">lair.lat</div><div class="auth-sub">verify email first</div><div class="err" id="li-err"></div><div class="fg"><label class="fl">email</label><input id="li-email" type="email" placeholder="you@example.com"></div><div class="fg"><label class="fl">password</label><input id="li-pass" type="password" onkeydown="if(event.key==='Enter')doLogin()"></div><button class="btn-white" style="width:100%" onclick="doLogin()">sign in</button><div class="auth-sw" style="text-align:center;margin-top:14px;font-size:12px;">no account? <a onclick="showPage('register')" style="cursor:pointer;text-decoration:underline;">join</a></div></div></div></div>
 
+<div class="page" id="page-register"><div class="auth-wrap"><div class="auth-box"><div class="auth-logo">lair.lat</div><div class="auth-sub">confirm your email to login</div><div class="err" id="reg-err"></div><div class="fg"><label class="fl">username</label><input id="reg-user" placeholder="handle" maxlength="30"></div><div class="fg"><label class="fl">email</label><input id="reg-email" type="email" placeholder="you@example.com"></div><div class="fg"><label class="fl">password</label><input id="reg-pass" type="password" onkeydown="if(event.key==='Enter')doRegister()"></div><button class="btn-white" style="width:100%" onclick="doRegister()">create account</button><div class="auth-sw" style="margin-top:14px;font-size:12px;">already have an account? <a onclick="showPage('login')" style="cursor:pointer;text-decoration:underline;">sign in</a></div></div></div></div>
+
+<!-- profile & settings -->
 <div class="page layout" id="page-profile"><div id="prof-content"></div></div>
-<div class="page layout" id="page-settings"><div class="back" onclick="showPage('home')">← back</div><div class="set-box form-box"><div class="form-title">account settings</div><div class="fg"><label class="fl">username</label><input id="set-user"></div><div class="fg"><label class="fl">bio</label><textarea id="set-bio" rows="3"></textarea></div><div class="err" id="set-err"></div><div style="display:flex;gap:8px;"><button class="btn-white" onclick="saveSettings()">save</button><button class="btn-danger" onclick="doLogout()">sign out</button></div></div></div>
+<div class="page layout" id="page-settings"><div class="back" onclick="showPage('home')">← back</div><div class="set-box form-box"><div class="form-title">edit profile</div><div class="fg"><label class="fl">username</label><input id="set-user"></div><div class="fg"><label class="fl">bio</label><textarea id="set-bio" rows="3"></textarea></div><div class="err" id="set-err"></div><div style="display:flex;gap:8px;"><button class="btn-white" onclick="saveSettings()">save</button><button class="btn-danger" onclick="doLogout()">sign out</button></div></div></div>
 
 <script>
 const SB_URL = 'https://flmoswqpocsufircduiy.supabase.co';
@@ -222,10 +224,12 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 
 let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'selling', COMMENT_INTENT = 'comment';
 
-// utils
-function toast(msg, type='ok'){ let el=document.getElementById('toast'); el.textContent=msg; el.className='toast show '+type; clearTimeout(window.tt); window.tt=setTimeout(()=>el.classList.remove('show'),2500);}
+// helpers
+function toast(msg, type='ok'){ let el=document.getElementById('toast'); el.textContent=msg; el.className='toast show '+type; clearTimeout(window.tt); window.tt=setTimeout(()=>el.classList.remove('show'),2800);}
 function esc(s){ if(!s)return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function ago(ts){ if(!ts)return ''; let d=(Date.now()-new Date(ts))/1000; if(d<60)return 'just now'; if(d<3600)return Math.floor(d/60)+'m ago'; if(d<86400)return Math.floor(d/3600)+'h ago'; return Math.floor(d/86400)+'d ago';}
+function showErr(id,msg){ let e=document.getElementById(id); e.innerText=msg; e.style.display='block';}
+function hideErr(id){ let e=document.getElementById(id); if(e)e.style.display='none';}
 
 async function getProfile(uid){ let {data}=await sb.from('profiles').select('*').eq('id',uid).maybeSingle(); return data || {id:uid, username:'anon'};}
 function pushState(path){ let full=path.startsWith('/')?path:'/'+path; window.history.pushState({},'',full);}
@@ -235,13 +239,13 @@ function showPage(id){
   if(id==='home') pushState('');
   else if(id==='settings') pushState('settings');
   else if(id==='new') pushState('new');
-  else if(id==='profile') {}
   else if(id!=='thread') pushState(id);
   if(id==='home') loadFeed();
   if(id==='new' && !ME) showPage('login');
   if(id==='settings' && ME) fillSettings();
 }
 window.addEventListener('popstate',()=>boot());
+
 async function renderNav(){
   let nr=document.getElementById('nav-r'), nb=document.getElementById('new-btn');
   if(ME && PROF){
@@ -254,47 +258,69 @@ async function renderNav(){
   }
 }
 
-// ---------- AUTH WITH EMAIL CONFIRMATION ----------
+// ========== SIGNUP (creates user but BLOCKS login until email confirmed) ==========
 async function doRegister(){
-  let errDiv=document.getElementById('reg-err'); errDiv.style.display='none';
+  hideErr('reg-err');
   let username=document.getElementById('reg-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
   let email=document.getElementById('reg-email').value.trim();
   let pass=document.getElementById('reg-pass').value;
-  if(username.length<2) return showErr('reg-err','username min 2 chars');
+  if(username.length<2) return showErr('reg-err','username min 2 characters');
   if(!email.includes('@')) return showErr('reg-err','valid email required');
-  if(pass.length<6) return showErr('reg-err','password ≥6 chars');
+  if(pass.length<6) return showErr('reg-err','password ≥6 characters');
+  
   let {data:ex}=await sb.from('profiles').select('id').eq('username',username).maybeSingle();
   if(ex) return showErr('reg-err','username taken');
+  
   let btn=document.getElementById('reg-btn'); let old=btn.innerText; btn.innerText='creating...'; btn.disabled=true;
-  let {data, error}=await sb.auth.signUp({email, password:pass, options:{data:{username}}});
+  
+  // sign up with supabase (email confirmation required by default in supabase settings)
+  const {data, error}=await sb.auth.signUp({
+    email, password:pass,
+    options: { data: { username } }
+  });
+  
   if(error){ showErr('reg-err',error.message); btn.innerText=old; btn.disabled=false; return; }
+  
   if(data.user){
-    // create profile placeholder
+    // create profile entry
     await sb.from('profiles').upsert({id:data.user.id, username, email, created_at:new Date().toISOString()});
-    toast('✅ confirmation email sent! Please verify your inbox, then sign in.','ok');
+    toast(`✅ verification email sent to ${email}. Please confirm your email before logging in.`, 'ok');
     showPage('login');
-  } else { toast('signup failed', 'er'); }
-  btn.innerText=old; btn.disabled=false;
-}
-async function doLogin(){
-  let errDiv=document.getElementById('li-err'); errDiv.style.display='none';
-  let email=document.getElementById('li-email').value.trim();
-  let pass=document.getElementById('li-pass').value;
-  let btn=document.getElementById('li-btn'); let old=btn.innerText; btn.innerText='signing...'; btn.disabled=true;
-  let {data, error}=await sb.auth.signInWithPassword({email, password:pass});
-  if(error){ showErr('li-err',error.message); btn.innerText=old; btn.disabled=false; return; }
-  if(data.user){
-    ME=data.user;
-    // check email confirmed
-    if(!ME.email_confirmed_at){ toast('⚠️ please verify your email address before logging in. Check spam!','er'); await sb.auth.signOut(); ME=null; btn.innerText=old; btn.disabled=false; showPage('login'); return; }
-    PROF=await getProfile(ME.id);
-    renderNav(); toast(`welcome @${PROF.username || ME.email}`); showPage('home'); loadFeed();
+  } else {
+    toast('signup error', 'er');
   }
   btn.innerText=old; btn.disabled=false;
 }
+
+// ========== LOGIN: only allowed if email_confirmed_at exists ==========
+async function doLogin(){
+  hideErr('li-err');
+  let email=document.getElementById('li-email').value.trim();
+  let pass=document.getElementById('li-pass').value;
+  let btn=document.getElementById('li-btn'); let old=btn.innerText; btn.innerText='signing...'; btn.disabled=true;
+  
+  const {data, error}=await sb.auth.signInWithPassword({email, password:pass});
+  if(error){ showErr('li-err',error.message); btn.innerText=old; btn.disabled=false; return; }
+  
+  if(data.user){
+    // CRITICAL: check if email is confirmed
+    if(!data.user.email_confirmed_at){
+      await sb.auth.signOut();
+      showErr('li-err','❌ Email not verified! Check your inbox (and spam) and click the confirmation link, then try again.');
+      btn.innerText=old; btn.disabled=false;
+      return;
+    }
+    ME=data.user;
+    PROF=await getProfile(ME.id);
+    renderNav();
+    toast(`welcome @${PROF.username || ME.email}`);
+    showPage('home');
+    loadFeed();
+  }
+  btn.innerText=old; btn.disabled=false;
+}
+
 async function doLogout(){ await sb.auth.signOut(); ME=null; PROF=null; renderNav(); toast('signed out'); showPage('home');}
-function showErr(id,msg){ let e=document.getElementById(id); e.innerText=msg; e.style.display='block';}
-function hideErr(id){ let e=document.getElementById(id); if(e)e.style.display='none';}
 
 // settings & profile
 async function fillSettings(){ if(!PROF)return; document.getElementById('set-user').value=PROF.username||''; document.getElementById('set-bio').value=PROF.bio||'';}
@@ -306,8 +332,9 @@ async function saveSettings(){
   if(ex) return showErr('set-err','username taken');
   let {error}=await sb.from('profiles').upsert({id:ME.id, username, bio, updated_at:new Date().toISOString()});
   if(error) return showErr('set-err',error.message);
-  PROF=await getProfile(ME.id); renderNav(); toast('profile updated');
+  PROF=await getProfile(ME.id); renderNav(); toast('profile saved');
 }
+
 async function loadProfilePage(username){
   username=username.replace('@','');
   let el=document.getElementById('prof-content'); el.innerHTML='<div class="loading"><div class="spin"></div></div>';
@@ -321,50 +348,52 @@ async function loadProfilePage(username){
   let avImg=prof.avatar_url?`<img src="${esc(prof.avatar_url)}">`:'';
   el.innerHTML=`<div class="back" onclick="showPage('home')">← back</div>
     <div class="prof-head"><div class="av av-lg">${avImg}${!prof.avatar_url?init:''}</div>
-    <div class="prof-info"><div class="prof-name">@${esc(prof.username)}</div>${prof.bio?`<div class="prof-bio" style="font-size:13px;color:var(--text2);margin-top:6px;">${esc(prof.bio)}</div>`:''}
-    <div class="prof-stats"><div class="pst"><div class="pst-n">${threads?.length||0}</div><div class="pst-l">threads</div></div><div class="pst"><div class="pst-n">${comCnt?.length||0}</div><div class="pst-l">comments</div></div></div>
-    ${isOwn?`<button onclick="showPage('settings')" style="margin-top:10px;">edit profile</button>`:''}</div></div>
+    <div class="prof-info"><div class="prof-name">@${esc(prof.username)}</div>${prof.bio?`<div style="font-size:13px;color:var(--text2);margin-top:6px;">${esc(prof.bio)}</div>`:''}
+    <div class="prof-stats"><div><strong>${threads?.length||0}</strong> threads</div><div><strong>${comCnt?.length||0}</strong> comments</div></div>
+    ${isOwn?`<button onclick="showPage('settings')" style="margin-top:10px;">edit</button>`:''}</div></div>
     <div class="sec-hed">listings</div><div>${!threads||threads.length===0?'<div class="empty">no posts yet</div>':threads.map(t=>cardHTML(t,t.profiles)).join('')}</div>`;
 }
+
 function cardHTML(t,prof){
   let author=prof?.username||'anon'; let init=author.slice(0,2).toUpperCase();
   let avImg=prof?.avatar_url?`<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">`:'';
   let tagsHTML=(t.tags||[]).slice(0,3).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
   let priceTag=t.price?`<span class="tag">\$${Number(t.price).toFixed(2)}</span>`:'';
-  return `<div class="tcard" onclick="openThread('${t.id}')"><div class="tcard-inner"><div class="tcard-top"><div class="av" style="width:24px;height:24px;font-size:10px" onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div><span class="tcard-author"><b onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">@${esc(author)}</b> · ${ago(t.created_at)}</span></div><div class="tcard-title">${esc(t.title)}</div>${t.body?`<div class="tcard-body">${esc(t.body)}</div>`:''}<div class="tcard-foot"><span class="tag">${t.type}</span>${tagsHTML}${priceTag}<div class="tcard-stats"><span>💬 ${t.comment_count||0}</span></div></div></div></div>`;
+  return `<div class="tcard" onclick="openThread('${t.id}')"><div class="tcard-inner"><div class="tcard-top"><div class="av" style="width:24px;height:24px;font-size:10px" onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div><span class="tcard-author"><b onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">@${esc(author)}</b> · ${ago(t.created_at)}</span></div><div class="tcard-title">${esc(t.title)}</div>${t.body?`<div class="tcard-body">${esc(t.body)}</div>`:''}<div class="tcard-foot"><span class="tag">${t.type}</span>${tagsHTML}${priceTag}<div class="tcard-stats">💬 ${t.comment_count||0}</div></div></div></div>`;
 }
 
-// FEED
+// feed
 async function loadFeed(){
   let el=document.getElementById('feed'); if(!el)return;
   el.innerHTML='<div class="loading"><div class="spin"></div></div>';
   let q=sb.from('threads').select('*, profiles(username,avatar_url)').order('created_at',{ascending:false}).limit(60);
   if(FILTER!=='all') q=q.eq('type',FILTER);
   let {data,error}=await q;
-  if(error||!data||data.length===0){ el.innerHTML='<div class="empty">✨ no listings yet. create one →</div>'; return; }
+  if(error||!data||data.length===0){ el.innerHTML='<div class="empty">✨ no listings. create one →</div>'; return; }
   el.innerHTML=data.map(t=>cardHTML(t,t.profiles)).join('');
 }
 document.querySelectorAll('.fbtn').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); FILTER=b.dataset.f; loadFeed();};});
 
-// THREADS with discord/telegram instead of location
+// thread interactions
 async function openThread(id){ pushState(`thread/${id}`); showPage('thread'); loadThread(id); }
 async function loadThread(id){
   let el=document.getElementById('thread-body'); el.innerHTML='<div class="loading"><div class="spin"></div></div>';
   await sb.rpc('increment_views',{thread_id:id}).catch(()=>{});
   let {data:t}=await sb.from('threads').select('*, profiles(username,avatar_url)').eq('id',id).maybeSingle();
   let {data:comments}=await sb.from('comments').select('*, profiles(username,avatar_url)').eq('thread_id',id).order('created_at');
-  if(!t){ el.innerHTML='<div class="empty">gone</div>'; return; }
+  if(!t){ el.innerHTML='<div class="empty">thread gone</div>'; return; }
   let prof=t.profiles, author=prof?.username||'unknown', init=author.slice(0,2).toUpperCase(), avImg=prof?.avatar_url?`<img src="${esc(prof.avatar_url)}">`:'';
   let isOwn=ME && ME.id===t.author_id;
-  let cmtsHTML=!comments||comments.length===0?'<div style="padding:20px 0;color:var(--text3);">no messages</div>':comments.map(c=>`<div class="cbox"><div class="cbox-top"><div class="av" style="width:22px;height:22px;font-size:9px" onclick="loadProfilePage('${esc(c.profiles?.username)}')">${c.profiles?.avatar_url?`<img src="${esc(c.profiles.avatar_url)}">`:(c.profiles?.username||'?').slice(0,2).toUpperCase()}</div><span class="cbox-author" onclick="loadProfilePage('${esc(c.profiles?.username)}')">${esc(c.profiles?.username)}</span><span class="cbox-time">${ago(c.created_at)}</span>${(ME && ME.id===c.author_id)?`<button class="btn-danger btn-sm" style="margin-left:auto;padding:2px 6px" onclick="delComment('${c.id}')">✕</button>`:''}</div><div class="cbox-body">${esc(c.body)}</div>${c.intent!=='comment'?`<div class="intent-tag">${c.intent=== 'buy'?'🔔 wants to buy': c.intent==='offer'?'💰 offer':c.intent}</div>`:''}</div>`).join('');
+  let cmtsHTML=!comments||comments.length===0?'<div style="padding:20px 0;color:var(--text3);">no replies</div>':comments.map(c=>`<div class="cbox"><div class="cbox-top"><div class="av" style="width:22px;height:22px;font-size:9px" onclick="loadProfilePage('${esc(c.profiles?.username)}')">${c.profiles?.avatar_url?`<img src="${esc(c.profiles.avatar_url)}">`:(c.profiles?.username||'?').slice(0,2).toUpperCase()}</div><span class="cbox-author" onclick="loadProfilePage('${esc(c.profiles?.username)}')">${esc(c.profiles?.username)}</span><span>${ago(c.created_at)}</span>${(ME && ME.id===c.author_id)?`<button class="btn-danger btn-sm" style="margin-left:auto;padding:2px 6px" onclick="delComment('${c.id}')">✕</button>`:''}</div><div class="cbox-body">${esc(c.body)}</div>${c.intent!=='comment'?`<div class="intent-tag">${c.intent==='buy'?'🔔 wants to buy':c.intent==='offer'?'💰 offer':c.intent}</div>`:''}</div>`).join('');
   let writeHTML=ME?`<div class="write-box"><textarea id="c-text" placeholder="reply or offer..."></textarea><div class="write-foot"><div class="intents"><button class="ichip on" data-i="comment" onclick="pickIntent(this,'comment')">comment</button><button class="ichip" data-i="buy" onclick="pickIntent(this,'buy')">want to buy</button><button class="ichip" data-i="offer" onclick="pickIntent(this,'offer')">offer</button></div><button class="btn-white btn-sm" onclick="postComment('${id}')">send</button></div></div>`:`<div style="text-align:center;padding:16px;border:1px solid var(--border);margin-top:14px"><button class="btn-white btn-sm" onclick="showPage('login')">sign in to reply</button></div>`;
   let contactHtml='';
   if((t.type==='selling' || t.type==='buying') && t.contact){
     contactHtml=`<div class="contact-chip">📱 contact: ${esc(t.contact)}</div>`;
   }
-  el.innerHTML=`<div class="thread-full"><div style="display:flex;gap:8px;margin-bottom:12px"><div class="av" onclick="loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div><div><div style="font-size:13px;font-weight:500" onclick="loadProfilePage('${esc(author)}')">@${esc(author)}</div><div style="font-size:10px;color:var(--text3)">${ago(t.created_at)}</div></div><span class="tag" style="margin-left:auto">${t.type}</span>${isOwn?`<button class="btn-danger btn-sm" onclick="delThread('${id}')">delete</button>`:''}</div><div class="thread-full-title">${esc(t.title)}</div>${t.price?`<div class="price-badge"><span class="price-num">\$${Number(t.price).toFixed(2)}</span>${contactHtml}</div>`:contactHtml?`<div class="price-badge">${contactHtml}</div>`:''}<div class="thread-full-body">${esc(t.body||'')}</div><div style="margin-top:10px">${(t.tags||[]).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('')}</div></div><div class="comments-hd">💬 ${comments?.length||0} messages</div><div id="clist">${cmtsHTML}</div>${writeHTML}`;
+  el.innerHTML=`<div class="thread-full"><div style="display:flex;gap:8px;margin-bottom:12px"><div class="av" onclick="loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div><div><div style="font-weight:500">@${esc(author)}</div><div style="font-size:10px;color:var(--text3)">${ago(t.created_at)}</div></div><span class="tag">${t.type}</span>${isOwn?`<button class="btn-danger btn-sm" onclick="delThread('${id}')">delete</button>`:''}</div><div class="thread-full-title">${esc(t.title)}</div>${t.price?`<div class="price-badge"><span class="price-num">\$${Number(t.price).toFixed(2)}</span>${contactHtml}</div>`:contactHtml?`<div class="price-badge">${contactHtml}</div>`:''}<div class="thread-full-body">${esc(t.body||'')}</div><div style="margin-top:10px">${(t.tags||[]).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('')}</div></div><div class="comments-hd">💬 ${comments?.length||0}</div><div id="clist">${cmtsHTML}</div>${writeHTML}`;
   COMMENT_INTENT='comment';
 }
+
 async function postComment(threadId){
   if(!ME){ showPage('login'); return; }
   let text=document.getElementById('c-text')?.value.trim();
@@ -374,14 +403,13 @@ async function postComment(threadId){
   document.getElementById('c-text').value='';
   await sb.rpc('increment_comments',{thread_id:threadId}).catch(()=>{});
   let list=document.getElementById('clist'); if(list.querySelector('div[style*="padding"]')) list.innerHTML='';
-  list.insertAdjacentHTML('beforeend',`<div class="cbox"><div class="cbox-top"><div class="av" style="width:22px;height:22px;font-size:9px">${PROF?.avatar_url?`<img src="${esc(PROF.avatar_url)}">`:(PROF?.username||'?').slice(0,2).toUpperCase()}</div><span class="cbox-author">${esc(PROF?.username||ME.email)}</span><span class="cbox-time">just now</span></div><div class="cbox-body">${esc(text)}</div>${COMMENT_INTENT!=='comment'?`<div class="intent-tag">${COMMENT_INTENT=== 'buy'?'wants to buy':COMMENT_INTENT==='offer'?'offer':COMMENT_INTENT}</div>`:''}</div>`);
-  let countSpan=document.querySelector('.comments-hd'); if(countSpan)countSpan.innerText=`💬 ${(parseInt((countSpan.innerText.match(/\d+/)||[0])[0])+1)} messages`;
+  list.insertAdjacentHTML('beforeend',`<div class="cbox"><div class="cbox-top"><div class="av" style="width:22px;height:22px;font-size:9px">${PROF?.avatar_url?`<img src="${esc(PROF.avatar_url)}">`:(PROF?.username||'?').slice(0,2).toUpperCase()}</div><span class="cbox-author">${esc(PROF?.username||ME.email)}</span><span>just now</span></div><div class="cbox-body">${esc(text)}</div>${COMMENT_INTENT!=='comment'?`<div class="intent-tag">${COMMENT_INTENT==='buy'?'wants to buy':COMMENT_INTENT==='offer'?'offer':COMMENT_INTENT}</div>`:''}</div>`);
+  let countSpan=document.querySelector('.comments-hd'); if(countSpan)countSpan.innerText=`💬 ${(parseInt((countSpan.innerText.match(/\d+/)||[0])[0])+1)}`;
   COMMENT_INTENT='comment';
 }
 async function delComment(id){ if(confirm('delete?')){ await sb.from('comments').delete().eq('id',id).eq('author_id',ME.id); document.getElementById('c-'+id)?.remove(); toast('deleted');}}
 async function delThread(id){ if(confirm('delete thread?')){ await sb.from('comments').delete().eq('thread_id',id); await sb.from('threads').delete().eq('id',id).eq('author_id',ME.id); toast('deleted'); showPage('home'); }}
 
-// NEW THREAD: forces discord/telegram when selling/buying (no location)
 function pickType(el,type){ document.querySelectorAll('.tchip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); THREAD_TYPE=type; let row=document.getElementById('nt-price-row'); row.style.display=(type==='selling'||type==='buying')?'grid':'none';}
 async function postThread(){
   if(!ME){ showPage('login'); return; }
@@ -402,24 +430,31 @@ async function postThread(){
   }).select().single();
   btn.innerText='publish'; btn.disabled=false;
   if(error) return showErr('nt-err',error.message);
-  ['nt-title','nt-body','nt-price','nt-contact','nt-tags'].forEach(id=>{let inp=document.getElementById(id); if(inp)inp.value='';});
+  document.getElementById('nt-title').value=''; document.getElementById('nt-body').value=''; document.getElementById('nt-price').value=''; document.getElementById('nt-contact').value=''; document.getElementById('nt-tags').value='';
   toast('listing live!'); openThread(data.id);
 }
 function pickIntent(el,intent){ COMMENT_INTENT=intent; document.querySelectorAll('.ichip').forEach(c=>c.classList.remove('on')); el.classList.add('on');}
 
-// boot sequence with email confirmation check
+// BOOT with email check
 async function boot(){
   let {data:{session}}=await sb.auth.getSession();
-  if(session){ ME=session.user; if(ME.email_confirmed_at){ PROF=await getProfile(ME.id); } else { await sb.auth.signOut(); ME=null; toast('verify email first','er'); showPage('login'); } }
+  if(session && session.user){
+    if(session.user.email_confirmed_at){
+      ME=session.user;
+      PROF=await getProfile(ME.id);
+    } else {
+      await sb.auth.signOut();
+      toast('Please verify your email before logging in','er');
+    }
+  }
   renderNav();
-  let path=sessionStorage.getItem('redirectRoute') || window.location.pathname;
-  sessionStorage.removeItem('redirectRoute');
+  let path=window.location.pathname;
   if(path.startsWith('/thread/')){ let id=path.replace('/thread/',''); await loadThread(id); showPage('thread'); pushState(path);}
   else if(path.startsWith('/users/@')){ let u=path.replace('/users/@',''); await loadProfilePage(u);}
   else if(path==='/settings'){ if(ME)showPage('settings'); else showPage('login');}
   else if(path==='/new'){ if(ME)showPage('new'); else showPage('login');}
   else { showPage('home'); loadFeed(); if(path!=='/')pushState('');}
-  sb.auth.onAuthStateChange(async (ev,sess)=>{ if(ev==='SIGNED_IN' && sess.user?.email_confirmed_at){ ME=sess.user; PROF=await getProfile(ME.id); renderNav(); toast('verified!'); showPage('home'); loadFeed();} else if(ev==='SIGNED_OUT'){ ME=null; PROF=null; renderNav();}});
+  sb.auth.onAuthStateChange(async (ev,sess)=>{ if(ev==='SIGNED_IN' && sess?.user?.email_confirmed_at){ ME=sess.user; PROF=await getProfile(ME.id); renderNav(); toast('verified!'); showPage('home'); loadFeed();} else if(ev==='SIGNED_OUT'){ ME=null; PROF=null; renderNav();}});
 }
 boot();
 </script>
