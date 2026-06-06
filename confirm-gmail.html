@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail Confirmed - Redirecting</title>
+    <style>
+        /* RESET: remove any default margins or paddings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* BODY: fully black background, no gradients, no images, no borders */
+        body {
+            background-color: #000000;  /* pure black */
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            /* no shadows, no outlines, nothing else */
+        }
+
+        /* main container: no background, no borders, no effects */
+        .confirmation-container {
+            background: transparent;   /* completely transparent, letting black through */
+            text-align: center;
+            padding: 1rem;
+            /* no margins, no box shadows, no decorations */
+        }
+
+        /* MAIN TEXT: smaller white text as requested */
+        .confirm-text {
+            color: #ffffff;           /* pure white */
+            background: transparent;
+            font-size: 1.25rem;       /* smaller than before (previously used clamp up to 3rem) */
+            font-weight: 500;
+            letter-spacing: normal;
+            line-height: 1.4;
+            text-decoration: none;
+            text-shadow: none;
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* SECONDARY TEXT: even smaller white text for the redirect message */
+        .redirect-text {
+            color: #ffffff;           /* pure white */
+            background: transparent;
+            font-size: 0.9rem;        /* smaller than the main text */
+            font-weight: 400;
+            letter-spacing: normal;
+            line-height: 1.5;
+            text-decoration: none;
+            text-shadow: none;
+            border: none;
+            margin-top: 0.75rem;      /* slight spacing from the main text */
+            padding: 0;
+            opacity: 0.85;             /* subtle, but still white and readable */
+        }
+
+        /* No hover effects, no additional states that change color */
+        .confirm-text:focus,
+        .confirm-text:active,
+        .confirm-text:hover,
+        .redirect-text:focus,
+        .redirect-text:active,
+        .redirect-text:hover {
+            color: #ffffff;
+            background: transparent;
+        }
+
+        /* guarantee no other elements appear — no pseudo-elements, no icons, no extra text */
+        .confirmation-container::before,
+        .confirmation-container::after,
+        .confirm-text::before,
+        .confirm-text::after,
+        .redirect-text::before,
+        .redirect-text::after {
+            display: none;
+            content: none;
+        }
+
+        /* remove any possible outline or focus rings from body or container */
+        body:focus,
+        .confirmation-container:focus {
+            outline: none;
+        }
+
+        /* absolutely nothing else: the page is plain black, only the requested white text.
+           Main text: "your gmail has been confirmed" (smaller)
+           Under it: even smaller text that says "you will be redirected in X seconds"
+           with X counting down from 3 to 0, then redirect to https://lair.lat
+        */
+    </style>
+</head>
+<body>
+    <div class="confirmation-container">
+        <div class="confirm-text">
+            your gmail has been confirmed
+        </div>
+        <div class="redirect-text" id="countdownMessage">
+            you will be redirected in 3 seconds
+        </div>
+    </div>
+
+    <script>
+        // Countdown from 3 seconds to 0, updating the text each second, then redirect.
+        let secondsLeft = 3;
+        const countdownElement = document.getElementById('countdownMessage');
+        
+        // Update the message every second
+        const interval = setInterval(function() {
+            secondsLeft--;
+            
+            if (secondsLeft > 0) {
+                // Update the text with the current remaining seconds
+                countdownElement.textContent = `you will be redirected in ${secondsLeft} second${secondsLeft !== 1 ? 's' : ''}`;
+            } else if (secondsLeft === 0) {
+                // Final update before redirect
+                countdownElement.textContent = `you will be redirected in 0 seconds`;
+                clearInterval(interval);
+                // Perform the redirect
+                window.location.replace("https://lair.lat");
+            }
+        }, 1000);
+        
+        // Fallback: in case setTimeout also triggers after exactly 3 seconds
+        // (ensures redirect even if interval has any glitch)
+        setTimeout(function() {
+            // Clear interval to avoid double redirect attempts
+            clearInterval(interval);
+            window.location.replace("https://lair.lat");
+        }, 3000);
+    </script>
+</body>
+</html>
