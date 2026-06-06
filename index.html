@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>lair.lat · confirm email to trade</title>
+<title>lair.lat</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* Your existing CSS - keeping it compact but complete */
 :root {
   --bg: #000000;
   --surface: #080808;
@@ -37,8 +38,11 @@ input,textarea,select{
   padding:10px 12px;
   outline:none;
   width:100%;
+  transition:border .15s;
+  -webkit-appearance:none;
 }
-input:focus,textarea:focus{border-color:var(--border3);}
+input:focus,textarea:focus,select:focus{border-color:var(--border3);}
+input::placeholder,textarea::placeholder{color:var(--text3);}
 button{
   cursor:pointer;
   font-family:'IBM Plex Sans',sans-serif;
@@ -47,16 +51,19 @@ button{
   border:1px solid var(--border2);
   border-radius:var(--r);
   padding:9px 16px;
+  transition:all .12s;
   background:transparent;
   color:var(--text2);
-  transition:all .12s;
 }
 button:hover{border-color:var(--border3);color:var(--text);}
+button:active{opacity:.7;}
 .btn-white{background:#fff;color:#000;border-color:#fff;font-weight:600;}
-.btn-white:hover{background:#e0e0e0;color:#000;}
+.btn-white:hover{background:#e0e0e0;border-color:#e0e0e0;color:#000;}
 .btn-danger{color:var(--danger);border-color:rgba(255,51,51,.25);}
-.btn-danger:hover{background:rgba(255,51,51,.08);border-color:rgba(255,51,51,.5);}
+.btn-danger:hover{background:rgba(255,51,51,.08);border-color:rgba(255,51,51,.5);color:var(--danger);}
 .btn-sm{padding:6px 12px;font-size:12px;}
+
+/* NAV */
 nav{
   position:sticky;top:0;z-index:200;
   background:rgba(0,0,0,.92);
@@ -65,33 +72,46 @@ nav{
   height:52px;padding:0 20px;
   display:flex;align-items:center;justify-content:space-between;
 }
-.logo{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;cursor:pointer;}
+.logo{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:16px;font-weight:600;
+  letter-spacing:-.5px;color:#fff;cursor:pointer;
+}
 .logo span{color:var(--text3);}
 .nav-r{display:flex;align-items:center;gap:8px;}
+
+/* AVATAR */
 .av{
   width:30px;height:30px;border-radius:50%;
   background:var(--surface3);border:1px solid var(--border2);
   display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:600;color:#fff;
   font-family:'IBM Plex Mono',monospace;
-  overflow:hidden;cursor:pointer;
+  overflow:hidden;flex-shrink:0;cursor:pointer;
 }
 .av img{width:100%;height:100%;object-fit:cover;}
-.av-lg{width:80px;height:80px;font-size:22px;font-weight:700;}
+.av-lg{width:80px;height:80px;font-size:22px;font-weight:700;border:1px solid var(--border2);}
+
+/* LAYOUT */
 .layout{max-width:700px;margin:0 auto;padding:28px 18px 80px;}
 .page{display:none;animation:fadeIn .15s ease;}
 .page.active{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* FEED */
 .feed-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.feed-title{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;}
+.feed-title{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;letter-spacing:-.5px;}
 .filters{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
 .fbtn{
   padding:5px 12px;border-radius:2px;font-size:12px;font-weight:500;
   font-family:'IBM Plex Mono',monospace;
   background:transparent;color:var(--text3);border:1px solid transparent;cursor:pointer;
+  transition:all .12s;
 }
 .fbtn:hover{color:var(--text2);}
 .fbtn.on{color:#fff;border-color:var(--border2);background:var(--surface3);}
+
+/* THREAD CARD */
 .tcard{
   border-bottom:1px solid var(--border);
   padding:16px 0;cursor:pointer;
@@ -99,11 +119,12 @@ nav{
 }
 .tcard:first-child{border-top:1px solid var(--border);}
 .tcard:hover{background:var(--surface);}
-.tcard-inner{padding:0 2px;}
+.tcard:hover .tcard-inner{padding:0 12px;}
+.tcard-inner{padding:0 2px;transition:padding .1s;}
 .tcard-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .tcard-author{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
-.tcard-author b{color:var(--text2);}
-.tcard-title{font-size:15px;font-weight:600;margin-bottom:5px;}
+.tcard-author b{color:var(--text2);font-weight:500;}
+.tcard-title{font-size:15px;font-weight:600;line-height:1.35;margin-bottom:5px;color:#fff;}
 .tcard-body{font-size:13px;color:var(--text3);line-height:1.5;margin-bottom:10px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .tcard-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .tag{
@@ -111,351 +132,801 @@ nav{
   font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:500;
   border-radius:2px;border:1px solid var(--border2);color:var(--text3);
 }
+.tag-sell{border-color:rgba(255,255,255,.2);color:#aaa;}
+.tag-buy{border-color:rgba(255,255,255,.2);color:#aaa;}
+.tag-trade{border-color:rgba(255,255,255,.2);color:#aaa;}
 .tcard-stats{margin-left:auto;display:flex;gap:12px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
+
+/* THREAD VIEW */
 .back{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);cursor:pointer;margin-bottom:20px;}
+.back:hover{color:#fff;}
 .thread-full{border-bottom:1px solid var(--border);padding-bottom:24px;margin-bottom:24px;}
-.thread-full-title{font-size:22px;font-weight:700;margin-bottom:14px;}
-.thread-full-body{font-size:14px;color:var(--text2);white-space:pre-wrap;}
+.thread-full-title{font-size:22px;font-weight:700;line-height:1.3;margin-bottom:14px;letter-spacing:-.3px;}
+.thread-full-body{font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap;}
 .price-badge{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  display:inline-flex;align-items:center;gap:10px;
   border:1px solid var(--border2);padding:10px 16px;border-radius:var(--r);
   margin:14px 0;font-family:'IBM Plex Mono',monospace;
 }
 .price-num{font-size:20px;font-weight:600;color:#fff;}
-.contact-chip{font-size:12px;background:var(--surface2);padding:4px 10px;border-radius:40px;color:var(--text2);}
-.comments-hd{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:14px;}
+.price-loc{font-size:12px;color:var(--text3);}
+
+/* COMMENTS */
+.comments-hd{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 .cbox{border-bottom:1px solid var(--border);padding:14px 0;}
+.cbox:last-child{border-bottom:none;}
 .cbox-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .cbox-author{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text2);cursor:pointer;}
+.cbox-author:hover{color:#fff;}
+.cbox-time{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
 .cbox-body{font-size:13px;color:var(--text2);line-height:1.6;}
-.intent-tag{display:inline-block;margin-top:6px;font-size:11px;padding:2px 8px;border:1px solid var(--border2);border-radius:2px;}
+.intent-tag{display:inline-block;margin-top:6px;font-size:11px;font-family:'IBM Plex Mono',monospace;padding:2px 8px;border:1px solid var(--border2);border-radius:2px;color:var(--text3);}
+
 .write-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:16px;}
-.write-box textarea{min-height:70px;resize:vertical;margin-bottom:10px;}
+.write-box textarea{min-height:70px;resize:vertical;margin-bottom:10px;background:var(--surface2);}
 .write-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
 .intents{display:flex;gap:4px;}
 .ichip{
   padding:5px 10px;border-radius:2px;font-size:11px;font-family:'IBM Plex Mono',monospace;
-  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);
+  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .12s;
 }
+.ichip:hover{color:var(--text2);border-color:var(--border2);}
 .ichip.on{background:var(--surface3);color:#fff;border-color:var(--border2);}
+
+/* NEW THREAD */
 .form-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;}
 .form-title{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;margin-bottom:20px;}
 .fg{margin-bottom:14px;}
-.fl{display:block;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:5px;text-transform:uppercase;}
-.type-row{display:flex;gap:4px;margin-bottom:14px;}
+.fl{display:block;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.type-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;}
 .tchip{
   padding:6px 14px;border-radius:2px;font-size:12px;font-family:'IBM Plex Mono',monospace;
-  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);
+  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:all .12s;
 }
+.tchip:hover{color:var(--text);}
 .tchip.on{background:var(--surface3);color:#fff;border-color:var(--border2);}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* AUTH */
 .auth-wrap{min-height:calc(100vh - 52px);display:flex;align-items:center;justify-content:center;padding:40px 18px;}
 .auth-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;width:100%;max-width:360px;}
-.auth-logo{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;text-align:center;}
-.auth-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:24px;}
-.err{background:rgba(255,51,51,.06);border:1px solid rgba(255,51,51,.2);color:#ff6666;font-size:12px;padding:9px 12px;border-radius:var(--r);margin-bottom:12px;display:none;}
+.auth-logo{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;text-align:center;margin-bottom:4px;}
+.auth-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:24px;font-family:'IBM Plex Mono',monospace;}
+.auth-hed{font-size:15px;font-weight:600;margin-bottom:18px;}
+.auth-sw{text-align:center;margin-top:14px;font-size:12px;color:var(--text3);}
+.auth-sw a{color:var(--text2);cursor:pointer;text-decoration:underline;}
+
+/* PROFILE PAGE (banner removed) */
+.prof-head{
+  display:flex;align-items:flex-end;gap:14px;
+  padding:0 2px;
+  margin-bottom:16px;
+  position:relative;
+  margin-top: 0;
+}
+.prof-av-wrap{
+  position:relative;
+  width:80px;height:80px;flex-shrink:0;
+}
+.prof-av-wrap .av-lg{
+  border:3px solid var(--bg);
+  background:var(--surface3);
+}
+.prof-info{padding-bottom:4px;flex:1;min-width:0;}
+.prof-name{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:-.3px;}
+.prof-url{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin:2px 0 6px;}
+.prof-bio{font-size:13px;color:var(--text2);line-height:1.5;}
+.prof-stats{display:flex;gap:18px;margin-top:10px;}
+.pst{display:flex;flex-direction:column;}
+.pst-n{font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#fff;}
+.pst-l{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.sec-hed{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+/* SETTINGS */
+.set-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:12px;}
+
+/* AVATAR UPLOAD */
+.av-upload-area{
+  display:flex;align-items:center;gap:16px;margin-bottom:14px;
+}
+.av-preview{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--surface3);border:1px solid var(--border2);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:600;color:#fff;font-family:'IBM Plex Mono',monospace;
+  flex-shrink:0;
+}
+.av-preview img{width:100%;height:100%;object-fit:cover;}
+.file-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border:1px solid var(--border2);border-radius:var(--r);
+  font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text2);
+  cursor:pointer;transition:all .12s;background:var(--surface2);
+}
+.file-btn:hover{border-color:var(--border3);color:#fff;}
+.file-input-hidden{display:none;}
+
+/* ERROR/TOAST */
+.err{background:rgba(255,51,51,.06);border:1px solid rgba(255,51,51,.2);color:#ff6666;font-size:12px;padding:9px 12px;border-radius:var(--r);margin-bottom:12px;}
 .toast{
-  position:fixed;bottom:20px;right:20px;background:var(--surface3);border:1px solid var(--border2);
-  border-radius:var(--r);padding:11px 16px;font-size:13px;z-index:9999;
-  opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;
+  position:fixed;bottom:20px;right:20px;
+  background:var(--surface3);border:1px solid var(--border2);
+  border-radius:var(--r);padding:11px 16px;font-size:13px;
+  z-index:9999;opacity:0;transform:translateY(8px);
+  transition:all .2s;pointer-events:none;max-width:280px;
+  font-family:'IBM Plex Mono',monospace;
 }
 .toast.show{opacity:1;transform:translateY(0);}
-.empty{text-align:center;padding:50px 20px;color:var(--text3);}
-.loading{text-align:center;padding:40px;}
-.spin{display:inline-block;width:18px;height:18px;border:1.5px solid var(--border2);border-top-color:#fff;border-radius:50%;animation:spin .5s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
-.prof-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:16px;}
-.prof-info{flex:1;}
-.prof-name{font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
-.prof-stats{display:flex;gap:18px;margin-top:10px;}
-.sec-hed{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;}
-@media(max-width:480px){.frow{grid-template-columns:1fr;}}
+.toast.ok{border-color:rgba(255,255,255,.25);color:#fff;}
+.toast.er{border-color:rgba(255,51,51,.3);color:#ff6666;}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:50px 20px;color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.spin{display:inline-block;width:18px;height:18px;border:1.5px solid var(--border2);border-top-color:#fff;border-radius:50%;animation:sp .5s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:40px;color:var(--text3);}
+
+@media(max-width:480px){
+  .frow{grid-template-columns:1fr;}
+  nav{padding:0 14px;}
+  .layout{padding:18px 14px 60px;}
+  .auth-box{padding:22px 18px;}
+  .prof-head{flex-direction:column;align-items:flex-start;margin-top:0;}
+}
 </style>
 </head>
 <body>
-<nav><div class="logo" id="nav-logo">lair<span>.lat</span></div><div class="nav-r" id="nav-r"><button onclick="showPage('login')">sign in</button><button class="btn-white" onclick="showPage('register')">join</button></div></nav>
+
+<nav>
+  <div class="logo" id="nav-logo">lair<span>.lat</span></div>
+  <div class="nav-r" id="nav-r">
+    <button onclick="showPage('login')">sign in</button>
+    <button class="btn-white" onclick="showPage('register')">join</button>
+  </div>
+</nav>
+
 <div class="toast" id="toast"></div>
 
-<!-- home feed -->
+<!-- HOME -->
 <div class="page active layout" id="page-home">
-  <div class="feed-top"><div class="feed-title">marketplace</div><button class="btn-white btn-sm" id="new-btn" style="display:none" onclick="showPage('new')">+ sell / buy</button></div>
-  <div class="filters"><button class="fbtn on" data-f="all">all</button><button class="fbtn" data-f="selling">selling</button><button class="fbtn" data-f="buying">buying</button><button class="fbtn" data-f="trading">trading</button></div>
+  <div class="feed-top">
+    <div class="feed-title">threads</div>
+    <button class="btn-white btn-sm" id="new-btn" style="display:none" onclick="showPage('new')">+ new thread</button>
+  </div>
+  <div class="filters">
+    <button class="fbtn on" data-f="all">all</button>
+    <button class="fbtn" data-f="discussion">discussion</button>
+    <button class="fbtn" data-f="selling">selling</button>
+    <button class="fbtn" data-f="buying">buying</button>
+    <button class="fbtn" data-f="trading">trading</button>
+  </div>
   <div id="feed"></div>
 </div>
 
-<!-- single thread -->
-<div class="page layout" id="page-thread"><div class="back" onclick="showPage('home')">← back</div><div id="thread-body"></div></div>
+<!-- THREAD -->
+<div class="page layout" id="page-thread">
+  <div class="back" onclick="showPage('home')">← back</div>
+  <div id="thread-body"></div>
+</div>
 
-<!-- create thread with discord/tele -->
+<!-- NEW THREAD -->
 <div class="page layout" id="page-new">
   <div class="back" onclick="showPage('home')">← back</div>
   <div class="form-box">
-    <div class="form-title">list item / request</div>
-    <label class="fl">type</label><div class="type-row">
+    <div class="form-title">new thread</div>
+    <label class="fl">type</label>
+    <div class="type-row">
+      <button class="tchip on" data-t="discussion" onclick="pickType(this,'discussion')">discussion</button>
       <button class="tchip" data-t="selling" onclick="pickType(this,'selling')">selling</button>
       <button class="tchip" data-t="buying" onclick="pickType(this,'buying')">buying</button>
       <button class="tchip" data-t="trading" onclick="pickType(this,'trading')">trading</button>
     </div>
-    <div class="fg"><label class="fl">title</label><input id="nt-title" placeholder="e.g. Off-White hoodie L" maxlength="120"></div>
-    <div class="fg"><label class="fl">description</label><textarea id="nt-body" style="min-height:100px" placeholder="condition, details, price negotiation..."></textarea></div>
+    <div class="fg"><label class="fl">title</label><input id="nt-title" placeholder="what is this about?" maxlength="120"></div>
+    <div class="fg"><label class="fl">body</label><textarea id="nt-body" style="min-height:110px;resize:vertical" placeholder="describe it in detail..."></textarea></div>
     <div id="nt-price-row" class="frow" style="display:none;margin-bottom:14px;">
       <div><label class="fl">price ($)</label><input type="number" id="nt-price" placeholder="0.00" step="0.01" min="0"></div>
-      <div><label class="fl">discord / telegram</label><input id="nt-contact" placeholder="@username or dm link"></div>
+      <div><label class="fl">location</label><input id="nt-loc" placeholder="city, state"></div>
     </div>
-    <div class="fg"><label class="fl">tags (comma)</label><input id="nt-tags" placeholder="rare, size L, ds"></div>
-    <div class="err" id="nt-err"></div>
-    <button class="btn-white" style="width:100%" onclick="postThread()">publish</button>
+    <div class="fg"><label class="fl">tags (comma separated)</label><input id="nt-tags" placeholder="sneakers, nike, size 10"></div>
+    <div class="err" id="nt-err" style="display:none"></div>
+    <button class="btn-white" style="width:100%" onclick="postThread()" id="nt-btn">post thread</button>
   </div>
 </div>
 
-<!-- login & register with email confirmation BLOCK -->
-<div class="page" id="page-login"><div class="auth-wrap"><div class="auth-box"><div class="auth-logo">lair.lat</div><div class="auth-sub">verify email first</div><div class="err" id="li-err"></div><div class="fg"><label class="fl">email</label><input id="li-email" type="email" placeholder="you@example.com"></div><div class="fg"><label class="fl">password</label><input id="li-pass" type="password" onkeydown="if(event.key==='Enter')doLogin()"></div><button class="btn-white" style="width:100%" onclick="doLogin()">sign in</button><div class="auth-sw" style="text-align:center;margin-top:14px;font-size:12px;">no account? <a onclick="showPage('register')" style="cursor:pointer;text-decoration:underline;">join</a></div></div></div></div>
+<!-- LOGIN -->
+<div class="page" id="page-login">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">lair.lat</div>
+      <div class="auth-sub">threads & drops</div>
+      <div class="auth-hed">sign in</div>
+      <div class="err" id="li-err" style="display:none"></div>
+      <div class="fg"><label class="fl">email</label><input type="email" id="li-email" placeholder="you@example.com"></div>
+      <div class="fg"><label class="fl">password</label><input type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn-white" style="width:100%" onclick="doLogin()" id="li-btn">sign in</button>
+      <div class="auth-sw">no account? <a onclick="showPage('register')">join now</a></div>
+    </div>
+  </div>
+</div>
 
-<div class="page" id="page-register"><div class="auth-wrap"><div class="auth-box"><div class="auth-logo">lair.lat</div><div class="auth-sub">confirm your email to login</div><div class="err" id="reg-err"></div><div class="fg"><label class="fl">username</label><input id="reg-user" placeholder="handle" maxlength="30"></div><div class="fg"><label class="fl">email</label><input id="reg-email" type="email" placeholder="you@example.com"></div><div class="fg"><label class="fl">password</label><input id="reg-pass" type="password" onkeydown="if(event.key==='Enter')doRegister()"></div><button class="btn-white" style="width:100%" onclick="doRegister()">create account</button><div class="auth-sw" style="margin-top:14px;font-size:12px;">already have an account? <a onclick="showPage('login')" style="cursor:pointer;text-decoration:underline;">sign in</a></div></div></div></div>
+<!-- REGISTER -->
+<div class="page" id="page-register">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">lair.lat</div>
+      <div class="auth-sub">threads & drops</div>
+      <div class="auth-hed">create account</div>
+      <div class="err" id="reg-err" style="display:none"></div>
+      <div class="fg"><label class="fl">username</label><input id="reg-user" placeholder="yourhandle" maxlength="30"></div>
+      <div class="fg"><label class="fl">email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
+      <div class="fg"><label class="fl">password</label><input type="password" id="reg-pass" placeholder="min 6 characters" onkeydown="if(event.key==='Enter')doRegister()"></div>
+      <button class="btn-white" style="width:100%" onclick="doRegister()" id="reg-btn">create account</button>
+      <div class="auth-sw">have an account? <a onclick="showPage('login')">sign in</a></div>
+    </div>
+  </div>
+</div>
 
-<!-- profile & settings -->
-<div class="page layout" id="page-profile"><div id="prof-content"></div></div>
-<div class="page layout" id="page-settings"><div class="back" onclick="showPage('home')">← back</div><div class="set-box form-box"><div class="form-title">edit profile</div><div class="fg"><label class="fl">username</label><input id="set-user"></div><div class="fg"><label class="fl">bio</label><textarea id="set-bio" rows="3"></textarea></div><div class="err" id="set-err"></div><div style="display:flex;gap:8px;"><button class="btn-white" onclick="saveSettings()">save</button><button class="btn-danger" onclick="doLogout()">sign out</button></div></div></div>
+<!-- PROFILE -->
+<div class="page layout" id="page-profile">
+  <div id="prof-content"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page layout" id="page-settings">
+  <div class="back" onclick="showPage('home')">← back</div>
+  <div class="set-box">
+    <div class="form-title">edit profile</div>
+
+    <label class="fl">profile photo</label>
+    <div class="av-upload-area">
+      <div class="av-preview" id="set-av-preview">??</div>
+      <div>
+        <label class="file-btn" for="set-av-file">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          choose photo
+        </label>
+        <input type="file" id="set-av-file" class="file-input-hidden" accept="image/*" onchange="previewAvatar(this)">
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;font-family:'IBM Plex Mono',monospace">jpg, png, gif — max 2mb</div>
+      </div>
+    </div>
+
+    <div class="fg"><label class="fl">username</label><input id="set-user" placeholder="yourhandle" maxlength="30"></div>
+    <div class="fg"><label class="fl">bio</label><textarea id="set-bio" style="min-height:70px" placeholder="tell people about yourself..."></textarea></div>
+    <div class="err" id="set-err" style="display:none"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-white" onclick="saveSettings()">save changes</button>
+      <button class="btn-danger" onclick="doLogout()">sign out</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SB_URL = 'https://flmoswqpocsufircduiy.supabase.co';
 const SB_KEY = 'sb_publishable_g5hrheYjAQ2OKNjkJKPCHQ_D2f8fndS';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
-let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'selling', COMMENT_INTENT = 'comment';
+let ME = null, PROF = null, FILTER = 'all', THREAD_TYPE = 'discussion', COMMENT_INTENT = 'comment';
+let pendingAvatarFile = null;
 
-// helpers
-function toast(msg, type='ok'){ let el=document.getElementById('toast'); el.textContent=msg; el.className='toast show '+type; clearTimeout(window.tt); window.tt=setTimeout(()=>el.classList.remove('show'),2800);}
-function esc(s){ if(!s)return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function ago(ts){ if(!ts)return ''; let d=(Date.now()-new Date(ts))/1000; if(d<60)return 'just now'; if(d<3600)return Math.floor(d/60)+'m ago'; if(d<86400)return Math.floor(d/3600)+'h ago'; return Math.floor(d/86400)+'d ago';}
-function showErr(id,msg){ let e=document.getElementById(id); e.innerText=msg; e.style.display='block';}
-function hideErr(id){ let e=document.getElementById(id); if(e)e.style.display='none';}
+// ── FIXED BOOT WITH PROPER ROUTING ───────────────────
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { ME = session.user; PROF = await getProfile(ME.id); }
+  renderNav();
 
-async function getProfile(uid){ let {data}=await sb.from('profiles').select('*').eq('id',uid).maybeSingle(); return data || {id:uid, username:'anon'};}
-function pushState(path){ let full=path.startsWith('/')?path:'/'+path; window.history.pushState({},'',full);}
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  let el=document.getElementById('page-'+id); if(el)el.classList.add('active');
-  if(id==='home') pushState('');
-  else if(id==='settings') pushState('settings');
-  else if(id==='new') pushState('new');
-  else if(id!=='thread') pushState(id);
-  if(id==='home') loadFeed();
-  if(id==='new' && !ME) showPage('login');
-  if(id==='settings' && ME) fillSettings();
-}
-window.addEventListener('popstate',()=>boot());
-
-async function renderNav(){
-  let nr=document.getElementById('nav-r'), nb=document.getElementById('new-btn');
-  if(ME && PROF){
-    let init=(PROF.username||'?').slice(0,2).toUpperCase(), imgHTML=PROF.avatar_url?`<img src="${esc(PROF.avatar_url)}" onerror="this.style.display='none'">`:'';
-    nr.innerHTML=`<div class="av" onclick="showPage('settings')" title="settings">${imgHTML}${!PROF.avatar_url?init:''}</div>`;
-    if(nb)nb.style.display='inline-flex';
+  // CRITICAL FIX: Check for saved route FIRST
+  let fullPath = sessionStorage.getItem('redirectRoute');
+  if (fullPath) {
+    sessionStorage.removeItem('redirectRoute');
+    console.log('Restoring route:', fullPath);
   } else {
-    nr.innerHTML=`<button onclick="showPage('login')">sign in</button><button class="btn-white" onclick="showPage('register')">join</button>`;
-    if(nb)nb.style.display='none';
+    fullPath = window.location.pathname;
   }
-}
-
-// ========== SIGNUP (creates user but BLOCKS login until email confirmed) ==========
-async function doRegister(){
-  hideErr('reg-err');
-  let username=document.getElementById('reg-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
-  let email=document.getElementById('reg-email').value.trim();
-  let pass=document.getElementById('reg-pass').value;
-  if(username.length<2) return showErr('reg-err','username min 2 characters');
-  if(!email.includes('@')) return showErr('reg-err','valid email required');
-  if(pass.length<6) return showErr('reg-err','password ≥6 characters');
   
-  let {data:ex}=await sb.from('profiles').select('id').eq('username',username).maybeSingle();
-  if(ex) return showErr('reg-err','username taken');
+  console.log('Current path:', fullPath);
   
-  let btn=document.getElementById('reg-btn'); let old=btn.innerText; btn.innerText='creating...'; btn.disabled=true;
-  
-  // sign up with supabase (email confirmation required by default in supabase settings)
-  const {data, error}=await sb.auth.signUp({
-    email, password:pass,
-    options: { data: { username } }
-  });
-  
-  if(error){ showErr('reg-err',error.message); btn.innerText=old; btn.disabled=false; return; }
-  
-  if(data.user){
-    // create profile entry
-    await sb.from('profiles').upsert({id:data.user.id, username, email, created_at:new Date().toISOString()});
-    toast(`✅ verification email sent to ${email}. Please confirm your email before logging in.`, 'ok');
-    showPage('login');
-  } else {
-    toast('signup error', 'er');
+  // Handle different route patterns
+  if (fullPath.startsWith('/thread/')) {
+    const threadId = fullPath.replace('/thread/', '');
+    await loadThread(threadId);
+    showPage('thread');
+    // Update URL without triggering another redirect
+    window.history.replaceState({}, '', fullPath);
+  } 
+  else if (fullPath.startsWith('/users/@')) {
+    const username = fullPath.replace('/users/@', '');
+    await loadProfilePage(username);
+    showPage('profile');
+    window.history.replaceState({}, '', fullPath);
   }
-  btn.innerText=old; btn.disabled=false;
-}
-
-// ========== LOGIN: only allowed if email_confirmed_at exists ==========
-async function doLogin(){
-  hideErr('li-err');
-  let email=document.getElementById('li-email').value.trim();
-  let pass=document.getElementById('li-pass').value;
-  let btn=document.getElementById('li-btn'); let old=btn.innerText; btn.innerText='signing...'; btn.disabled=true;
-  
-  const {data, error}=await sb.auth.signInWithPassword({email, password:pass});
-  if(error){ showErr('li-err',error.message); btn.innerText=old; btn.disabled=false; return; }
-  
-  if(data.user){
-    // CRITICAL: check if email is confirmed
-    if(!data.user.email_confirmed_at){
-      await sb.auth.signOut();
-      showErr('li-err','❌ Email not verified! Check your inbox (and spam) and click the confirmation link, then try again.');
-      btn.innerText=old; btn.disabled=false;
-      return;
-    }
-    ME=data.user;
-    PROF=await getProfile(ME.id);
-    renderNav();
-    toast(`welcome @${PROF.username || ME.email}`);
+  else if (fullPath === '/settings') {
+    if (ME) showPage('settings');
+    else showPage('login');
+    window.history.replaceState({}, '', fullPath);
+  }
+  else if (fullPath === '/new') {
+    if (ME) showPage('new');
+    else showPage('login');
+    window.history.replaceState({}, '', fullPath);
+  }
+  else {
     showPage('home');
     loadFeed();
-  }
-  btn.innerText=old; btn.disabled=false;
-}
-
-async function doLogout(){ await sb.auth.signOut(); ME=null; PROF=null; renderNav(); toast('signed out'); showPage('home');}
-
-// settings & profile
-async function fillSettings(){ if(!PROF)return; document.getElementById('set-user').value=PROF.username||''; document.getElementById('set-bio').value=PROF.bio||'';}
-async function saveSettings(){
-  let username=document.getElementById('set-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
-  let bio=document.getElementById('set-bio').value.trim();
-  if(username.length<2) return showErr('set-err','username too short');
-  let {data:ex}=await sb.from('profiles').select('id').eq('username',username).neq('id',ME.id).maybeSingle();
-  if(ex) return showErr('set-err','username taken');
-  let {error}=await sb.from('profiles').upsert({id:ME.id, username, bio, updated_at:new Date().toISOString()});
-  if(error) return showErr('set-err',error.message);
-  PROF=await getProfile(ME.id); renderNav(); toast('profile saved');
-}
-
-async function loadProfilePage(username){
-  username=username.replace('@','');
-  let el=document.getElementById('prof-content'); el.innerHTML='<div class="loading"><div class="spin"></div></div>';
-  showPage('profile'); pushState(`users/@${username}`);
-  let {data:prof}=await sb.from('profiles').select('*').eq('username',username).maybeSingle();
-  if(!prof){ el.innerHTML='<div class="empty">user not found</div>'; return; }
-  let {data:threads}=await sb.from('threads').select('*, profiles(username,avatar_url)').eq('author_id',prof.id).order('created_at',{ascending:false});
-  let {data:comCnt}=await sb.from('comments').select('id').eq('author_id',prof.id);
-  let isOwn=ME && ME.id===prof.id;
-  let init=(prof.username||'?').slice(0,2).toUpperCase();
-  let avImg=prof.avatar_url?`<img src="${esc(prof.avatar_url)}">`:'';
-  el.innerHTML=`<div class="back" onclick="showPage('home')">← back</div>
-    <div class="prof-head"><div class="av av-lg">${avImg}${!prof.avatar_url?init:''}</div>
-    <div class="prof-info"><div class="prof-name">@${esc(prof.username)}</div>${prof.bio?`<div style="font-size:13px;color:var(--text2);margin-top:6px;">${esc(prof.bio)}</div>`:''}
-    <div class="prof-stats"><div><strong>${threads?.length||0}</strong> threads</div><div><strong>${comCnt?.length||0}</strong> comments</div></div>
-    ${isOwn?`<button onclick="showPage('settings')" style="margin-top:10px;">edit</button>`:''}</div></div>
-    <div class="sec-hed">listings</div><div>${!threads||threads.length===0?'<div class="empty">no posts yet</div>':threads.map(t=>cardHTML(t,t.profiles)).join('')}</div>`;
-}
-
-function cardHTML(t,prof){
-  let author=prof?.username||'anon'; let init=author.slice(0,2).toUpperCase();
-  let avImg=prof?.avatar_url?`<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">`:'';
-  let tagsHTML=(t.tags||[]).slice(0,3).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
-  let priceTag=t.price?`<span class="tag">\$${Number(t.price).toFixed(2)}</span>`:'';
-  return `<div class="tcard" onclick="openThread('${t.id}')"><div class="tcard-inner"><div class="tcard-top"><div class="av" style="width:24px;height:24px;font-size:10px" onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div><span class="tcard-author"><b onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">@${esc(author)}</b> · ${ago(t.created_at)}</span></div><div class="tcard-title">${esc(t.title)}</div>${t.body?`<div class="tcard-body">${esc(t.body)}</div>`:''}<div class="tcard-foot"><span class="tag">${t.type}</span>${tagsHTML}${priceTag}<div class="tcard-stats">💬 ${t.comment_count||0}</div></div></div></div>`;
-}
-
-// feed
-async function loadFeed(){
-  let el=document.getElementById('feed'); if(!el)return;
-  el.innerHTML='<div class="loading"><div class="spin"></div></div>';
-  let q=sb.from('threads').select('*, profiles(username,avatar_url)').order('created_at',{ascending:false}).limit(60);
-  if(FILTER!=='all') q=q.eq('type',FILTER);
-  let {data,error}=await q;
-  if(error||!data||data.length===0){ el.innerHTML='<div class="empty">✨ no listings. create one →</div>'; return; }
-  el.innerHTML=data.map(t=>cardHTML(t,t.profiles)).join('');
-}
-document.querySelectorAll('.fbtn').forEach(b=>{b.onclick=()=>{document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on')); b.classList.add('on'); FILTER=b.dataset.f; loadFeed();};});
-
-// thread interactions
-async function openThread(id){ pushState(`thread/${id}`); showPage('thread'); loadThread(id); }
-async function loadThread(id){
-  let el=document.getElementById('thread-body'); el.innerHTML='<div class="loading"><div class="spin"></div></div>';
-  await sb.rpc('increment_views',{thread_id:id}).catch(()=>{});
-  let {data:t}=await sb.from('threads').select('*, profiles(username,avatar_url)').eq('id',id).maybeSingle();
-  let {data:comments}=await sb.from('comments').select('*, profiles(username,avatar_url)').eq('thread_id',id).order('created_at');
-  if(!t){ el.innerHTML='<div class="empty">thread gone</div>'; return; }
-  let prof=t.profiles, author=prof?.username||'unknown', init=author.slice(0,2).toUpperCase(), avImg=prof?.avatar_url?`<img src="${esc(prof.avatar_url)}">`:'';
-  let isOwn=ME && ME.id===t.author_id;
-  let cmtsHTML=!comments||comments.length===0?'<div style="padding:20px 0;color:var(--text3);">no replies</div>':comments.map(c=>`<div class="cbox"><div class="cbox-top"><div class="av" style="width:22px;height:22px;font-size:9px" onclick="loadProfilePage('${esc(c.profiles?.username)}')">${c.profiles?.avatar_url?`<img src="${esc(c.profiles.avatar_url)}">`:(c.profiles?.username||'?').slice(0,2).toUpperCase()}</div><span class="cbox-author" onclick="loadProfilePage('${esc(c.profiles?.username)}')">${esc(c.profiles?.username)}</span><span>${ago(c.created_at)}</span>${(ME && ME.id===c.author_id)?`<button class="btn-danger btn-sm" style="margin-left:auto;padding:2px 6px" onclick="delComment('${c.id}')">✕</button>`:''}</div><div class="cbox-body">${esc(c.body)}</div>${c.intent!=='comment'?`<div class="intent-tag">${c.intent==='buy'?'🔔 wants to buy':c.intent==='offer'?'💰 offer':c.intent}</div>`:''}</div>`).join('');
-  let writeHTML=ME?`<div class="write-box"><textarea id="c-text" placeholder="reply or offer..."></textarea><div class="write-foot"><div class="intents"><button class="ichip on" data-i="comment" onclick="pickIntent(this,'comment')">comment</button><button class="ichip" data-i="buy" onclick="pickIntent(this,'buy')">want to buy</button><button class="ichip" data-i="offer" onclick="pickIntent(this,'offer')">offer</button></div><button class="btn-white btn-sm" onclick="postComment('${id}')">send</button></div></div>`:`<div style="text-align:center;padding:16px;border:1px solid var(--border);margin-top:14px"><button class="btn-white btn-sm" onclick="showPage('login')">sign in to reply</button></div>`;
-  let contactHtml='';
-  if((t.type==='selling' || t.type==='buying') && t.contact){
-    contactHtml=`<div class="contact-chip">📱 contact: ${esc(t.contact)}</div>`;
-  }
-  el.innerHTML=`<div class="thread-full"><div style="display:flex;gap:8px;margin-bottom:12px"><div class="av" onclick="loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div><div><div style="font-weight:500">@${esc(author)}</div><div style="font-size:10px;color:var(--text3)">${ago(t.created_at)}</div></div><span class="tag">${t.type}</span>${isOwn?`<button class="btn-danger btn-sm" onclick="delThread('${id}')">delete</button>`:''}</div><div class="thread-full-title">${esc(t.title)}</div>${t.price?`<div class="price-badge"><span class="price-num">\$${Number(t.price).toFixed(2)}</span>${contactHtml}</div>`:contactHtml?`<div class="price-badge">${contactHtml}</div>`:''}<div class="thread-full-body">${esc(t.body||'')}</div><div style="margin-top:10px">${(t.tags||[]).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('')}</div></div><div class="comments-hd">💬 ${comments?.length||0}</div><div id="clist">${cmtsHTML}</div>${writeHTML}`;
-  COMMENT_INTENT='comment';
-}
-
-async function postComment(threadId){
-  if(!ME){ showPage('login'); return; }
-  let text=document.getElementById('c-text')?.value.trim();
-  if(!text) return;
-  let {data,error}=await sb.from('comments').insert({thread_id:threadId, author_id:ME.id, body:text, intent:COMMENT_INTENT, created_at:new Date().toISOString()}).select('*, profiles(username,avatar_url)').single();
-  if(error){ toast('error: '+error.message,'er'); return; }
-  document.getElementById('c-text').value='';
-  await sb.rpc('increment_comments',{thread_id:threadId}).catch(()=>{});
-  let list=document.getElementById('clist'); if(list.querySelector('div[style*="padding"]')) list.innerHTML='';
-  list.insertAdjacentHTML('beforeend',`<div class="cbox"><div class="cbox-top"><div class="av" style="width:22px;height:22px;font-size:9px">${PROF?.avatar_url?`<img src="${esc(PROF.avatar_url)}">`:(PROF?.username||'?').slice(0,2).toUpperCase()}</div><span class="cbox-author">${esc(PROF?.username||ME.email)}</span><span>just now</span></div><div class="cbox-body">${esc(text)}</div>${COMMENT_INTENT!=='comment'?`<div class="intent-tag">${COMMENT_INTENT==='buy'?'wants to buy':COMMENT_INTENT==='offer'?'offer':COMMENT_INTENT}</div>`:''}</div>`);
-  let countSpan=document.querySelector('.comments-hd'); if(countSpan)countSpan.innerText=`💬 ${(parseInt((countSpan.innerText.match(/\d+/)||[0])[0])+1)}`;
-  COMMENT_INTENT='comment';
-}
-async function delComment(id){ if(confirm('delete?')){ await sb.from('comments').delete().eq('id',id).eq('author_id',ME.id); document.getElementById('c-'+id)?.remove(); toast('deleted');}}
-async function delThread(id){ if(confirm('delete thread?')){ await sb.from('comments').delete().eq('thread_id',id); await sb.from('threads').delete().eq('id',id).eq('author_id',ME.id); toast('deleted'); showPage('home'); }}
-
-function pickType(el,type){ document.querySelectorAll('.tchip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); THREAD_TYPE=type; let row=document.getElementById('nt-price-row'); row.style.display=(type==='selling'||type==='buying')?'grid':'none';}
-async function postThread(){
-  if(!ME){ showPage('login'); return; }
-  hideErr('nt-err');
-  let title=document.getElementById('nt-title').value.trim();
-  let body=document.getElementById('nt-body').value.trim();
-  let price=document.getElementById('nt-price').value;
-  let contact=document.getElementById('nt-contact').value.trim();
-  let tagsRaw=document.getElementById('nt-tags').value.trim();
-  if(!title || !body) return showErr('nt-err','title & description required');
-  if((THREAD_TYPE==='selling' || THREAD_TYPE==='buying') && !contact) return showErr('nt-err','Discord / Telegram @ is required for selling/buying');
-  let tags=tagsRaw?tagsRaw.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean):[];
-  let btn=document.getElementById('nt-btn'); btn.innerText='posting...'; btn.disabled=true;
-  let {data,error}=await sb.from('threads').insert({
-    title, body, type:THREAD_TYPE, price: price?parseFloat(price):null,
-    contact: contact || null, tags, author_id:ME.id,
-    comment_count:0, view_count:0, created_at:new Date().toISOString()
-  }).select().single();
-  btn.innerText='publish'; btn.disabled=false;
-  if(error) return showErr('nt-err',error.message);
-  document.getElementById('nt-title').value=''; document.getElementById('nt-body').value=''; document.getElementById('nt-price').value=''; document.getElementById('nt-contact').value=''; document.getElementById('nt-tags').value='';
-  toast('listing live!'); openThread(data.id);
-}
-function pickIntent(el,intent){ COMMENT_INTENT=intent; document.querySelectorAll('.ichip').forEach(c=>c.classList.remove('on')); el.classList.add('on');}
-
-// BOOT with email check
-async function boot(){
-  let {data:{session}}=await sb.auth.getSession();
-  if(session && session.user){
-    if(session.user.email_confirmed_at){
-      ME=session.user;
-      PROF=await getProfile(ME.id);
-    } else {
-      await sb.auth.signOut();
-      toast('Please verify your email before logging in','er');
+    if (fullPath !== '/') {
+      window.history.replaceState({}, '', '/');
     }
   }
-  renderNav();
-  let path=window.location.pathname;
-  if(path.startsWith('/thread/')){ let id=path.replace('/thread/',''); await loadThread(id); showPage('thread'); pushState(path);}
-  else if(path.startsWith('/users/@')){ let u=path.replace('/users/@',''); await loadProfilePage(u);}
-  else if(path==='/settings'){ if(ME)showPage('settings'); else showPage('login');}
-  else if(path==='/new'){ if(ME)showPage('new'); else showPage('login');}
-  else { showPage('home'); loadFeed(); if(path!=='/')pushState('');}
-  sb.auth.onAuthStateChange(async (ev,sess)=>{ if(ev==='SIGNED_IN' && sess?.user?.email_confirmed_at){ ME=sess.user; PROF=await getProfile(ME.id); renderNav(); toast('verified!'); showPage('home'); loadFeed();} else if(ev==='SIGNED_OUT'){ ME=null; PROF=null; renderNav();}});
+
+  sb.auth.onAuthStateChange(async (ev, sess) => {
+    if (ev === 'SIGNED_IN') { ME = sess.user; PROF = await getProfile(ME.id); renderNav(); }
+    if (ev === 'SIGNED_OUT') { ME = null; PROF = null; renderNav(); }
+  });
 }
+
+// Listen for popstate (back/forward buttons)
+window.addEventListener('popstate', () => {
+  boot();
+});
+
+function pushState(path) {
+  const fullPath = path.startsWith('/') ? path : '/' + path;
+  window.history.pushState({}, '', fullPath);
+}
+
+// ── NAV ───────────────────────────────────────────────
+function renderNav() {
+  document.getElementById('nav-logo').onclick = () => { 
+    pushState('');
+    showPage('home'); 
+    loadFeed(); 
+  };
+  const nr = document.getElementById('nav-r');
+  const nb = document.getElementById('new-btn');
+  if (ME && PROF) {
+    const init = (PROF.username||'?').slice(0,2).toUpperCase();
+    const imgHTML = PROF.avatar_url ? `<img src="${PROF.avatar_url}" onerror="this.style.display='none'">` : '';
+    nr.innerHTML = `<div class="av" onclick="showPage('settings')" title="settings">${imgHTML}${!PROF.avatar_url?init:''}</div>`;
+    if(nb) nb.style.display='inline-flex';
+    fillSettings();
+  } else {
+    nr.innerHTML = `<button onclick="showPage('login')">sign in</button><button class="btn-white" onclick="showPage('register')">join</button>`;
+    if(nb) nb.style.display='none';
+  }
+}
+
+// ── PAGE ──────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-'+id);
+  if (el) el.classList.add('active');
+  
+  if (id === 'home') {
+    pushState('');
+  } else if (id === 'settings') {
+    pushState('settings');
+  } else if (id === 'new') {
+    pushState('new');
+  } else if (id === 'login') {
+    pushState('login');
+  } else if (id === 'register') {
+    pushState('register');
+  }
+  
+  window.scrollTo(0,0);
+  if (id === 'home') loadFeed();
+  if (id === 'new' && !ME) { showPage('login'); return; }
+}
+
+// ── TOAST ─────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show '+type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function esc(s) {
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function ago(ts) {
+  if(!ts) return '';
+  const d = (Date.now() - new Date(ts))/1000;
+  if(d<60) return 'just now';
+  if(d<3600) return Math.floor(d/60)+'m ago';
+  if(d<86400) return Math.floor(d/3600)+'h ago';
+  if(d<604800) return Math.floor(d/86400)+'d ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideErr(id) { document.getElementById(id).style.display='none'; }
+
+// ── AUTH ──────────────────────────────────────────────
+async function doRegister() {
+  hideErr('reg-err');
+  let username = document.getElementById('reg-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  if(username.length < 2) return showErr('reg-err','username needs at least 2 characters');
+  if(!email) return showErr('reg-err','email required');
+  if(pass.length < 6) return showErr('reg-err','password must be at least 6 characters');
+
+  const { data: ex } = await sb.from('profiles').select('id').eq('username',username).maybeSingle();
+  if(ex) return showErr('reg-err','username taken, try another');
+
+  const btn = document.getElementById('reg-btn');
+  btn.textContent='creating...'; btn.disabled=true;
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  if(error) { showErr('reg-err', error.message); btn.textContent='create account'; btn.disabled=false; return; }
+
+  if(data.user) {
+    await sb.from('profiles').insert({ id: data.user.id, username, email, created_at: new Date().toISOString() });
+    ME = data.user;
+    PROF = await getProfile(ME.id);
+    renderNav();
+    toast('welcome to lair.lat!');
+    showPage('home');
+  }
+  btn.textContent='create account'; btn.disabled=false;
+}
+
+async function doLogin() {
+  hideErr('li-err');
+  const email = document.getElementById('li-email').value.trim();
+  const pass = document.getElementById('li-pass').value;
+  const btn = document.getElementById('li-btn');
+  btn.textContent='signing in...'; btn.disabled=true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error) { showErr('li-err', error.message); btn.textContent='sign in'; btn.disabled=false; return; }
+  ME = data.user; PROF = await getProfile(ME.id);
+  renderNav(); toast('welcome back!'); showPage('home');
+  btn.textContent='sign in'; btn.disabled=false;
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  ME=null; PROF=null; pendingAvatarFile=null;
+  renderNav(); toast('signed out'); showPage('home');
+}
+
+// ── PROFILE ───────────────────────────────────────────
+async function getProfile(uid) {
+  const { data } = await sb.from('profiles').select('*').eq('id',uid).maybeSingle();
+  return data || { id: uid, username: ME?.email?.split('@')[0]||'user' };
+}
+
+async function loadProfilePage(username) {
+  // Remove @ if present
+  username = username.replace('@', '');
+  console.log('Loading profile for username:', username);
+  
+  showPage('profile');
+  pushState(`users/@${username}`);
+  
+  const el = document.getElementById('prof-content');
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  
+  const { data: prof } = await sb.from('profiles').select('*').eq('username', username).maybeSingle();
+  if(!prof) { 
+    el.innerHTML='<div class="empty">user @' + esc(username) + ' not found</div>'; 
+    return; 
+  }
+
+  const { data: threads } = await sb.from('threads').select('*, profiles(username,avatar_url)').eq('author_id', prof.id).order('created_at',{ascending:false});
+  const { data: comCnt } = await sb.from('comments').select('id').eq('author_id', prof.id);
+
+  const isOwn = ME && ME.id === prof.id;
+  const init = (prof.username||'?').slice(0,2).toUpperCase();
+  const avImg = prof.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+
+  el.innerHTML = `
+    <div class="back" onclick="showPage('home')">← back</div>
+    <div class="prof-head">
+      <div class="prof-av-wrap">
+        <div class="av av-lg">${avImg}${!prof.avatar_url?init:''}</div>
+      </div>
+      <div class="prof-info">
+        <div class="prof-name">@${esc(prof.username)}</div>
+        <div class="prof-url">lair.lat/users/@${esc(prof.username)}</div>
+        ${prof.bio ? `<div class="prof-bio">${esc(prof.bio)}</div>` : ''}
+        <div class="prof-stats">
+          <div class="pst"><div class="pst-n">${threads?.length||0}</div><div class="pst-l">threads</div></div>
+          <div class="pst"><div class="pst-n">${comCnt?.length||0}</div><div class="pst-l">comments</div></div>
+        </div>
+        ${isOwn ? `<button onclick="showPage('settings')" style="margin-top:10px;font-size:12px;padding:6px 12px">edit profile</button>` : ''}
+      </div>
+    </div>
+    <div class="sec-hed">threads</div>
+    <div>${!threads||threads.length===0?'<div class="empty" style="padding:30px 0">no threads yet</div>':threads.map(t=>cardHTML(t,prof)).join('')}
+    </div>
+  `;
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+function fillSettings() {
+  if(!PROF) return;
+  const init = (PROF.username||'?').slice(0,2).toUpperCase();
+  const prev = document.getElementById('set-av-preview');
+  if(prev) {
+    prev.innerHTML = PROF.avatar_url ? `<img src="${esc(PROF.avatar_url)}" onerror="this.style.display='none'">` : init;
+  }
+  if(document.getElementById('set-user')) document.getElementById('set-user').value = PROF.username||'';
+  if(document.getElementById('set-bio')) document.getElementById('set-bio').value = PROF.bio||'';
+}
+
+function previewAvatar(input) {
+  if(!input.files[0]) return;
+  if(input.files[0].size > 2*1024*1024) { toast('image too large (max 2mb)', 'er'); input.value=''; return; }
+  pendingAvatarFile = input.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('set-av-preview');
+    prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function uploadFile(file, bucket, path) {
+  const { data, error } = await sb.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type });
+  if(error) return null;
+  const { data: urlData } = sb.storage.from(bucket).getPublicUrl(path);
+  return urlData.publicUrl + '?t=' + Date.now();
+}
+
+async function saveSettings() {
+  hideErr('set-err');
+  const username = document.getElementById('set-user').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const bio = document.getElementById('set-bio').value.trim();
+  if(username.length < 2) return showErr('set-err','username needs at least 2 characters');
+
+  const { data: ex } = await sb.from('profiles').select('id').eq('username',username).neq('id',ME.id).maybeSingle();
+  if(ex) return showErr('set-err','username already taken');
+
+  const updates = { id: ME.id, username, bio, updated_at: new Date().toISOString() };
+
+  if(pendingAvatarFile) {
+    const url = await uploadFile(pendingAvatarFile, 'avatars', `${ME.id}/avatar`);
+    if(url) updates.avatar_url = url;
+    else toast('avatar upload failed — check storage bucket', 'er');
+  }
+
+  const { error } = await sb.from('profiles').upsert(updates);
+  if(error) return showErr('set-err', error.message);
+
+  PROF = await getProfile(ME.id);
+  pendingAvatarFile = null;
+  renderNav();
+  toast('profile saved!');
+}
+
+// ── FEED ──────────────────────────────────────────────
+async function loadFeed() {
+  const el = document.getElementById('feed');
+  if(!el) return;
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+  let q = sb.from('threads').select('*, profiles(username,avatar_url)').order('created_at',{ascending:false}).limit(60);
+  if(FILTER !== 'all') q = q.eq('type', FILTER);
+  const { data, error } = await q;
+  if(error||!data||data.length===0) {
+    el.innerHTML = `<div class="empty">${error?'could not load — run the SQL setup first':'no threads yet. be the first!'}</div>`;
+    return;
+  }
+  el.innerHTML = data.map(t => cardHTML(t, t.profiles)).join('');
+}
+
+function cardHTML(t, prof) {
+  const author = prof?.username||'unknown';
+  const init = author.slice(0,2).toUpperCase();
+  const avImg = prof?.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+  const typeTag = t.type !== 'discussion' ? `<span class="tag tag-${t.type}">${t.type}</span>` : '';
+  const tagsHTML = (t.tags||[]).slice(0,3).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
+  const priceTag = t.price ? `<span class="tag">\$${Number(t.price).toFixed(2)}</span>` : '';
+  return `<div class="tcard" onclick="openThread('${t.id}')">
+    <div class="tcard-inner">
+      <div class="tcard-top">
+        <div class="av" style="width:24px;height:24px;font-size:10px" onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div>
+        <span class="tcard-author"><b onclick="event.stopPropagation();loadProfilePage('${esc(author)}')">@${esc(author)}</b> · ${ago(t.created_at)}</span>
+      </div>
+      <div class="tcard-title">${esc(t.title)}</div>
+      ${t.body?`<div class="tcard-body">${esc(t.body)}</div>`:''}
+      <div class="tcard-foot">${typeTag}${tagsHTML}${priceTag}<div class="tcard-stats"><span>💬 ${t.comment_count||0}</span><span>👁 ${t.view_count||0}</span></div></div>
+    </div>
+  </div>`;
+}
+
+document.querySelectorAll('.fbtn').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    FILTER = b.dataset.f;
+    loadFeed();
+  };
+});
+
+// ── THREAD ────────────────────────────────────────────
+async function openThread(id) {
+  pushState(`thread/${id}`);
+  showPage('thread');
+  loadThread(id);
+}
+
+async function loadThread(id) {
+  const el = document.getElementById('thread-body');
+  if(!el) return;
+  el.innerHTML = '<div class="loading"><div class="spin"></div></div>';
+
+  try {
+    await sb.rpc('increment_views',{thread_id:id}).catch(()=>{});
+  } catch(e) {}
+
+  const { data: t } = await sb.from('threads').select('*, profiles(username,avatar_url)').eq('id',id).maybeSingle();
+  const { data: comments } = await sb.from('comments').select('*, profiles(username,avatar_url)').eq('thread_id',id).order('created_at',{ascending:true});
+
+  if(!t) { el.innerHTML='<div class="empty">thread not found</div>'; return; }
+
+  const prof = t.profiles;
+  const author = prof?.username||'unknown';
+  const init = author.slice(0,2).toUpperCase();
+  const avImg = prof?.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+  const isOwn = ME && ME.id === t.author_id;
+
+  const cmtsHTML = !comments||comments.length===0
+    ? '<div style="padding:20px 0;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;font-size:12px">no comments yet</div>'
+    : comments.map(c=>commentHTML(c)).join('');
+
+  const writeHTML = ME
+    ? `<div class="write-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div class="av" style="width:24px;height:24px;font-size:10px">${PROF?.avatar_url?`<img src="${esc(PROF.avatar_url)}">`:((PROF?.username||'?').slice(0,2).toUpperCase())}</div>
+          <span style="font-size:12px;color:var(--text3);font-family:'IBM Plex Mono',monospace">@${esc(PROF?.username||'you')}</span>
+        </div>
+        <textarea id="c-text" placeholder="write a comment..."></textarea>
+        <div class="write-foot">
+          <div class="intents">
+            <button class="ichip on" data-i="comment" onclick="pickIntent(this,'comment')">comment</button>
+            <button class="ichip" data-i="buy" onclick="pickIntent(this,'buy')">want to buy</button>
+            <button class="ichip" data-i="offer" onclick="pickIntent(this,'offer')">make offer</button>
+          </div>
+          <button class="btn-white btn-sm" onclick="postComment('${id}')">post</button>
+        </div>
+      </div>`
+    : `<div style="text-align:center;padding:18px;border:1px solid var(--border);border-radius:var(--r);margin-top:14px">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:10px;font-family:'IBM Plex Mono',monospace">sign in to comment</div>
+        <button class="btn-white btn-sm" onclick="showPage('login')">sign in</button>
+      </div>`;
+
+  const typeTag = t.type !== 'discussion' ? `<span class="tag">${t.type}</span>` : '';
+  const tagsHTML = (t.tags||[]).map(tg=>`<span class="tag">${esc(tg)}</span>`).join('');
+
+  el.innerHTML = `
+    <div class="thread-full">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <div class="av" onclick="loadProfilePage('${esc(author)}')" style="cursor:pointer">${avImg}${!prof?.avatar_url?init:''}</div>
+        <div>
+          <div style="font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;color:var(--text2)" onclick="loadProfilePage('${esc(author)}')">@${esc(author)}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace">${ago(t.created_at)}</div>
+        </div>
+        ${typeTag}
+        ${isOwn?`<button class="btn-danger btn-sm" onclick="delThread('${id}')" style="margin-left:auto">delete</button>`:''}
+      </div>
+      <div class="thread-full-title">${esc(t.title)}</div>
+      ${t.price?`<div class="price-badge"><span class="price-num">\$${Number(t.price).toFixed(2)}</span>${t.location?`<span class="price-loc">· ${esc(t.location)}</span>`:''}</div>`:''}
+      <div class="thread-full-body">${esc(t.body||'')}</div>
+      ${tagsHTML?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:14px">${tagsHTML}</div>`:''}
+    </div>
+    <div class="comments-hd">comments <span style="color:var(--text3)" id="ccount">${comments?.length||0}</span></div>
+    <div id="clist">${cmtsHTML}</div>
+    ${writeHTML}
+  `;
+  COMMENT_INTENT = 'comment';
+}
+
+function commentHTML(c) {
+  const prof = c.profiles;
+  const author = prof?.username||'unknown';
+  const init = author.slice(0,2).toUpperCase();
+  const avImg = prof?.avatar_url ? `<img src="${esc(prof.avatar_url)}" onerror="this.style.display='none'">` : '';
+  const isOwn = ME && ME.id === c.author_id;
+  const intentMap = { buy:'wants to buy', offer:'making offer' };
+  const intentTag = c.intent && c.intent !== 'comment' ? `<span class="intent-tag">${intentMap[c.intent]||c.intent}</span>` : '';
+  return `<div class="cbox" id="c-${c.id}">
+    <div class="cbox-top">
+      <div class="av" style="width:22px;height:22px;font-size:9px;cursor:pointer" onclick="loadProfilePage('${esc(author)}')">${avImg}${!prof?.avatar_url?init:''}</div>
+      <span class="cbox-author" onclick="loadProfilePage('${esc(author)}')">${esc(author)}</span>
+      <span class="cbox-time">${ago(c.created_at)}</span>
+      ${isOwn?`<button class="btn-danger btn-sm" style="margin-left:auto;padding:3px 8px;font-size:11px" onclick="delComment('${c.id}')">×</button>`:''}
+    </div>
+    <div class="cbox-body">${esc(c.body)}</div>
+    ${intentTag}
+  </div>`;
+}
+
+function pickIntent(el, intent) {
+  COMMENT_INTENT = intent;
+  document.querySelectorAll('.ichip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+}
+
+async function postComment(threadId) {
+  if(!ME) { showPage('login'); return; }
+  const text = document.getElementById('c-text').value.trim();
+  if(!text) return;
+  const { data, error } = await sb.from('comments').insert({
+    thread_id: threadId, author_id: ME.id, body: text,
+    intent: COMMENT_INTENT, created_at: new Date().toISOString()
+  }).select('*, profiles(username,avatar_url)').single();
+  if(error) { toast('error: '+error.message,'er'); return; }
+  document.getElementById('c-text').value = '';
+  try {
+    await sb.rpc('increment_comments',{thread_id:threadId}).catch(()=>{});
+  } catch(e) {}
+  const list = document.getElementById('clist');
+  const noMsg = list.querySelector('div[style*="padding"]');
+  if(noMsg) list.innerHTML = '';
+  list.insertAdjacentHTML('beforeend', commentHTML(data));
+  const cc = document.getElementById('ccount');
+  if(cc) cc.textContent = parseInt(cc.textContent||0)+1;
+  COMMENT_INTENT = 'comment';
+}
+
+async function delComment(id) {
+  if(!confirm('delete this comment?')) return;
+  await sb.from('comments').delete().eq('id',id).eq('author_id',ME.id);
+  document.getElementById('c-'+id)?.remove();
+  toast('deleted');
+}
+
+async function delThread(id) {
+  if(!confirm('delete this thread?')) return;
+  await sb.from('comments').delete().eq('thread_id',id);
+  await sb.from('threads').delete().eq('id',id).eq('author_id',ME.id);
+  toast('thread deleted');
+  pushState('');
+  showPage('home');
+}
+
+// ── NEW THREAD ────────────────────────────────────────
+function pickType(el, type) {
+  document.querySelectorAll('.tchip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  THREAD_TYPE = type;
+  document.getElementById('nt-price-row').style.display = (type==='selling'||type==='buying')?'grid':'none';
+}
+
+async function postThread() {
+  if(!ME) { showPage('login'); return; }
+  hideErr('nt-err');
+  const title = document.getElementById('nt-title').value.trim();
+  const body = document.getElementById('nt-body').value.trim();
+  const price = document.getElementById('nt-price').value;
+  const loc = document.getElementById('nt-loc').value.trim();
+  const tagsRaw = document.getElementById('nt-tags').value.trim();
+  if(!title) return showErr('nt-err','title is required');
+  if(!body) return showErr('nt-err','body is required');
+  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean) : [];
+  const btn = document.getElementById('nt-btn');
+  btn.textContent='posting...'; btn.disabled=true;
+  const { data, error } = await sb.from('threads').insert({
+    title, body, type: THREAD_TYPE,
+    price: price ? parseFloat(price) : null,
+    location: loc||null, tags,
+    author_id: ME.id, comment_count:0, view_count:0,
+    created_at: new Date().toISOString()
+  }).select().single();
+  btn.textContent='post thread'; btn.disabled=false;
+  if(error) return showErr('nt-err', error.message);
+  ['nt-title','nt-body','nt-price','nt-loc','nt-tags'].forEach(id=>document.getElementById(id).value='');
+  toast('thread posted!');
+  openThread(data.id);
+}
+
 boot();
 </script>
 </body>
