@@ -86,7 +86,6 @@ body::after {
     z-index:6; 
     transform-origin: top center; 
     animation:swing 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; 
-    /* Dropped grayscale to 60% to let some color bleed through */
     filter: grayscale(60%) brightness(1.3); 
 }
 
@@ -211,10 +210,7 @@ header { text-align:center; padding:50px 0 20px; position: relative; z-index: 10
 console.log("%c[SYSTEM] Access logged. Nothing to see here.", "color:#444; font-family:monospace; font-size:11px;");
 
 const members = [
-    { name: "LUCI", img: "luci.jpg", status: "i'd rather be the villain in your story than a witness to your atrophy", telegram:"https://t.me/disease" },
-    { name: "ABEL", img: "abel.jpg", status: "sometimes i touch weep", telegram:"https://t.me/abelfh", doxbin:"https://doxbin.com/user/draculea" },
-    { name: "GELD", img: "geld.jpg", status: "silence is golden", telegram:"https://t.me/geld", doxbin:"https://doxbin.com/user/geld" },
-    { name: "DIABLO", img: "diablo.jpg", status: "The scarlet bloom flowers once more", telegram:"https://t.me/temp8193", doxbin:"https://doxbin.com/user/diablo" }
+    { name: "hoes", img: "luci.jpg", status: "i'd rather be the villain in your story than a witness to your atrophy", telegram:"https://t.me/disease", doxbin:"https://doxbin.com/user/draculea" }
 ];
 
 const roster = document.getElementById("roster");
