@@ -211,8 +211,7 @@ console.log("%c[SYSTEM] Access logged. Nothing to see here.", "color:#444; font-
 
 const members = [
     { name: "hoes", img: "c5c3fe2940f1bf6c395e0cc3d0dee6a5.webp", status: "i am a fucking boss g", telegram:"https://t.me/cancelplans", doxbin:"https://doxbin.com/user/ihop" },
-    { name: "slqnx", img: "IMG_4689.jpg", status: "i am a fucking boss g", telegram:"https://t.me/weldlng", doxbin:"https://doxbin.com/user/slqnx" },
-    { name: "lure", img: "fe12bb585fa4ee0e97b950d31fe0f741.jpg", status: "i am a fucking boss g", discord:"https://discord.gg/inbirth" }
+    { name: "lure", img: "fe12bb585fa4ee0e97b950d31fe0f741.jpg", status: "i run shit g", discord:"https://discord.gg/inbirth" }
 ];
 
 const roster = document.getElementById("roster");
@@ -253,6 +252,7 @@ function showProfile(m) {
     
     if(m.telegram) addBtn("TELEGRAM", m.telegram);
     if(m.doxbin) addBtn("DOXBIN", m.doxbin);
+    if(m.discord) addBtn("DISCORD", m.discord);
 }
 
 function addBtn(txt, url) {
